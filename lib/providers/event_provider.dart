@@ -39,7 +39,7 @@ class EventProvider extends ChangeNotifier {
 
   void startEventPolling() {
     _pollTimer?.cancel();
-    _pollTimer = Timer.periodic(const Duration(seconds: 8), (_) async {
+    _pollTimer = Timer.periodic(const Duration(seconds: 15), (_) async {
       await pollRecentEvents();
     });
     // Initial fetch

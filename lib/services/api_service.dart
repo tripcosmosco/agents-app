@@ -160,7 +160,7 @@ class ApiService {
       final uri = Uri.parse('$baseUrl/mobile/call-logs?limit=$limit&offset=$offset');
       final response = await http
           .get(uri, headers: _headers)
-          .timeout(const Duration(seconds: 8));
+          .timeout(const Duration(seconds: 15));
 
       if (response.statusCode == 200) {
         final data = _safeJsonDecode(response.body);
@@ -238,7 +238,7 @@ class ApiService {
       final uri = Uri.parse('$baseUrl/mobile/leads');
       final response = await http
           .get(uri, headers: _headers)
-          .timeout(const Duration(seconds: 8));
+          .timeout(const Duration(seconds: 15));
 
       if (response.statusCode == 200) {
         final data = _safeJsonDecode(response.body);
@@ -356,7 +356,7 @@ class ApiService {
       final uri = Uri.parse('$baseUrl/mobile/events').replace(queryParameters: queryParams);
       final response = await http
           .get(uri, headers: _headers)
-          .timeout(const Duration(seconds: 8));
+          .timeout(const Duration(seconds: 15));
 
       if (response.statusCode == 200) {
         final data = _safeJsonDecode(response.body);
