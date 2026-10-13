@@ -582,6 +582,23 @@ class ApiService {
     return null;
   }
 
+  /// Fetch Authenticated Agent Profile & Dedicated AI Sales Co-Pilot (Aditi AI)
+  Future<Map<String, dynamic>?> fetchAgentProfile() async {
+    try {
+      final uri = Uri.parse('$baseUrl/mobile/agent-profile');
+      final response = await http.get(uri, headers: _headers).timeout(const Duration(seconds: 8));
+      if (response.statusCode == 200) {
+        final data = _safeJsonDecode(response.body);
+        if (data != null && data['ok'] == true && data['agent'] is Map) {
+          return Map<String, dynamic>.from(data['agent']);
+        }
+      }
+    } catch (e) {
+      debugPrint('Error fetching agent profile: $e');
+    }
+    return null;
+  }
+
   /// 11. Send WhatsApp Message via Central Evolution API
   Future<bool> sendWhatsAppMessage({
     required String phone,

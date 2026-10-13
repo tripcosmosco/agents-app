@@ -510,32 +510,43 @@ class _SettingsScreenState extends State<SettingsScreen> {
       newApiToken: newToken,
     );
 
-    if (mounted) {
-      setState(() {
-        _isSaving = false;
-      });
+    Map<String, dynamic>? profile;
+    if (success) {
+      profile = await widget.apiService.fetchAgentProfile();
+    }
 
-      if (success) {
-        // Refresh providers with updated connection
-        context.read<LeadProvider>().refreshLeadsFromServer();
-        context.read<CallProvider>().checkCallQueue();
-        context.read<EventProvider>().refresh();
-        context.read<WhatsAppProvider>().fetchThreadsFromServer();
+    if (!mounted) return;
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('✓ Server configuration saved successfully!'),
-            backgroundColor: AppColors.successGreen,
-          ),
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Failed to save configuration.'),
-            backgroundColor: AppColors.errorRed,
-          ),
-        );
+    setState(() {
+      _isSaving = false;
+    });
+
+    if (success) {
+      if (profile != null && profile['name'] != null) {
+        final agentName = profile['name'].toString().trim();
+        context.read<LeadProvider>().setCurrentAgent(agentName);
+        context.read<WhatsAppProvider>().setCurrentAgent(agentName);
       }
+
+      // Refresh providers with updated connection
+      context.read<LeadProvider>().refreshLeadsFromServer();
+      context.read<CallProvider>().checkCallQueue();
+      context.read<EventProvider>().refresh();
+      context.read<WhatsAppProvider>().fetchThreadsFromServer();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('✓ Server configuration saved successfully!'),
+          backgroundColor: AppColors.successGreen,
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Failed to save configuration.'),
+          backgroundColor: AppColors.errorRed,
+        ),
+      );
     }
   }
 

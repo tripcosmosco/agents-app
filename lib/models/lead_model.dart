@@ -29,7 +29,7 @@ class LeadModel {
     this.budget = '',
     this.stage = 'new',
     this.source = 'website_chat',
-    this.stickyAgent = 'Santosh Yadav',
+    this.stickyAgent = '',
     this.score = 65,
     required this.createdAt,
     this.lastContactAt,
@@ -84,7 +84,7 @@ class LeadModel {
       budget: json['deal_value'] != null ? '₹${json['deal_value']}' : (json['budget'] ?? ''),
       stage: normalizedStage,
       source: json['source_channel'] ?? json['source'] ?? 'website_chat',
-      stickyAgent: json['owner'] ?? json['sticky_agent'] ?? json['assigned_to'] ?? json['assigned_manager'] ?? 'Santosh Yadav',
+      stickyAgent: (json['owner'] ?? json['sticky_agent'] ?? json['assigned_to'] ?? json['assigned_manager'] ?? '').toString().trim(),
       score: int.tryParse(json['score']?.toString() ?? '65') ?? 65,
       createdAt: json['created_at'] != null
           ? DateTime.tryParse(json['created_at'].toString()) ?? DateTime.now()

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/whatsapp_thread_model.dart';
 import '../services/api_service.dart';
+import '../services/storage_service.dart';
 
 class WhatsAppProvider extends ChangeNotifier {
   final ApiService apiService;
@@ -26,7 +27,7 @@ class WhatsAppProvider extends ChangeNotifier {
   bool _evolutionOnline = true;
   bool get evolutionOnline => _evolutionOnline;
 
-  String _currentAgentName = 'Santosh Yadav';
+  String _currentAgentName = '';
   String get currentAgentName => _currentAgentName;
 
   int get totalUnreadCount => _threads.fold(0, (sum, th) => sum + th.unreadCount);
@@ -35,7 +36,16 @@ class WhatsAppProvider extends ChangeNotifier {
   int get b2bThreadsCount => _threads.where((th) => isB2bThread(th)).length;
 
   WhatsAppProvider({required this.apiService}) {
+    _initAgentName();
     fetchThreadsFromServer();
+  }
+
+  Future<void> _initAgentName() async {
+    final saved = await StorageService.getAgentName();
+    if (saved.isNotEmpty && saved != 'Executive Agent') {
+      _currentAgentName = saved;
+      notifyListeners();
+    }
   }
 
   bool isB2bThread(WhatsAppThread th) {

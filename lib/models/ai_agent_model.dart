@@ -183,6 +183,61 @@ class AiAgentPersona {
   static List<AiAgentPersona> defaultTravelPersonas() {
     return [
       AiAgentPersona(
+        id: 'agent_aditi_sales_copilot',
+        name: 'Aditi AI',
+        title: 'Senior Sales AI Co-Pilot & Tour Closer',
+        voiceName: 'Aditi (Hindi-English Warm & Devotional)',
+        tone: 'Devotional, Respectful, Persuasive & Transparent',
+        circuits: const ['Varanasi', 'Ayodhya', 'Prayagraj', 'Bodhgaya', 'Chitrakoot'],
+        canChatWhatsapp: true,
+        canMakeVoiceCalls: true,
+        canTakeInbound: true,
+        isAutonomous: true,
+        conversationsCount: 384,
+        dealsClosed: 112,
+        conversionRate: 29.2,
+        isPublished: true,
+        systemPrompt:
+            'You are Aditi AI, Senior AI Sales Specialist and dedicated co-pilot at TripCosmos.co (Varanasi HQ). Greet guests with warm Indian hospitality ("Namaste ji 🙏", "Har Har Mahadev"). You are thoroughly trained in all TripCosmos tour circuits (Varanasi 3D/2N Kashi Darshan from ₹14,500, Ayodhya 2D/1N Ram Janmabhoomi from ₹9,800, Prayagraj Sangam excursion from ₹4,800, and Kashi-Ayodhya-Prayagraj 4D/3N Golden Circuit from ₹22,500). Provide exact fleet tariffs (Sedan ₹11/km, Innova Crysta ₹17/km, Tempo Traveller ₹24/km), VIP Sugam passes (₹300), and Dashashwamedh evening Bajra boat reservations. Always collect traveler phone/WhatsApp and dates, provide transparent inclusions, and seamlessly alert the human sales manager for custom negotiations.',
+        skills: [
+          const AgentSkill(
+            id: 'skill_pkg_pricing_engine',
+            name: 'Complete Tour Package Pricing Engine',
+            description: 'Quotes exact retail and B2B DMC net pricing for Varanasi, Ayodhya, Prayagraj, Bodhgaya circuits with hotel tiers.',
+            category: 'pricing',
+            isEnabled: true,
+          ),
+          const AgentSkill(
+            id: 'skill_vip_darshan_boat',
+            name: 'VIP Darshan & Bajra Boat Reservations',
+            description: 'Books Kashi Vishwanath Sugam Darshan passes, Assi morning sunrise boat, and Dashashwamedh evening Aarti Bajra seats.',
+            category: 'darshan',
+            isEnabled: true,
+          ),
+          const AgentSkill(
+            id: 'skill_fleet_calculator',
+            name: 'Dynamic Fleet & Outstation Fare Engine',
+            description: 'Calculates instant per-km and flat quotes for Swift Dzire (₹11/km), Crysta (₹17/km), and Tempo Traveller (₹24/km).',
+            category: 'pricing',
+            isEnabled: true,
+          ),
+          const AgentSkill(
+            id: 'skill_whatsapp_pdf_quote',
+            name: '1-Tap WhatsApp Itinerary & Quote Dispatch',
+            description: 'Generates branded PDF day-wise itineraries with cost breakdown and dispatches to customer WhatsApp in under 5 seconds.',
+            category: 'sales',
+            isEnabled: true,
+          ),
+          const AgentSkill(
+            id: 'skill_human_co_pilot_handoff',
+            name: 'Human Co-Pilot Handoff & Escalation',
+            description: 'Instantly alerts assigned human sales specialist when traveler requests custom discount or human phone consultation.',
+            category: 'guardrail',
+            isEnabled: true,
+          ),
+        ],
+      ),
+      AiAgentPersona(
         id: 'agent_aarav_kashi',
         name: 'Aarav Sharma',
         title: 'Kashi Pilgrimage & VIP Desk Specialist',
@@ -224,7 +279,7 @@ class AiAgentPersona {
           const AgentSkill(
             id: 'skill_human_escalation',
             name: 'Human Rep Handover Guardrail',
-            description: 'Instantly alerts human manager (Santosh Yadav) if customer expresses price grievance or requests human agent.',
+            description: 'Instantly alerts assigned human manager if customer expresses price grievance or requests human agent.',
             category: 'guardrail',
             isEnabled: true,
           ),

@@ -3,6 +3,7 @@ import 'package:uuid/uuid.dart';
 
 import '../models/lead_model.dart';
 import '../services/api_service.dart';
+import '../services/storage_service.dart';
 
 class LeadProvider extends ChangeNotifier {
   final ApiService apiService;
@@ -23,14 +24,34 @@ class LeadProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
 
   LeadProvider({required this.apiService}) {
+    _initAgentIdentity();
     refreshLeadsFromServer();
   }
 
   String _ownerFilter = 'all'; // 'all', 'my_leads', 'unassigned', 'follow_ups'
   String get ownerFilter => _ownerFilter;
 
-  String _currentAgent = 'Santosh Yadav';
+  String _currentAgent = '';
   String get currentAgent => _currentAgent;
+
+  Future<void> _initAgentIdentity() async {
+    final saved = await StorageService.getAgentName();
+    if (saved.isNotEmpty && saved != 'Executive Agent') {
+      _currentAgent = saved;
+      notifyListeners();
+    }
+    try {
+      final profile = await apiService.fetchAgentProfile();
+      if (profile != null && profile['name'] != null && profile['name'].toString().trim().isNotEmpty) {
+        _currentAgent = profile['name'].toString().trim();
+        await StorageService.setAgentName(_currentAgent);
+        if (profile['paired_ai'] is Map && profile['paired_ai']['name'] != null) {
+          await StorageService.setPairedAiName(profile['paired_ai']['name'].toString());
+        }
+        notifyListeners();
+      }
+    } catch (_) {}
+  }
 
   void setOwnerFilter(String filter) {
     _ownerFilter = filter;
@@ -38,12 +59,15 @@ class LeadProvider extends ChangeNotifier {
   }
 
   void setCurrentAgent(String agentName) {
-    _currentAgent = agentName;
+    _currentAgent = agentName.trim();
+    StorageService.setAgentName(_currentAgent);
     notifyListeners();
   }
 
   int get myLeadsCount {
+    if (_currentAgent.isEmpty) return 0;
     return _leads.where((l) =>
+      l.stickyAgent.isNotEmpty &&
       l.stickyAgent.toLowerCase() == _currentAgent.toLowerCase()
     ).length;
   }
@@ -78,7 +102,9 @@ class LeadProvider extends ChangeNotifier {
           lead.phone.contains(_searchQuery) ||
           lead.destination.toLowerCase().contains(_searchQuery.toLowerCase());
 
-      final isMyLead = lead.stickyAgent.toLowerCase() == _currentAgent.toLowerCase();
+      final isMyLead = _currentAgent.isNotEmpty &&
+          lead.stickyAgent.isNotEmpty &&
+          lead.stickyAgent.toLowerCase() == _currentAgent.toLowerCase();
       final isUnassigned = lead.stickyAgent.isEmpty ||
           lead.stickyAgent.toLowerCase() == 'unassigned' ||
           lead.stickyAgent.toLowerCase() == 'admin';

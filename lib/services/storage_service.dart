@@ -16,14 +16,26 @@ class StorageService {
     await prefs.setString(_keyToken, token);
   }
 
+  static const String _keyPairedAiName = 'tc_paired_ai_name';
+
   static Future<String> getAgentName() async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(_keyAgentName) ?? 'Santosh Yadav (Varanasi HQ)';
+    return prefs.getString(_keyAgentName) ?? 'Executive Agent';
   }
 
   static Future<void> setAgentName(String name) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_keyAgentName, name);
+  }
+
+  static Future<String> getPairedAiName() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_keyPairedAiName) ?? 'Aditi AI';
+  }
+
+  static Future<void> setPairedAiName(String name) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_keyPairedAiName, name);
   }
 
   static Future<bool> getAiOutboundActive() async {
