@@ -60,7 +60,6 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       });
     }
 
-    final isWide = MediaQuery.of(context).size.width >= 1000;
 
     final mainContent = Stack(
       children: [
@@ -161,131 +160,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       ],
     );
 
-    if (isWide) {
-      return Scaffold(
-        body: Row(
-          children: [
-            NavigationRail(
-              selectedIndex: _currentIndex,
-              onDestinationSelected: (index) => setState(() => _currentIndex = index),
-              backgroundColor: Theme.of(context).brightness == Brightness.light ? Colors.white : AppColors.surface,
-              selectedIconTheme: const IconThemeData(color: AppColors.accentGold),
-              unselectedIconTheme: IconThemeData(
-                color: Theme.of(context).brightness == Brightness.light ? AppColors.lightTextMuted : AppColors.textMuted,
-              ),
-              selectedLabelTextStyle: const TextStyle(color: AppColors.accentGold, fontWeight: FontWeight.bold, fontSize: 11),
-              unselectedLabelTextStyle: TextStyle(
-                color: Theme.of(context).brightness == Brightness.light ? AppColors.lightTextMuted : AppColors.textMuted,
-                fontSize: 11,
-              ),
-              labelType: NavigationRailLabelType.all,
-              leading: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                child: Container(
-                  width: 42,
-                  height: 42,
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(colors: [Color(0xFFF59E0B), Color(0xFFD97706)]),
-                    borderRadius: BorderRadius.circular(12),
-                    boxShadow: [
-                      BoxShadow(color: AppColors.accentGold.withValues(alpha: 0.3), blurRadius: 8, offset: const Offset(0, 2)),
-                    ],
-                  ),
-                  child: const Center(
-                    child: Text(
-                      'TC',
-                      style: TextStyle(color: Colors.black, fontWeight: FontWeight.w900, fontSize: 16),
-                    ),
-                  ),
-                ),
-              ),
-              destinations: [
-                NavigationRailDestination(
-                  icon: Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      const Icon(Icons.phone_rounded),
-                      if (pendingCount > 0)
-                        Positioned(
-                          right: -6,
-                          top: -4,
-                          child: Container(
-                            padding: const EdgeInsets.all(4),
-                            decoration: const BoxDecoration(color: AppColors.errorRed, shape: BoxShape.circle),
-                            child: Text('$pendingCount', style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w700)),
-                          ),
-                        ),
-                    ],
-                  ),
-                  label: const Text('Dialer'),
-                ),
-                const NavigationRailDestination(
-                  icon: Icon(Icons.people_alt_rounded),
-                  label: Text('Leads CRM'),
-                ),
-                const NavigationRailDestination(
-                  icon: Icon(Icons.smart_toy_rounded),
-                  label: Text('AI Agents'),
-                ),
-                NavigationRailDestination(
-                  icon: Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      const Icon(Icons.chat_rounded),
-                      if (wpUnread > 0)
-                        Positioned(
-                          right: -8,
-                          top: -4,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: AppColors.successGreen,
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(color: Colors.white, width: 1),
-                            ),
-                            child: Text('$wpUnread', style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w700)),
-                          ),
-                        ),
-                    ],
-                  ),
-                  label: const Text('WhatsApp'),
-                ),
-                const NavigationRailDestination(
-                  icon: Icon(Icons.bar_chart_rounded),
-                  label: Text('Analytics'),
-                ),
-              ],
-              trailing: Expanded(
-                child: Align(
-                  alignment: Alignment.bottomCenter,
-                  child: Padding(
-                    padding: const EdgeInsets.only(bottom: 16),
-                    child: IconButton(
-                      icon: const Icon(Icons.settings_outlined, color: AppColors.accentGold, size: 22),
-                      tooltip: 'Server & Companion Settings',
-                      onPressed: () {
-                        if (widget.apiService != null) {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => SettingsScreen(apiService: widget.apiService!),
-                            ),
-                          ).then((_) {
-                            if (mounted) setState(() {});
-                          });
-                        }
-                      },
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            const VerticalDivider(width: 1, thickness: 1, color: AppColors.borderSubtle),
-            Expanded(child: mainContent),
-          ],
-        ),
-      );
-    }
+
 
     return Scaffold(
       body: mainContent,

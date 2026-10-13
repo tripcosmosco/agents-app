@@ -19,10 +19,11 @@ class ApiService {
         _apiToken = apiToken ?? AppConstants.defaultMobileToken;
 
   String get baseUrl {
-    if (_baseUrl.isEmpty || (!_baseUrl.startsWith('http://') && !_baseUrl.startsWith('https://'))) {
-      return AppConstants.defaultApiBaseUrl;
+    String url = _baseUrl.trim();
+    if (url.isEmpty || (!url.startsWith('http://') && !url.startsWith('https://'))) {
+      url = AppConstants.defaultApiBaseUrl;
     }
-    return _baseUrl;
+    return url.endsWith('/') ? url.substring(0, url.length - 1) : url;
   }
   String? get apiToken => _apiToken;
   bool get isAuthenticated => _apiToken != null && _apiToken!.trim().isNotEmpty;
@@ -96,7 +97,7 @@ class ApiService {
   Future<Map<String, dynamic>> testConnection() async {
     final stopwatch = Stopwatch()..start();
     try {
-      final uri = Uri.parse('$_baseUrl/mobile/events?limit=1');
+      final uri = Uri.parse('$baseUrl/mobile/events?limit=1');
       final response = await http
           .get(uri, headers: _headers)
           .timeout(const Duration(seconds: 25));

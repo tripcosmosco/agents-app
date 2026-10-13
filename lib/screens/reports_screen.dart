@@ -99,7 +99,7 @@ class ReportsScreen extends StatelessWidget {
                     child: _buildMetricCard(
                       'Total Calls',
                       '$totalCalls',
-                      'Jio ₹0 Bridge',
+                      'WebRTC & Jio Bridge',
                       AppColors.outboundCall,
                     ),
                   ),
@@ -119,9 +119,9 @@ class ReportsScreen extends StatelessWidget {
                 children: [
                   Expanded(
                     child: _buildMetricCard(
-                      'Jio SIM Savings',
+                      'Telephony Savings',
                       '₹$savedRupees',
-                      '100% Free Calls',
+                      '₹0 Free Calling',
                       AppColors.successGreen,
                     ),
                   ),
