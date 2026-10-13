@@ -19,8 +19,10 @@ object CallLogSync {
 
     suspend fun send(baseUrl: String, payload: CallLogPayload) {
         lock.withLock {
-            val pending = readQueue().toMutableList()
-            pending.add(payload)
+            // Persist first: if the process dies mid-request the call is still queued, and the server
+            // de-duplicates on call_id if it did arrive.
+            val pending = (readQueue().filter { it.callId.isBlank() || it.callId != payload.callId } + payload).takeLast(MAX_PENDING)
+            writeQueue(pending)
             writeQueue(drain(baseUrl, pending))
         }
     }

@@ -8,14 +8,12 @@ import co.tripcosmos.salesagents.notify.Notifier
 import co.tripcosmos.salesagents.notify.SyncWorker
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 
 class SalesAgentsApp : Application() {
 
     companion object {
-        /** Kept for the caller-ID overlay service, which posts its foreground notification on this channel. */
-        const val CALLER_ID_CHANNEL_ID = Notifier.CH_CALLER_ID
-
         lateinit var instance: SalesAgentsApp
             private set
     }
@@ -23,12 +21,15 @@ class SalesAgentsApp : Application() {
     /** One repository for the whole process (the UI and the background worker share the same cache). */
     val repository: Repository by lazy { Repository(AppDatabase.getDatabase(this).cacheDao()) }
 
+    /** For work that must outlive the screen that started it (sign-out cleanup, push-token upload). */
+    val appScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
     override fun onCreate() {
         super.onCreate()
         instance = this
         AppConfig.init(this)
         Notifier.createChannels(this)
-        CoroutineScope(Dispatchers.IO).launch {
+        appScope.launch {
             CallLogSync.flush(AppConfig.baseUrl())
             repository.trimCache()
         }

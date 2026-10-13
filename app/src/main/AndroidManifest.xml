@@ -10,16 +10,12 @@
     <uses-permission android:name="android.permission.CALL_PHONE" />
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
     <uses-permission android:name="android.permission.READ_CALL_LOG" />
-    <uses-permission android:name="android.permission.READ_CONTACTS" />
 
-
-    <!-- Floating Superfone-style Smart Caller ID Overlay -->
+    <!-- Caller-ID card drawn over the incoming-call screen (no foreground service needed) -->
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
 
-    <!-- Foreground Services for Persistent Call & Overlay Monitoring -->
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_PHONE_CALL" tools:targetApi="34" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" tools:targetApi="33" />
+    <uses-permission android:name="android.permission.USE_BIOMETRIC" />
 
     <application
         android:name=".SalesAgentsApp"
@@ -55,14 +51,6 @@
                 <action android:name="android.intent.action.PHONE_STATE" />
             </intent-filter>
         </receiver>
-
-        <!-- Floating Smart Caller ID Overlay Service -->
-        <service
-            android:name=".telephony.CallerIdOverlayService"
-            android:enabled="true"
-            android:exported="false"
-            android:foregroundServiceType="phoneCall"
-            tools:targetApi="34" />
 
     </application>
 

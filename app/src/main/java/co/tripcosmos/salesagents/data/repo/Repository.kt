@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import retrofit2.Response
 import java.io.IOException
+import kotlin.coroutines.cancellation.CancellationException
 
 /** Outcome of a server call. Screens show [Err.message] verbatim: it is written for the agent. */
 sealed class Res<out T> {
@@ -57,6 +58,9 @@ class Repository(
                 }
                 else -> Res.Err(errorMessage(response, body), if (response.code() in 400..499) Res.Kind.VALIDATION else Res.Kind.SERVER)
             }
+        } catch (e: CancellationException) {
+            // The screen that asked went away (or a newer search replaced this one): not an error.
+            throw e
         } catch (e: IOException) {
             Res.Err("No connection. Check your internet and try again.", Res.Kind.NETWORK)
         } catch (e: Exception) {

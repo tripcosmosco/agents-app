@@ -32,7 +32,7 @@ object Notifier {
         val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         fun ch(id: String, name: String, desc: String, importance: Int) =
             nm.createNotificationChannel(NotificationChannel(id, name, importance).apply { description = desc })
-        ch(CH_CALLER_ID, "Caller ID", "Shows who is calling while a call rings", NotificationManager.IMPORTANCE_LOW)
+        nm.deleteNotificationChannel(CH_CALLER_ID) // the caller card no longer runs as a foreground service
         ch(CH_CALLS, "Finished calls", "Prompts you to add notes after a call", NotificationManager.IMPORTANCE_DEFAULT)
         ch(CH_LEADS, "New leads", "A new enquiry has arrived", NotificationManager.IMPORTANCE_HIGH)
         ch(CH_MESSAGES, "Customer replies", "A customer replied on WhatsApp", NotificationManager.IMPORTANCE_HIGH)
@@ -46,17 +46,26 @@ object Notifier {
         return NotificationManagerCompat.from(context).areNotificationsEnabled()
     }
 
-    fun openIntent(context: Context, open: String, leadId: Long = 0, requestCode: Int): PendingIntent {
+    /**
+     * [tag] + [id] identify the subject ("lead" 42, "chat" 42, "task" 7). Posting uses them as the notification's
+     * tag and id, so a lead id and a task id can never collide however large they grow.
+     */
+    fun openIntent(context: Context, open: String, leadId: Long = 0, tag: String, id: Long): PendingIntent {
         val intent = Intent(context, MainActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
             putExtra(EXTRA_OPEN, open)
             putExtra(EXTRA_LEAD_ID, leadId)
+            // Makes each PendingIntent distinct without relying on a request-code number range.
+            data = android.net.Uri.parse("tripcosmos://notify/$tag/$id")
         }
-        return PendingIntent.getActivity(context, requestCode, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+        return PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
     }
 
-    /** Posts a notification if the user allows it. [id] should be stable per subject so updates replace, not stack. */
-    fun post(context: Context, channel: String, id: Int, title: String, text: String, tap: PendingIntent) {
+    fun post(context: Context, channel: String, tag: String, id: Long, title: String, text: String, tap: PendingIntent) =
+        post(context, channel, id.toInt(), title, text, tap, tag)
+
+    /** Posts a notification if the user allows it. The same tag + id replaces, rather than stacks. */
+    fun post(context: Context, channel: String, id: Int, title: String, text: String, tap: PendingIntent, tag: String? = null) {
         if (!canPost(context)) return
         val n = NotificationCompat.Builder(context, channel)
             .setSmallIcon(R.drawable.ic_notification)
@@ -68,7 +77,7 @@ object Notifier {
             .setPriority(if (channel == CH_LEADS || channel == CH_MESSAGES) NotificationCompat.PRIORITY_HIGH else NotificationCompat.PRIORITY_DEFAULT)
             .build()
         try {
-            NotificationManagerCompat.from(context).notify(id, n)
+            NotificationManagerCompat.from(context).notify(tag, id, n)
         } catch (e: SecurityException) {
             // Permission revoked between the check and the call; nothing to do.
         }

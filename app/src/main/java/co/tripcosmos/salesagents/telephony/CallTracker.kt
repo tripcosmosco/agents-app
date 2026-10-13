@@ -126,8 +126,15 @@ object CallTracker {
         }
     }
 
-    /** Stable across retries and across the timer-vs-call-log difference in start time (bucketed to the minute). */
-    fun id(startMillis: Long, number: String): String = "${startMillis / 60000}-${Format.phoneKey(number)}"
+    /**
+     * Id the server de-duplicates on. Taken once, after [reconcile], from the call log's own start time (to the
+     * second), and then stored with the queued payload, so retries reuse it and two separate calls to the same
+     * number a few seconds apart (a missed call, then a call back) stay two calls.
+     */
+    fun id(startMillis: Long, number: String): String = "${startMillis / 1000}-${Format.phoneKey(number)}"
+
+    /** The call with its final id, computed from the reconciled time and number. */
+    fun withFinalId(call: FinishedCall): FinishedCall = call.copy(callId = id(call.at, call.number))
 
     // ---- last finished call, for the post-call sheet ---------------------------------------
 

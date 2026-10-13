@@ -95,13 +95,22 @@ object AppConfig {
 
     // ---- internals ------------------------------------------------------------------------
 
-    /** Ensures a scheme and a trailing slash so Retrofit accepts it. Blank falls back to production. */
+    /**
+     * Turns whatever the agent typed ("tripcosmos.co", "https://tripcosmos.co/", or the full API URL) into the
+     * plugin's API base with a scheme and a trailing slash. Blank falls back to production.
+     */
     internal fun normalizeBaseUrl(raw: String?): String {
         val v = raw?.trim().orEmpty()
         if (v.isEmpty()) return DEFAULT_BASE_URL
-        val withScheme = if (v.startsWith("http://") || v.startsWith("https://")) v else "https://$v"
-        return if (withScheme.endsWith("/")) withScheme else "$withScheme/"
+        var url = if (v.startsWith("http://") || v.startsWith("https://")) v else "https://$v"
+        url = url.trimEnd('/')
+        if (!url.contains("/wp-json")) url += "/wp-json/tc-agents/v1"
+        else if (url.endsWith("/wp-json")) url += "/tc-agents/v1"
+        return "$url/"
     }
+
+    /** "https://tripcosmos.co" for the saved API base, for links into wp-admin. */
+    fun siteUrl(): String = baseUrl().substringBefore("/wp-json").trimEnd('/')
 
     private fun context(): Context = checkNotNull(appContext) { "AppConfig.init() was not called" }
 

@@ -314,7 +314,8 @@ data class CallerIdContact(
     val destination: String? = null,
     val requirements: String? = null,
     @SerializedName("ai_summary") val aiSummary: String? = null,
-    @SerializedName("next_best_action") val nextBestAction: String? = null
+    @SerializedName("next_best_action") val nextBestAction: String? = null,
+    val owner: String? = null
 )
 
 data class CallerIdResponse(

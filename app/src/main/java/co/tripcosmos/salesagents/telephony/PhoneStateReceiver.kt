@@ -48,7 +48,7 @@ class PhoneStateReceiver : BroadcastReceiver() {
             TelephonyManager.EXTRA_STATE_IDLE -> {
                 val finished = CallTracker.onIdle(state, now) ?: return
                 CallTracker.save(CallState())
-                CallerIdOverlayService.hideOverlay(context)
+                CallerIdOverlay.hide()
                 finish(context, finished, state)
             }
         }
@@ -63,8 +63,10 @@ class PhoneStateReceiver : BroadcastReceiver() {
                 delay(CALL_LOG_SETTLE_MS)
                 val since = minOf(state.startedAt.takeIf { it > 0 } ?: Long.MAX_VALUE, state.ringedAt.takeIf { it > 0 } ?: Long.MAX_VALUE)
                     .let { if (it == Long.MAX_VALUE) guess.at else it } - 30_000
-                val key = Format.phoneKey(guess.number).ifBlank { null }
-                val call = CallTracker.reconcile(guess, CallLogReader.latest(app, since, key))
+                // Outgoing: the number we noted before dialling may be stale (the agent backed out and dialled
+                // someone else), so take the newest row and trust its number. Incoming: the number is known.
+                val key = if (guess.callType == "outgoing") null else Format.phoneKey(guess.number).ifBlank { null }
+                val call = CallTracker.withFinalId(CallTracker.reconcile(guess, CallLogReader.latest(app, since, key)))
                 CallTracker.clearPendingOutgoing()
 
                 if (call.number.isBlank()) return@launch // nothing to attribute the call to
@@ -101,7 +103,7 @@ class PhoneStateReceiver : BroadcastReceiver() {
             context, Notifier.CH_CALLS, POST_CALL_NOTIFICATION_ID,
             title = what,
             text = "Tap to add notes and set a follow-up",
-            tap = Notifier.openIntent(context, "postcall", requestCode = POST_CALL_NOTIFICATION_ID)
+            tap = Notifier.openIntent(context, "postcall", tag = "postcall", id = POST_CALL_NOTIFICATION_ID.toLong())
         )
     }
 
@@ -111,15 +113,19 @@ class PhoneStateReceiver : BroadcastReceiver() {
             try {
                 if (!Settings.canDrawOverlays(app)) return@launch
                 val contact = ApiClient.get().callerId(number).body()?.takeIf { it.found }?.contact ?: return@launch
-                CallerIdOverlayService.showOverlay(
-                    context = app,
-                    name = contact.name,
-                    phone = contact.phone,
-                    dealValue = contact.dealValue,
-                    stage = contact.stage,
-                    destination = contact.destination.orEmpty(),
-                    aiSummary = contact.aiSummary.orEmpty(),
-                    nextAction = contact.nextBestAction.orEmpty()
+                CallerIdOverlay.show(
+                    app,
+                    CallerIdOverlay.Card(
+                        leadId = contact.id,
+                        name = contact.name,
+                        phone = contact.phone,
+                        stage = contact.stage,
+                        destination = contact.destination.orEmpty(),
+                        dealValue = contact.dealValue,
+                        summary = contact.aiSummary.orEmpty(),
+                        nextAction = contact.nextBestAction.orEmpty(),
+                        owner = contact.owner.orEmpty()
+                    )
                 )
             } catch (e: Exception) {
                 // Caller card is best-effort; a failed lookup must never disturb the call.

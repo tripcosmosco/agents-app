@@ -11,6 +11,8 @@ import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -99,6 +101,36 @@ fun LoadingRow(modifier: Modifier = Modifier) {
     Box(modifier = modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) {
         CircularProgressIndicator(strokeWidth = 2.dp, modifier = Modifier.size(28.dp))
     }
+}
+
+/**
+ * Runs [block] every [intervalMs] while the screen is on and the app is in the foreground, and stops when
+ * the app goes to the background or the screen leaves composition. Used for live chat threads and the inbox.
+ */
+@Composable
+fun PollWhileVisible(intervalMs: Long, key: Any? = Unit, block: suspend () -> Unit) {
+    val owner = androidx.compose.ui.platform.LocalLifecycleOwner.current
+    val latest = androidx.compose.runtime.rememberUpdatedState(block)
+    androidx.compose.runtime.LaunchedEffect(owner, key) {
+        owner.repeatOnLifecycle(androidx.lifecycle.Lifecycle.State.RESUMED) {
+            while (true) {
+                kotlinx.coroutines.delay(intervalMs)
+                latest.value()
+            }
+        }
+    }
+}
+
+/** Calls [onLoadMore] when the list is scrolled to within a few rows of its end. */
+@Composable
+fun LoadMoreWhenNearEnd(state: androidx.compose.foundation.lazy.LazyListState, enabled: Boolean, onLoadMore: () -> Unit) {
+    val near by androidx.compose.runtime.remember(state) {
+        androidx.compose.runtime.derivedStateOf {
+            val last = state.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: -1
+            last >= state.layoutInfo.totalItemsCount - 4 && state.layoutInfo.totalItemsCount > 0
+        }
+    }
+    androidx.compose.runtime.LaunchedEffect(near, enabled) { if (near && enabled) onLoadMore() }
 }
 
 /** Thin banner shown above a cached list while it is stale (data loaded, but a refresh failed offline). */
