@@ -53,8 +53,18 @@ class StorageService {
     return prefs.getBool(_keyAiReceptionistActive) ?? true;
   }
 
-  static Future<void> setAiReceptionistActive(bool active) async {
+  static Future<bool> setAiReceptionistActive(bool active) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(_keyAiReceptionistActive, active);
+    return prefs.setBool(_keyAiReceptionistActive, active);
+  }
+
+  static Future<String?> getString(String key) async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(key);
+  }
+
+  static Future<bool> setString(String key, String value) async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.setString(key, value);
   }
 }

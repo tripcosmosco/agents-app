@@ -4,8 +4,10 @@ import 'package:provider/provider.dart';
 
 import '../core/constants/app_constants.dart';
 import '../core/theme/app_colors.dart';
+import '../models/ai_agent_model.dart';
 import '../models/lead_model.dart';
 import '../models/whatsapp_thread_model.dart';
+import '../providers/ai_agent_provider.dart';
 import '../providers/call_provider.dart';
 import '../providers/whatsapp_provider.dart';
 import 'cab_fare_dialog.dart';
@@ -263,7 +265,307 @@ class _WhatsAppTeamChatViewState extends State<WhatsAppTeamChatView> {
     }
   }
 
+  void _showEditNameDialog(BuildContext context, WhatsAppProvider provider, WhatsAppThread thread) {
+    final controller = TextEditingController(
+      text: thread.displayName.startsWith('Traveler') ? '' : thread.displayName,
+    );
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF1E293B),
+        title: const Text('Edit Traveler / Contact Name', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+        content: TextField(
+          controller: controller,
+          style: const TextStyle(color: Colors.white),
+          decoration: const InputDecoration(
+            hintText: 'e.g. Ramesh Kumar Ji',
+            hintStyle: TextStyle(color: Colors.white38),
+            labelText: 'Full Name',
+            isDense: true,
+          ),
+          autofocus: true,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel', style: TextStyle(color: Colors.white54)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.accentGold, foregroundColor: Colors.black),
+            onPressed: () {
+              final newName = controller.text.trim();
+              if (newName.isNotEmpty) {
+                provider.updateThreadName(thread.id, newName);
+              }
+              Navigator.pop(ctx);
+            },
+            child: const Text('Save Name', style: TextStyle(fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showCallModeSelector(BuildContext context, WhatsAppThread currentThread) {
+    final aiProvider = context.read<AiAgentProvider>();
+    final activePersona = aiProvider.selectedPersona;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF1E293B),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.phone_forwarded_rounded, color: AppColors.accentGold, size: 22),
+                const SizedBox(width: 10),
+                Text(
+                  'Call ${currentThread.displayName}',
+                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: const CircleAvatar(
+                backgroundColor: AppColors.successGreen,
+                child: Icon(Icons.phone_android_rounded, color: Colors.white, size: 20),
+              ),
+              title: const Text('Direct Carrier Call (Your Phone SIM)', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+              subtitle: Text('Call ${currentThread.customerPhone} directly from your phone dialer (₹0 Cost)', style: const TextStyle(color: Colors.white54, fontSize: 11)),
+              onTap: () {
+                Navigator.pop(ctx);
+                context.read<CallProvider>().startOutboundCall(
+                  phone: currentThread.customerPhone,
+                  name: currentThread.displayName,
+                  tourInterest: currentThread.circuit,
+                );
+              },
+            ),
+            const Divider(color: Colors.white12),
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: const CircleAvatar(
+                backgroundColor: AppColors.accentBlue,
+                child: Icon(Icons.smart_toy_rounded, color: Colors.white, size: 20),
+              ),
+              title: Text('Dispatch Autonomous AI Voice Agent (${activePersona.name})', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+              subtitle: Text('AI Agent dials customer, discusses ${currentThread.circuit} and generates post-call summary', style: const TextStyle(color: Colors.white54, fontSize: 11)),
+              onTap: () async {
+                Navigator.pop(ctx);
+                final res = await aiProvider.apiService.initiateTelephonyCall(
+                  phone: currentThread.customerPhone,
+                  customerName: currentThread.displayName,
+                  reason: '${currentThread.circuit} Package Follow-up',
+                  modeOverride: 'livekit_sip',
+                );
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(res != null ? '🚀 AI Voice Agent ${activePersona.name} dialed ${currentThread.customerPhone}!' : '⚠️ Telephony bridge queued call dispatch.'),
+                      backgroundColor: AppColors.accentBlue,
+                    ),
+                  );
+                }
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showFailedMessageDetailsSheet(BuildContext context, WhatsAppProvider provider, WhatsAppMessage msg, WhatsAppThread thread) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF1E293B),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Row(
+              children: [
+                Icon(Icons.error_outline_rounded, color: AppColors.errorRed, size: 24),
+                SizedBox(width: 10),
+                Text(
+                  'WhatsApp Delivery Failed',
+                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFF0F172A),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Error Diagnostic:',
+                    style: TextStyle(color: AppColors.errorRed, fontWeight: FontWeight.bold, fontSize: 11),
+                  ),
+                  const SizedBox(height: 4),
+                  const Text(
+                    'Evolution WhatsApp Gateway returned: "HTTP 500 Connection Closed". The central WhatsApp session (+91 9336116210) is currently disconnected.',
+                    style: TextStyle(color: Colors.white70, fontSize: 12),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Message: "${msg.text}"',
+                    style: const TextStyle(color: Colors.white54, fontSize: 11, fontStyle: FontStyle.italic),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.white,
+                      side: const BorderSide(color: Colors.white24),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      _showEvolutionQrSheet(context, provider);
+                    },
+                    icon: const Icon(Icons.qr_code_2_rounded, size: 16, color: AppColors.accentGold),
+                    label: const Text('Check QR / Reconnect', style: TextStyle(fontSize: 12)),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.whatsappGreen,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      _sendMessage(provider, msg.text);
+                    },
+                    icon: const Icon(Icons.refresh_rounded, size: 16),
+                    label: const Text('Retry Sending', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showEvolutionQrSheet(BuildContext context, WhatsAppProvider provider) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF1E293B),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (ctx) => FutureBuilder<Map<String, dynamic>?>(
+        future: provider.apiService.fetchEvolutionStatus(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Padding(
+              padding: EdgeInsets.all(40),
+              child: Center(child: CircularProgressIndicator(color: AppColors.accentGold)),
+            );
+          }
+
+          final data = snapshot.data;
+          final state = data?['state']?.toString() ?? 'unknown';
+          final qr = data?['qr']?.toString() ?? '';
+          final isOpen = data?['is_open'] == true;
+
+          return Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      isOpen ? Icons.check_circle_rounded : Icons.warning_amber_rounded,
+                      color: isOpen ? AppColors.successGreen : AppColors.errorRed,
+                      size: 24,
+                    ),
+                    const SizedBox(width: 10),
+                    Text(
+                      isOpen ? 'WhatsApp Gateway Connected' : 'WhatsApp Gateway Disconnected',
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Instance: ${data?['instance'] ?? 'TripCosmos.co'} • State: $state',
+                  style: const TextStyle(color: Colors.white54, fontSize: 12),
+                ),
+                const SizedBox(height: 12),
+                if (!isOpen && qr.isNotEmpty && qr.startsWith('data:image')) ...[
+                  const Text(
+                    'Scan with business phone: Settings > Linked devices > Link a device',
+                    style: TextStyle(color: AppColors.accentGold, fontSize: 11),
+                  ),
+                  const SizedBox(height: 10),
+                  Center(
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
+                      child: Image.network(qr, width: 180, height: 180, fit: BoxFit.contain),
+                    ),
+                  ),
+                ] else if (!isOpen) ...[
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(color: const Color(0xFF0F172A), borderRadius: BorderRadius.circular(10)),
+                    child: const Text(
+                      'Session is closed. Open WhatsApp on +91 9336116210 and link device, or reload container at wa.vmstudio.digital.',
+                      style: TextStyle(color: Colors.white70, fontSize: 12),
+                    ),
+                  ),
+                ] else ...[
+                  const Text('All outbound messages from CRM are delivering normally.', style: TextStyle(color: Colors.white70)),
+                ],
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(backgroundColor: AppColors.accentGold, foregroundColor: Colors.black),
+                    onPressed: () => Navigator.pop(ctx),
+                    child: const Text('Close'),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
   void _showReassignAgentSheet(BuildContext context, WhatsAppProvider provider, WhatsAppThread currentThread) {
+    final aiProvider = context.read<AiAgentProvider>();
+    final aiPersonas = aiProvider.personas;
+
     showModalBottomSheet(
       context: context,
       backgroundColor: const Color(0xFF1E293B),
@@ -273,38 +575,105 @@ class _WhatsAppTeamChatViewState extends State<WhatsAppTeamChatView> {
       builder: (ctx) => SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text(
-                'Assign Lead & WhatsApp Thread Owner',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 16,
-                ),
-              ),
-              const SizedBox(height: 12),
-              ...AppConstants.teamMembers.map((member) {
-                final isCurrent = currentThread.assignedAgent.toLowerCase() == member['name']!.toLowerCase();
-                return ListTile(
-                  leading: CircleAvatar(
-                    backgroundColor: AppColors.accentBlue,
-                    child: Text(
-                      member['initials']!,
-                      style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 16),
+                  child: Text(
+                    'Assign Thread Handler (AI Persona or Human Rep)',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 16,
                     ),
                   ),
-                  title: Text(member['name']!, style: const TextStyle(color: Colors.white)),
-                  subtitle: Text(member['role']!, style: const TextStyle(color: Colors.white54, fontSize: 11)),
-                  trailing: isCurrent ? const Icon(Icons.check, color: AppColors.successGreen) : null,
-                  onTap: () {
-                    provider.assignThreadAgent(currentThread.id, member['name']!);
-                    Navigator.pop(ctx);
-                  },
-                );
-              }),
-            ],
+                ),
+                const SizedBox(height: 12),
+
+                // AI Personas Section
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                  child: Text(
+                    '🤖 AUTONOMOUS AI SALES PERSONAS',
+                    style: TextStyle(color: AppColors.accentGold, fontSize: 11, fontWeight: FontWeight.bold),
+                  ),
+                ),
+                ...aiPersonas.map((persona) {
+                  final isCurrent = currentThread.assignedAgent.toLowerCase().contains(persona.name.toLowerCase());
+                  return ListTile(
+                    leading: CircleAvatar(
+                      backgroundColor: AppColors.accentGold,
+                      child: Text(
+                        persona.name.substring(0, 1),
+                        style: const TextStyle(color: Colors.black, fontSize: 13, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                    title: Row(
+                      children: [
+                        Text(persona.name, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                        const SizedBox(width: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                          decoration: BoxDecoration(
+                            color: AppColors.accentGold.withValues(alpha: 0.2),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: const Text('AI Specialist', style: TextStyle(color: AppColors.accentGold, fontSize: 9.5, fontWeight: FontWeight.bold)),
+                        ),
+                      ],
+                    ),
+                    subtitle: Text('${persona.title} • ${persona.skills.where((s) => s.isEnabled).length} active skills', style: const TextStyle(color: Colors.white54, fontSize: 11)),
+                    trailing: isCurrent ? const Icon(Icons.check_circle_rounded, color: AppColors.successGreen) : null,
+                    onTap: () {
+                      provider.assignThreadAgent(currentThread.id, '${persona.name} (AI)');
+                      if (!currentThread.isAiAssisted) {
+                        provider.toggleAiTakeover(currentThread.id);
+                      }
+                      Navigator.pop(ctx);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('✓ Assigned AI Agent ${persona.name} to this traveler thread!'),
+                          backgroundColor: AppColors.accentBlue,
+                        ),
+                      );
+                    },
+                  );
+                }),
+
+                const Divider(color: Colors.white12),
+
+                // Human Sales Reps Section
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                  child: Text(
+                    '👤 HUMAN SALES TEAM',
+                    style: TextStyle(color: AppColors.textMuted, fontSize: 11, fontWeight: FontWeight.bold),
+                  ),
+                ),
+                ...AppConstants.teamMembers.map((member) {
+                  final isCurrent = currentThread.assignedAgent.toLowerCase() == member['name']!.toLowerCase();
+                  return ListTile(
+                    leading: CircleAvatar(
+                      backgroundColor: AppColors.accentBlue,
+                      child: Text(
+                        member['initials']!,
+                        style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                    title: Text(member['name']!, style: const TextStyle(color: Colors.white)),
+                    subtitle: Text(member['role']!, style: const TextStyle(color: Colors.white54, fontSize: 11)),
+                    trailing: isCurrent ? const Icon(Icons.check, color: AppColors.successGreen) : null,
+                    onTap: () {
+                      provider.assignThreadAgent(currentThread.id, member['name']!);
+                      Navigator.pop(ctx);
+                    },
+                  );
+                }),
+              ],
+            ),
           ),
         ),
       ),
@@ -368,54 +737,59 @@ class _WhatsAppTeamChatViewState extends State<WhatsAppTeamChatView> {
             ),
             const SizedBox(width: 10),
             Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    currentThread.customerName,
-                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Colors.white),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  Row(
-                    children: [
-                      Flexible(
-                        child: Text(
-                          currentThread.customerPhone,
-                          style: const TextStyle(fontSize: 10.5, color: Colors.white70, fontFamily: 'monospace'),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+              child: InkWell(
+                onTap: () => _showEditNameDialog(context, provider, currentThread),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            currentThread.displayName,
+                            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Colors.white),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 6),
-                      Flexible(
-                        child: Text(
-                          '• ${currentThread.circuit}',
-                          style: const TextStyle(fontSize: 10, color: AppColors.accentGold),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                        const SizedBox(width: 4),
+                        const Icon(Icons.edit_note_rounded, size: 14, color: Colors.white38),
+                      ],
+                    ),
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            currentThread.customerPhone,
+                            style: const TextStyle(fontSize: 10.5, color: Colors.white70, fontFamily: 'monospace'),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                ],
+                        const SizedBox(width: 6),
+                        Flexible(
+                          child: Text(
+                            '• ${currentThread.circuit}',
+                            style: const TextStyle(fontSize: 10, color: AppColors.accentGold),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
           ],
         ),
         actions: [
-          // 1-Tap Direct Phone Call
+          // 1-Tap Phone Call (SIM vs AI Voice Agent)
           if (currentThread.customerPhone.isNotEmpty)
             IconButton(
-              tooltip: 'Call ${currentThread.customerName}',
+              tooltip: 'Call ${currentThread.displayName}',
               icon: const Icon(Icons.call_rounded, color: AppColors.successGreen, size: 20),
-              onPressed: () {
-                context.read<CallProvider>().startOutboundCall(
-                  phone: currentThread.customerPhone,
-                  name: currentThread.customerName,
-                  tourInterest: currentThread.circuit,
-                );
-              },
+              onPressed: () => _showCallModeSelector(context, currentThread),
             ),
 
           // 1-Tap B2B / Retail Quote Generator
@@ -741,6 +1115,39 @@ class _WhatsAppTeamChatViewState extends State<WhatsAppTeamChatView> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  // Live Evolution Status Warning Banner
+                  if (!provider.evolutionOnline || currentThread.lastMessageStatus == 'failed') ...[
+                    Container(
+                      margin: const EdgeInsets.only(bottom: 6),
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: AppColors.errorRed.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: AppColors.errorRed.withValues(alpha: 0.4)),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.warning_amber_rounded, size: 14, color: AppColors.errorRed),
+                          const SizedBox(width: 6),
+                          const Expanded(
+                            child: Text(
+                              'WhatsApp Gateway session disconnected on server (+91 9336116210)',
+                              style: TextStyle(color: Colors.white70, fontSize: 10.5),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          InkWell(
+                            onTap: () => _showEvolutionQrSheet(context, provider),
+                            child: const Text(
+                              'Link QR / Status',
+                              style: TextStyle(color: AppColors.accentGold, fontSize: 10.5, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+
                   // Mode Selector Pill (WhatsApp vs Internal Whisper)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 6),
@@ -829,7 +1236,7 @@ class _WhatsAppTeamChatViewState extends State<WhatsAppTeamChatView> {
                           decoration: InputDecoration(
                             hintText: _isInternalNoteMode
                                 ? 'Add private CRM team note (persisted on server)...'
-                                : 'Type WhatsApp message to ${currentThread.customerName}...',
+                                : 'Type WhatsApp message to ${currentThread.displayName}...',
                             hintStyle: const TextStyle(color: Colors.white38, fontSize: 13),
                             filled: true,
                             fillColor: const Color(0xFF0F172A),
@@ -968,67 +1375,93 @@ class _WhatsAppTeamChatViewState extends State<WhatsAppTeamChatView> {
     final isCustomer = msg.isFromCustomer;
     final isWebChat = msg.channel == 'web';
 
-    return Align(
-      alignment: isCustomer ? Alignment.centerLeft : Alignment.centerRight,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 8),
-        constraints: const BoxConstraints(maxWidth: 320),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        decoration: BoxDecoration(
-          color: isCustomer
-              ? (isWebChat ? const Color(0xFF0C4A6E) : const Color(0xFF1E293B))
-              : const Color(0xFF065F46),
-          borderRadius: BorderRadius.only(
-            topLeft: const Radius.circular(16),
-            topRight: const Radius.circular(16),
-            bottomLeft: Radius.circular(isCustomer ? 2 : 16),
-            bottomRight: Radius.circular(isCustomer ? 16 : 2),
-          ),
-          border: Border.all(color: Colors.white10),
+    final isFailed = msg.status == 'failed';
+    final bubble = Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      constraints: const BoxConstraints(maxWidth: 320),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: isCustomer
+            ? (isWebChat ? const Color(0xFF0C4A6E) : const Color(0xFF1E293B))
+            : const Color(0xFF065F46),
+        borderRadius: BorderRadius.only(
+          topLeft: const Radius.circular(16),
+          topRight: const Radius.circular(16),
+          bottomLeft: Radius.circular(isCustomer ? 2 : 16),
+          bottomRight: Radius.circular(isCustomer ? 16 : 2),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (isWebChat)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 3),
-                child: Text(
-                  isCustomer ? '🌐 Website Visitor' : '🤖 AI / Web Reply',
-                  style: const TextStyle(
-                    fontSize: 9.5,
-                    fontWeight: FontWeight.w800,
-                    color: Color(0xFF38BDF8),
-                  ),
+        border: Border.all(
+          color: isFailed ? AppColors.errorRed.withValues(alpha: 0.6) : Colors.white10,
+          width: isFailed ? 1.5 : 1.0,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (isWebChat)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 3),
+              child: Text(
+                isCustomer ? '🌐 Website Visitor' : '🤖 AI / Web Reply',
+                style: const TextStyle(
+                  fontSize: 9.5,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF38BDF8),
                 ),
               ),
-            Text(
-              msg.text,
-              style: const TextStyle(color: Colors.white, fontSize: 13, height: 1.35),
             ),
-            const SizedBox(height: 4),
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                Text(
-                  timeStr,
-                  style: const TextStyle(color: Colors.white38, fontSize: 9.5),
+          Text(
+            msg.text,
+            style: const TextStyle(color: Colors.white, fontSize: 13, height: 1.35),
+          ),
+          const SizedBox(height: 4),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              Text(
+                timeStr,
+                style: const TextStyle(color: Colors.white38, fontSize: 9.5),
+              ),
+              if (!isCustomer) ...[
+                const SizedBox(width: 4),
+                Icon(
+                  isFailed ? Icons.error_outline : Icons.done_all,
+                  color: isFailed
+                      ? AppColors.errorRed
+                      : (msg.status == 'read' ? Colors.cyanAccent : Colors.white60),
+                  size: 13,
                 ),
-                if (!isCustomer) ...[
+                if (isFailed) ...[
                   const SizedBox(width: 4),
-                  Icon(
-                    msg.status == 'failed' ? Icons.error_outline : Icons.done_all,
-                    color: msg.status == 'failed'
-                        ? AppColors.errorRed
-                        : (msg.status == 'read' ? Colors.cyanAccent : Colors.white60),
-                    size: 13,
+                  const Text(
+                    'Failed • Tap to retry',
+                    style: TextStyle(color: AppColors.errorRed, fontSize: 9.5, fontWeight: FontWeight.bold),
                   ),
                 ],
               ],
-            ),
-          ],
-        ),
+            ],
+          ),
+        ],
       ),
+    );
+
+    return Align(
+      alignment: isCustomer ? Alignment.centerLeft : Alignment.centerRight,
+      child: isFailed
+          ? InkWell(
+              onTap: () {
+                final waProvider = context.read<WhatsAppProvider>();
+                final currentThread = waProvider.threads.firstWhere(
+                  (th) => th.id == widget.thread.id,
+                  orElse: () => widget.thread,
+                );
+                _showFailedMessageDetailsSheet(context, waProvider, msg, currentThread);
+              },
+              borderRadius: BorderRadius.circular(16),
+              child: bubble,
+            )
+          : bubble,
     );
   }
 }

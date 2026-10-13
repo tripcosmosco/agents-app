@@ -186,14 +186,32 @@ class WhatsAppThread {
     );
   }
 
+  String get displayName {
+    final clean = customerName.trim();
+    final lower = clean.toLowerCase();
+    if (clean.isEmpty ||
+        lower == 'nobody' ||
+        lower == 'null' ||
+        lower == 'unknown' ||
+        RegExp(r'^\+?[0-9]{7,15}$').hasMatch(clean)) {
+      if (circuit.isNotEmpty && circuit != 'Spiritual Circuit' && circuit != 'Varanasi Pilgrimage') {
+        return 'Traveler ($circuit)';
+      }
+      final numOnly = customerPhone.replaceAll(RegExp(r'[^0-9+]'), '');
+      return numOnly.isNotEmpty ? 'Traveler ($numOnly)' : 'Traveler';
+    }
+    return clean;
+  }
+
   String get initials {
-    final clean = customerName.replaceAll(RegExp(r'[^a-zA-Z0-9\s]'), '').trim();
+    final clean = displayName.replaceAll(RegExp(r'[^a-zA-Z0-9\s]'), '').trim();
     final parts = clean.split(RegExp(r'\s+'));
     if (parts.length >= 2 && parts[0].isNotEmpty && parts[1].isNotEmpty) {
       return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
     } else if (parts.isNotEmpty && parts[0].isNotEmpty) {
       return parts[0].substring(0, parts[0].length >= 2 ? 2 : 1).toUpperCase();
     }
-    return 'WA';
+    return 'TC';
   }
 }
+

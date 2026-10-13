@@ -194,6 +194,21 @@ class WhatsAppProvider extends ChangeNotifier {
     }
   }
 
+  Future<void> updateThreadName(String threadId, String newName) async {
+    final index = _threads.indexWhere((th) => th.id == threadId);
+    if (index != -1 && newName.trim().isNotEmpty) {
+      final th = _threads[index];
+      _threads[index] = th.copyWith(customerName: newName.trim());
+      notifyListeners();
+
+      await apiService.updateLead(
+        leadId: th.contactId > 0 ? th.contactId.toString() : th.id,
+        phone: th.customerPhone,
+        name: newName.trim(),
+      );
+    }
+  }
+
   Future<void> updateThreadStage(String threadId, String newStage, {double? dealValue}) async {
     final index = _threads.indexWhere((th) => th.id == threadId);
     if (index != -1) {
@@ -393,9 +408,26 @@ class WhatsAppProvider extends ChangeNotifier {
             final id = item['id']?.toString() ??
                 'th_${(item['phone']?.toString() ?? '').replaceAll(RegExp(r'[^0-9]'), '')}';
             final phone = item['phone']?.toString() ?? '';
-            final name = item['customer_name']?.toString() ??
-                item['name']?.toString() ??
-                'Traveler';
+            final rawName = (item['customer_name']?.toString() ?? item['name']?.toString() ?? '').trim();
+            final lowerRaw = rawName.toLowerCase();
+            final String name;
+            if (rawName.isEmpty ||
+                lowerRaw == 'nobody' ||
+                lowerRaw == 'null' ||
+                lowerRaw == 'unknown' ||
+                RegExp(r'^\+?[0-9]{7,15}$').hasMatch(rawName)) {
+              final circuitHint = item['tour_interest']?.toString() ?? item['destination']?.toString() ?? '';
+              if (circuitHint.isNotEmpty && circuitHint != 'Spiritual Circuit' && circuitHint != 'Varanasi Pilgrimage') {
+                name = 'Traveler ($circuitHint)';
+              } else if (phone.isNotEmpty) {
+                final shortPhone = phone.replaceAll(RegExp(r'[^0-9+]'), '');
+                name = 'Traveler ($shortPhone)';
+              } else {
+                name = 'Traveler';
+              }
+            } else {
+              name = rawName;
+            }
             final lastMsg = item['last_message']?.toString() ??
                 item['message']?.toString() ??
                 'Tap to open WhatsApp & CRM timeline';

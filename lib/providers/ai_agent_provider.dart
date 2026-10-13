@@ -1,5 +1,7 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 
+import '../models/ai_agent_model.dart';
 import '../services/api_service.dart';
 import '../services/storage_service.dart';
 
@@ -32,20 +34,17 @@ class AiAgentProvider extends ChangeNotifier {
   int _aiQualifiedLeadsToday = 0;
   int get aiQualifiedLeadsToday => _aiQualifiedLeadsToday;
 
-  void incrementAutoCalls() {
-    _autoCallsTriggeredToday++;
-    notifyListeners();
-  }
+  List<AiAgentPersona> _personas = [];
+  List<AiAgentPersona> get personas => _personas;
 
-  void incrementAiQualified() {
-    _aiQualifiedLeadsToday++;
-    notifyListeners();
-  }
+  String _selectedPersonaId = 'agent_aarav_kashi';
+  String get selectedPersonaId => _selectedPersonaId;
 
-  void updateStats({int? autoCalls, int? qualifiedLeads}) {
-    if (autoCalls != null) _autoCallsTriggeredToday = autoCalls;
-    if (qualifiedLeads != null) _aiQualifiedLeadsToday = qualifiedLeads;
-    notifyListeners();
+  AiAgentPersona get selectedPersona {
+    return _personas.firstWhere(
+      (p) => p.id == _selectedPersonaId,
+      orElse: () => _personas.isNotEmpty ? _personas.first : AiAgentPersona.defaultTravelPersonas().first,
+    );
   }
 
   List<ChatMessage> _playgroundMessages = [];
@@ -55,6 +54,7 @@ class AiAgentProvider extends ChangeNotifier {
   bool get isQueryingRag => _isQueryingRag;
 
   AiAgentProvider({required this.apiService}) {
+    _personas = AiAgentPersona.defaultTravelPersonas();
     _loadPreferences();
     _initializePlayground();
   }
@@ -62,6 +62,23 @@ class AiAgentProvider extends ChangeNotifier {
   Future<void> _loadPreferences() async {
     _isOutboundAgentActive = await StorageService.getAiOutboundActive();
     _isReceptionistActive = await StorageService.getAiReceptionistActive();
+    
+    // Load custom personas from storage if saved
+    final savedPersonasJson = await StorageService.getString('custom_ai_personas');
+    if (savedPersonasJson != null && savedPersonasJson.isNotEmpty) {
+      try {
+        final decoded = json.decode(savedPersonasJson);
+        if (decoded is List) {
+          final loaded = decoded.map((e) => AiAgentPersona.fromJson(Map<String, dynamic>.from(e))).toList();
+          if (loaded.isNotEmpty) {
+            _personas = loaded;
+          }
+        }
+      } catch (e) {
+        debugPrint('Error loading saved personas: $e');
+      }
+    }
+
     notifyListeners();
 
     final serverSettings = await apiService.syncAiSettings();
@@ -78,13 +95,95 @@ class AiAgentProvider extends ChangeNotifier {
     }
   }
 
+  Future<void> _persistPersonas() async {
+    try {
+      final jsonStr = json.encode(_personas.map((p) => p.toJson()).toList());
+      await StorageService.setString('custom_ai_personas', jsonStr);
+    } catch (e) {
+      debugPrint('Error persisting personas: $e');
+    }
+  }
+
+  void selectPersona(String personaId) {
+    if (_selectedPersonaId != personaId) {
+      _selectedPersonaId = personaId;
+      _initializePlayground();
+      notifyListeners();
+    }
+  }
+
+  void toggleSkill(String personaId, String skillId, bool isEnabled) {
+    final pIdx = _personas.indexWhere((p) => p.id == personaId);
+    if (pIdx == -1) return;
+
+    final target = _personas[pIdx];
+    final updatedSkills = target.skills.map((s) {
+      if (s.id == skillId) {
+        return s.copyWith(isEnabled: isEnabled);
+      }
+      return s;
+    }).toList();
+
+    _personas[pIdx] = target.copyWith(skills: updatedSkills);
+    notifyListeners();
+    _persistPersonas();
+  }
+
+  void updatePersona(AiAgentPersona updated) {
+    final index = _personas.indexWhere((p) => p.id == updated.id);
+    if (index != -1) {
+      _personas[index] = updated;
+    } else {
+      _personas.add(updated);
+    }
+    notifyListeners();
+    _persistPersonas();
+  }
+
+  void addPersona(AiAgentPersona newPersona) {
+    _personas.add(newPersona);
+    _selectedPersonaId = newPersona.id;
+    notifyListeners();
+    _persistPersonas();
+  }
+
+  void deletePersona(String id) {
+    _personas.removeWhere((p) => p.id == id);
+    if (_personas.isEmpty) {
+      _personas = AiAgentPersona.defaultTravelPersonas();
+    }
+    if (_selectedPersonaId == id) {
+      _selectedPersonaId = _personas.first.id;
+    }
+    notifyListeners();
+    _persistPersonas();
+  }
+
+  void incrementAutoCalls() {
+    _autoCallsTriggeredToday++;
+    notifyListeners();
+  }
+
+  void incrementAiQualified() {
+    _aiQualifiedLeadsToday++;
+    notifyListeners();
+  }
+
+  void updateStats({int? autoCalls, int? qualifiedLeads}) {
+    if (autoCalls != null) _autoCallsTriggeredToday = autoCalls;
+    if (qualifiedLeads != null) _aiQualifiedLeadsToday = qualifiedLeads;
+    notifyListeners();
+  }
+
   void _initializePlayground() {
+    final persona = selectedPersona;
+    final activeSkillsCount = persona.skills.where((s) => s.isEnabled).length;
     _playgroundMessages = [
       ChatMessage(
-        text: 'Namaste! I am your AI Voice & Sales Agent powered by TripCosmos Local RAG Bot 155464. Ask me any Varanasi or pilgrimage tour question to test live spoken responses!',
+        text: 'Namaste! I am ${persona.name} (${persona.title}). I am live with $activeSkillsCount active skills for circuits: ${persona.circuits.join(', ')}. Test my voice or chat responses here!',
         isUser: false,
-        timestamp: DateTime.now().subtract(const Duration(minutes: 5)),
-        provider: 'TripCosmos AI Bot 155464',
+        timestamp: DateTime.now().subtract(const Duration(minutes: 2)),
+        provider: '${persona.name} • ${persona.voiceName}',
       ),
     ];
     notifyListeners();
@@ -104,10 +203,11 @@ class AiAgentProvider extends ChangeNotifier {
     await apiService.syncAiSettings(receptionistEnabled: active);
   }
 
-  /// Send test question to live AI Puffer RAG Bot 155464
+  /// Send test question to live AI Puffer RAG Bot with active Persona Context
   Future<void> testRagQuery(String question) async {
     if (question.trim().isEmpty) return;
 
+    final persona = selectedPersona;
     final userMsg = ChatMessage(
       text: question.trim(),
       isUser: true,
@@ -117,13 +217,15 @@ class AiAgentProvider extends ChangeNotifier {
     _isQueryingRag = true;
     notifyListeners();
 
-    final reply = await apiService.queryVoiceRag(transcript: question);
+    final promptContext = 'System Role: ${persona.systemPrompt}\nActive Skills: ${persona.skills.where((s) => s.isEnabled).map((s) => s.name).join(', ')}\nUser Question: ${question.trim()}';
+
+    final reply = await apiService.queryVoiceRag(transcript: promptContext);
 
     final aiMsg = ChatMessage(
       text: reply,
       isUser: false,
       timestamp: DateTime.now(),
-      provider: 'Local RAG Bot 155464 (TripCosmos AI)',
+      provider: '${persona.name} (${persona.tone})',
     );
     _playgroundMessages.add(aiMsg);
     _isQueryingRag = false;

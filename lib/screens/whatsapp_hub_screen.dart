@@ -636,7 +636,7 @@ class _WhatsAppHubScreenState extends State<WhatsAppHubScreen> {
                         children: [
                           Expanded(
                             child: Text(
-                              th.customerName,
+                              th.displayName,
                               style: TextStyle(
                                 color: Colors.white,
                                 fontSize: 14.5,
@@ -723,11 +723,11 @@ class _WhatsAppHubScreenState extends State<WhatsAppHubScreen> {
                 if (th.customerPhone.isNotEmpty)
                   IconButton(
                     visualDensity: VisualDensity.compact,
-                    tooltip: 'Call ${th.customerName}',
+                    tooltip: 'Call ${th.displayName}',
                     onPressed: () {
                       context.read<CallProvider>().startOutboundCall(
                         phone: th.customerPhone,
-                        name: th.customerName,
+                        name: th.displayName,
                         tourInterest: th.circuit,
                       );
                     },

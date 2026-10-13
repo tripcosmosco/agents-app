@@ -608,6 +608,26 @@ class ApiService {
     return false;
   }
 
+  /// 11b. Check Live Evolution WhatsApp Gateway Connection State & Pairing QR
+  Future<Map<String, dynamic>?> fetchEvolutionStatus() async {
+    try {
+      final uri = Uri.parse('$baseUrl/mobile/evolution-status');
+      final response = await http
+          .get(uri, headers: _headers)
+          .timeout(const Duration(seconds: 8));
+
+      if (response.statusCode == 200) {
+        final data = _safeJsonDecode(response.body);
+        if (data != null && data['ok'] == true) {
+          return Map<String, dynamic>.from(data);
+        }
+      }
+    } catch (e) {
+      debugPrint('Error fetching Evolution status: $e');
+    }
+    return null;
+  }
+
   /// 12. Initiate Multi-Mode Telephony Call (LiveKit WebRTC, GSM Bridge, SIP Trunk)
   Future<Map<String, dynamic>?> initiateTelephonyCall({
     required String phone,
