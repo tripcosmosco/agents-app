@@ -26,7 +26,9 @@ class ActiveCallHud extends StatelessWidget {
         ? 'WEBRTC (₹0)'
         : callProvider.telephonyMode == TelephonyMode.gsmBridge
             ? 'GSM (+91 93361)'
-            : 'SIP TRUNK';
+            : callProvider.telephonyMode == TelephonyMode.airtelIq
+                ? 'AIRTEL IQ'
+                : 'SIP TRUNK';
 
     return SafeArea(
       child: Padding(

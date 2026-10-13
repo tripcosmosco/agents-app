@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 
 import '../core/theme/app_colors.dart';
 import '../services/api_service.dart';
+import '../services/storage_service.dart';
 
 class WebChatDetailScreen extends StatefulWidget {
   final Map<String, dynamic> chat;
@@ -122,13 +123,16 @@ class _WebChatDetailScreenState extends State<WebChatDetailScreen> {
     setState(() => _isSending = true);
     _textController.clear();
 
+    final savedName = await StorageService.getAgentName();
+    final agentName = savedName.isNotEmpty ? savedName : 'Sales Agent';
+
     // Optimistically add agent message
     final tempMsg = {
       'id': DateTime.now().millisecondsSinceEpoch,
       'from': 'agent',
       'role': 'agent',
       'content': text,
-      'agent_name': 'Santosh Yadav',
+      'agent_name': agentName,
       'created_at': DateTime.now().toIso8601String(),
     };
     setState(() {
@@ -140,7 +144,7 @@ class _WebChatDetailScreenState extends State<WebChatDetailScreen> {
     final success = await widget.apiService.sendWebChatReply(
       sessionId: _sessionId,
       message: text,
-      agentName: 'Santosh Yadav',
+      agentName: agentName,
     );
 
     if (mounted) {

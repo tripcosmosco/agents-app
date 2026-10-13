@@ -158,7 +158,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           final pairingCode = data?['pairing_code']?.toString() ?? '';
           final isOpen = data?['is_open'] == true || state == 'open';
 
-          return Padding(
+          return SingleChildScrollView(
             padding: const EdgeInsets.all(20),
             child: Column(
               mainAxisSize: MainAxisSize.min,

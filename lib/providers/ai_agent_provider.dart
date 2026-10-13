@@ -37,7 +37,7 @@ class AiAgentProvider extends ChangeNotifier {
   List<AiAgentPersona> _personas = [];
   List<AiAgentPersona> get personas => _personas;
 
-  String _selectedPersonaId = 'agent_aarav_kashi';
+  String _selectedPersonaId = 'agent_aditi_sales_copilot';
   String get selectedPersonaId => _selectedPersonaId;
 
   AiAgentPersona get selectedPersona {

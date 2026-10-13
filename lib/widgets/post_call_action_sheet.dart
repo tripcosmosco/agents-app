@@ -468,23 +468,32 @@ Har Har Mahadev! 🙏
                     context,
                     listen: false,
                   );
-                  leadProvider.createNewLead(
-                    name: widget.callLog.customerName,
-                    phone: widget.callLog.phone,
-                    destination: widget.callLog.tourInterest ?? 'Varanasi',
-                    source: 'phone_call',
-                    stage: _selectedStage,
-                    note: _noteController.text,
-                    nextFollowUpAt: _scheduledFollowUp,
-                  );
-                  leadProvider.apiService.updateLead(
-                    phone: widget.callLog.phone,
-                    name: widget.callLog.customerName,
-                    stage: _selectedStage,
-                    note: _noteController.text,
-                    nextFollowUpAt: _scheduledFollowUp?.toIso8601String(),
-                    destination: widget.callLog.tourInterest ?? 'Varanasi',
-                  );
+                  final cleanPhone = widget.callLog.phone.replaceAll(RegExp(r'[^0-9]'), '');
+                  final phoneSuffix = cleanPhone.length >= 10 ? cleanPhone.substring(cleanPhone.length - 10) : cleanPhone;
+                  final existingLead = leadProvider.leads.where((l) {
+                    final lp = l.phone.replaceAll(RegExp(r'[^0-9]'), '');
+                    return phoneSuffix.isNotEmpty && lp.endsWith(phoneSuffix);
+                  }).firstOrNull;
+
+                  if (existingLead != null) {
+                    leadProvider.updateLeadStage(existingLead.id, _selectedStage);
+                    if (_noteController.text.trim().isNotEmpty) {
+                      leadProvider.addLeadNote(existingLead.id, _noteController.text.trim());
+                    }
+                    if (_scheduledFollowUp != null) {
+                      leadProvider.scheduleFollowUp(existingLead.id, _scheduledFollowUp!);
+                    }
+                  } else {
+                    leadProvider.createNewLead(
+                      name: widget.callLog.customerName,
+                      phone: widget.callLog.phone,
+                      destination: widget.callLog.tourInterest ?? 'Varanasi',
+                      source: 'phone_call',
+                      stage: _selectedStage,
+                      note: _noteController.text.trim(),
+                      nextFollowUpAt: _scheduledFollowUp,
+                    );
+                  }
                   final callProvider = Provider.of<CallProvider>(context, listen: false);
                   widget.onDismiss();
                   if (callProvider.isPowerDialerActive) {

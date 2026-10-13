@@ -445,9 +445,10 @@ class WhatsAppProvider extends ChangeNotifier {
                 item['destination']?.toString() ??
                 'Spiritual Circuit';
             final stage = item['stage']?.toString() ?? 'new';
-            final owner = item['assigned_agent']?.toString() ??
-                item['owner']?.toString() ??
-                'Santosh Yadav';
+            final rawOwner = item['assigned_agent']?.toString() ?? item['owner']?.toString();
+            final owner = (rawOwner != null && rawOwner.trim().isNotEmpty)
+                ? rawOwner.trim()
+                : (_currentAgentName.isNotEmpty ? _currentAgentName : 'Unassigned');
             final unreadCount = int.tryParse(item['unread_count']?.toString() ?? '0') ?? 0;
             final contactId = int.tryParse(item['contact_id']?.toString() ?? '0') ?? 0;
             final callCount = int.tryParse(item['call_count']?.toString() ?? '0') ?? 0;

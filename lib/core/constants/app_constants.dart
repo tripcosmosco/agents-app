@@ -51,12 +51,13 @@ class AppConstants {
     {'id': 'lost', 'label': 'Lost', 'color': 0xFFEF4444},
   ];
 
-  // Team Telecallers / Lead Owners
+  // Team Telecallers / Lead Owners (Human + AI Co-Pilot Duo)
   static const List<Map<String, String>> teamMembers = [
-    {'name': 'Santosh Yadav', 'initials': 'SY', 'role': 'Senior Sales Specialist', 'phone': '+91 93361 16210'},
-    {'name': 'Ajay Verma', 'initials': 'AV', 'role': 'Inbound Lead Manager', 'phone': '+91 98190 55432'},
-    {'name': 'Nishkarsh Pushpam', 'initials': 'NP', 'role': 'Operations & Booking Lead', 'phone': '+91 74640 42539'},
-    {'name': 'TripCosmos Admin', 'initials': 'TC', 'role': 'Master SuperAdmin', 'phone': '+91 93361 16210'},
+    {'name': 'Aditi', 'initials': 'AD', 'role': 'Sales & Pilgrimage Specialist (Duo: Aditi AI)', 'email': 'aditi@tripcosmos.co', 'phone': '+91 93361 16210'},
+    {'name': 'Santosh Yadav', 'initials': 'SY', 'role': 'Senior Sales Specialist (Duo: Puffer Voice)', 'email': 'santosh@tripcosmos.co', 'phone': '+91 93361 16210'},
+    {'name': 'Ajay Verma', 'initials': 'AV', 'role': 'Inbound Lead Manager', 'email': 'ajay@tripcosmos.co', 'phone': '+91 98190 55432'},
+    {'name': 'Nishkarsh Pushpam', 'initials': 'NP', 'role': 'Operations & Booking Lead', 'email': 'operations@tripcosmos.co', 'phone': '+91 74640 42539'},
+    {'name': 'TripCosmos Admin', 'initials': 'TC', 'role': 'Master SuperAdmin', 'email': 'admin@tripcosmos.co', 'phone': '+91 93361 16210'},
   ];
 
   // Tour Circuits for 1-Tap Post-Call Actions

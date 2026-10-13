@@ -429,7 +429,7 @@ class _DialerScreenState extends State<DialerScreen> {
               const SizedBox(width: 8),
               Text(
                 provider.callState == CallState.dialing
-                    ? 'DIALING VIA JIO SIM...'
+                    ? 'DIALING (${provider.telephonyMode == TelephonyMode.livekitWebRtc ? "WEBRTC ₹0" : provider.telephonyMode == TelephonyMode.airtelIq ? "AIRTEL IQ" : provider.telephonyMode == TelephonyMode.sipTrunk ? "SIP TRUNK" : "JIO SIM"})...'
                     : 'CALL CONNECTED',
                 style: const TextStyle(
                   color: AppColors.successGreen,

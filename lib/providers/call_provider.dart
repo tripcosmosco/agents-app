@@ -288,6 +288,11 @@ class CallProvider extends ChangeNotifier {
 
     _callState = CallState.ended;
 
+    String modeLabel = 'Jio 5G (+91 93361 16210)';
+    if (_telephonyMode == TelephonyMode.livekitWebRtc) modeLabel = 'LiveKit WebRTC (₹0)';
+    if (_telephonyMode == TelephonyMode.airtelIq) modeLabel = 'Airtel IQ (Masked)';
+    if (_telephonyMode == TelephonyMode.sipTrunk) modeLabel = 'Cloud SIP Trunk';
+
     final newLog = CallLogModel(
       id: completedId,
       phone: _activePhoneNumber,
@@ -299,7 +304,8 @@ class CallProvider extends ChangeNotifier {
       timestamp: DateTime.now(),
       durationSeconds: duration,
       tourInterest: _activeTourInterest,
-      notes: notes.isNotEmpty ? notes : 'Call completed via Jio 5G SIM.',
+      simCard: modeLabel,
+      notes: notes.isNotEmpty ? notes : 'Call completed via $modeLabel.',
       aiQualified: true,
     );
 

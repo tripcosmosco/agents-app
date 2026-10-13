@@ -120,7 +120,7 @@ class _LeadDetailScreenState extends State<LeadDetailScreen> with SingleTickerPr
       ),
       builder: (ctx) {
         return SafeArea(
-          child: Padding(
+          child: SingleChildScrollView(
             padding: const EdgeInsets.all(20),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -194,6 +194,7 @@ class _LeadDetailScreenState extends State<LeadDetailScreen> with SingleTickerPr
   void _showChangeStageSheet(BuildContext context, LeadModel lead) {
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       backgroundColor: const Color(0xFF1E293B),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
@@ -202,17 +203,18 @@ class _LeadDetailScreenState extends State<LeadDetailScreen> with SingleTickerPr
         return SafeArea(
           child: Padding(
             padding: const EdgeInsets.all(20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Change Lead Pipeline Stage',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white),
-                ),
-                const SizedBox(height: 12),
-                Expanded(
-                  child: ListView(
+            child: SizedBox(
+              height: MediaQuery.of(context).size.height * 0.6,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Change Lead Pipeline Stage',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white),
+                  ),
+                  const SizedBox(height: 12),
+                  Expanded(
+                    child: ListView(
                     children: AppConstants.travelPipelineStages
                         .where((s) => s['id'] != 'all')
                         .map((stage) {
@@ -249,9 +251,10 @@ class _LeadDetailScreenState extends State<LeadDetailScreen> with SingleTickerPr
               ],
             ),
           ),
-        );
-      },
-    );
+        ),
+      );
+    },
+  );
   }
 
   void _sendQuickMessage(LeadModel lead) async {
@@ -497,7 +500,7 @@ class _LeadDetailScreenState extends State<LeadDetailScreen> with SingleTickerPr
                       ),
                       const SizedBox(width: 5),
                       Text(
-                        lead.stickyAgent,
+                        lead.stickyAgent.isNotEmpty ? lead.stickyAgent : 'Unassigned',
                         style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Colors.white),
                       ),
                     ],
