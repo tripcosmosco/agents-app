@@ -72,52 +72,57 @@ class _DialerScreenState extends State<DialerScreen> {
                 size: 18,
               ),
             ),
-            const SizedBox(width: 10),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    const Text(
-                      AppConstants.appName,
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-                    ),
-                    const SizedBox(width: 6),
-                    Consumer<LeadProvider>(
-                      builder: (context, lp, _) {
-                        final agentName = lp.currentAgent.isNotEmpty ? lp.currentAgent : 'Sales Agent';
-                        return Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
-                          decoration: BoxDecoration(
-                            color: AppColors.successGreen.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: AppColors.successGreen.withValues(alpha: 0.5)),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(Icons.circle, size: 6, color: AppColors.successGreen),
-                              const SizedBox(width: 4),
-                              Text(
-                                '$agentName (Online)',
-                                style: const TextStyle(
-                                  color: AppColors.successGreen,
-                                  fontSize: 9.5,
-                                  fontWeight: FontWeight.w700,
+            const SizedBox(width: 8),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    children: [
+                      const Text(
+                        AppConstants.appName,
+                        style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+                      ),
+                      const SizedBox(width: 6),
+                      Consumer<LeadProvider>(
+                        builder: (context, lp, _) {
+                          final agentName = lp.currentAgent.isNotEmpty ? lp.currentAgent : 'Sales';
+                          return Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                            decoration: BoxDecoration(
+                              color: AppColors.successGreen.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(color: AppColors.successGreen.withValues(alpha: 0.5)),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.circle, size: 5, color: AppColors.successGreen),
+                                const SizedBox(width: 3),
+                                Text(
+                                  agentName,
+                                  style: const TextStyle(
+                                    color: AppColors.successGreen,
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.w700,
+                                  ),
                                 ),
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                    ),
-                  ],
-                ),
-                const Text(
-                  'TripCosmos.co Office Bridge',
-                  style: TextStyle(fontSize: 10.5, color: AppColors.textMuted),
-                ),
-              ],
+                              ],
+                            ),
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                  const Text(
+                    'TripCosmos.co Office Bridge',
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
+                    style: TextStyle(fontSize: 10, color: AppColors.textMuted),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
@@ -169,8 +174,8 @@ class _DialerScreenState extends State<DialerScreen> {
               ),
             ],
             child: Container(
-              margin: const EdgeInsets.only(right: 8),
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              margin: const EdgeInsets.only(right: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
                 color: callProvider.telephonyMode == TelephonyMode.airtelIq
                     ? const Color(0xFFEF4444).withValues(alpha: 0.18)
@@ -179,7 +184,7 @@ class _DialerScreenState extends State<DialerScreen> {
                         : callProvider.telephonyMode == TelephonyMode.gsmBridge
                             ? AppColors.jioBlue.withValues(alpha: 0.18)
                             : AppColors.accentGold.withValues(alpha: 0.18),
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(16),
                 border: Border.all(
                   color: callProvider.telephonyMode == TelephonyMode.airtelIq
                       ? const Color(0xFFEF4444).withValues(alpha: 0.6)
@@ -208,61 +213,95 @@ class _DialerScreenState extends State<DialerScreen> {
                             : callProvider.telephonyMode == TelephonyMode.gsmBridge
                                 ? Colors.blueAccent
                                 : AppColors.accentGold,
-                    size: 14,
+                    size: 13,
                   ),
-                  const SizedBox(width: 4),
+                  const SizedBox(width: 3),
                   Text(
                     callProvider.telephonyMode == TelephonyMode.airtelIq
-                        ? 'Airtel IQ (Masked)'
+                        ? 'Airtel IQ'
                         : callProvider.telephonyMode == TelephonyMode.livekitWebRtc
                             ? 'WebRTC (₹0)'
                             : callProvider.telephonyMode == TelephonyMode.gsmBridge
-                                ? 'GSM (+91 93361)'
+                                ? 'GSM Bridge'
                                 : 'SIP Trunk',
                     style: const TextStyle(
                       color: Colors.white,
-                      fontSize: 11,
+                      fontSize: 10.5,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
-                  const Icon(Icons.arrow_drop_down, color: Colors.white70, size: 14),
+                  const Icon(Icons.arrow_drop_down, color: Colors.white70, size: 13),
                 ],
               ),
             ),
           ),
           IconButton(
             tooltip: 'Live Website Visitor Radar',
-            icon: const Icon(Icons.radar_rounded, color: AppColors.successGreen),
+            icon: const Icon(Icons.radar_rounded, color: AppColors.successGreen, size: 20),
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
             onPressed: () => LiveActivitySheet.show(context),
           ),
-          IconButton(
-            tooltip: 'Cab Fare Calculator',
-            icon: const Icon(Icons.local_taxi_rounded, color: Color(0xFFF59E0B)),
-            onPressed: () => CabFareDialog.show(context),
-          ),
+          // More Tools Menu (Cab Fare, Theme, Settings)
           Consumer<ThemeProvider>(
             builder: (context, themeProvider, _) {
-              return IconButton(
-                onPressed: () => themeProvider.toggleTheme(),
-                icon: Icon(
-                  themeProvider.isDarkMode ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
-                  color: AppColors.accentGold,
-                ),
-                tooltip: themeProvider.isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode',
+              return PopupMenuButton<String>(
+                tooltip: 'More Tools & Options',
+                icon: const Icon(Icons.more_vert_rounded, color: AppColors.accentGold, size: 20),
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                onSelected: (val) {
+                  if (val == 'cab') {
+                    CabFareDialog.show(context);
+                  } else if (val == 'theme') {
+                    themeProvider.toggleTheme();
+                  } else if (val == 'settings') {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => SettingsScreen(apiService: callProvider.apiService),
+                      ),
+                    );
+                  }
+                },
+                itemBuilder: (context) => [
+                  const PopupMenuItem(
+                    value: 'cab',
+                    child: Row(
+                      children: [
+                        Icon(Icons.local_taxi_rounded, color: Color(0xFFF59E0B), size: 18),
+                        SizedBox(width: 8),
+                        Text('Cab Fare Calculator'),
+                      ],
+                    ),
+                  ),
+                  PopupMenuItem(
+                    value: 'theme',
+                    child: Row(
+                      children: [
+                        Icon(
+                          themeProvider.isDarkMode ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
+                          color: AppColors.accentGold,
+                          size: 18,
+                        ),
+                        SizedBox(width: 8),
+                        Text(themeProvider.isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'),
+                      ],
+                    ),
+                  ),
+                  const PopupMenuItem(
+                    value: 'settings',
+                    child: Row(
+                      children: [
+                        Icon(Icons.settings_outlined, color: AppColors.accentGold, size: 18),
+                        SizedBox(width: 8),
+                        Text('Settings & API Token'),
+                      ],
+                    ),
+                  ),
+                ],
               );
             },
-          ),
-          IconButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => SettingsScreen(apiService: callProvider.apiService),
-                ),
-              );
-            },
-            icon: const Icon(Icons.settings_outlined, color: AppColors.accentGold),
-            tooltip: 'Server & Companion Settings',
           ),
         ],
       ),
