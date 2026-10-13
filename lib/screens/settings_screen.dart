@@ -354,6 +354,123 @@ class _SettingsScreenState extends State<SettingsScreen> {
     super.dispose();
   }
 
+  void _showAutoPairDialog() {
+    final pasteCtrl = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF1E293B),
+        title: const Row(
+          children: [
+            Icon(Icons.flash_on_rounded, color: AppColors.accentGold, size: 20),
+            SizedBox(width: 8),
+            Text('1-Tap Agent Auto-Pair', style: TextStyle(color: Colors.white, fontSize: 16)),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Paste the WhatsApp invite link, magic login URL, or pairing key received on your phone:',
+              style: TextStyle(color: Colors.white70, fontSize: 12),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: pasteCtrl,
+              maxLines: 3,
+              style: const TextStyle(color: Colors.white, fontSize: 12),
+              decoration: const InputDecoration(
+                hintText: 'e.g. https://tripcosmos.co/?tc_action=agent_login... or tca_...',
+                border: OutlineInputBorder(),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel', style: TextStyle(color: Colors.white54)),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final text = pasteCtrl.text.trim();
+              if (text.isEmpty) return;
+              Navigator.pop(ctx);
+              _handleAutoPairText(text);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.whatsappGreen,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Apply & Connect'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _handleAutoPairText(String raw) {
+    try {
+      String input = raw.trim();
+      // Case 1: Plain Token
+      if (input.startsWith('tca_') || (input.length == 32 && !input.contains('/'))) {
+        _tokenController.text = input;
+        _saveSettings();
+        return;
+      }
+
+      // Case 2: Deep Link (xagents://pair?payload=...)
+      if (input.startsWith('xagents://pair') && input.contains('payload=')) {
+        final uri = Uri.parse(input);
+        final payload = uri.queryParameters['payload'];
+        if (payload != null) {
+          final decoded = json.decode(payload);
+          if (decoded is Map) {
+            if (decoded['url'] != null) _urlController.text = decoded['url'].toString();
+            if (decoded['token'] != null) _tokenController.text = decoded['token'].toString();
+            _saveSettings();
+            return;
+          }
+        }
+      }
+
+      // Case 3: URL (magic login or standard URL)
+      if (input.startsWith('http://') || input.startsWith('https://')) {
+        final uri = Uri.parse(input);
+        final token = uri.queryParameters['token'];
+        final origin = '${uri.scheme}://${uri.host}${uri.hasPort ? ':${uri.port}' : ''}';
+        final restUrl = '$origin/wp-json/tc-agents/v1';
+
+        _urlController.text = restUrl;
+        if (token != null && token.isNotEmpty) {
+          _tokenController.text = token;
+        }
+        _saveSettings();
+        return;
+      }
+
+      // Case 4: JSON payload directly
+      if (input.startsWith('{') && input.endsWith('}')) {
+        final decoded = json.decode(input);
+        if (decoded is Map) {
+          if (decoded['url'] != null) _urlController.text = decoded['url'].toString();
+          if (decoded['token'] != null) _tokenController.text = decoded['token'].toString();
+          _saveSettings();
+          return;
+        }
+      }
+
+      // Fallback
+      _tokenController.text = input;
+      _saveSettings();
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to parse pairing input: $e'), backgroundColor: AppColors.errorRed),
+      );
+    }
+  }
+
   Future<void> _testConnection() async {
     setState(() {
       _isTesting = true;
@@ -984,6 +1101,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           ),
                         ),
                       ],
+                    ),
+
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: _showAutoPairDialog,
+                        icon: const Icon(Icons.flash_on_rounded, size: 16, color: Color(0xFF10B981)),
+                        label: const Text(
+                          '⚡ 1-Tap Auto-Pair (WhatsApp Invite or Link)',
+                          style: TextStyle(color: Color(0xFF10B981), fontWeight: FontWeight.bold, fontSize: 12.5),
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: Color(0xFF10B981), width: 1.2),
+                          padding: const EdgeInsets.symmetric(vertical: 11),
+                        ),
+                      ),
                     ),
 
                     if (widget.apiService.isAuthenticated) ...[
