@@ -60,105 +60,211 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       });
     }
 
-    return Scaffold(
-      body: Stack(
-        children: [
-          IndexedStack(index: _currentIndex, children: _screens),
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (widget.apiService != null && !widget.apiService!.isAuthenticated)
-                  SafeArea(
-                    bottom: false,
-                    child: Container(
-                      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFF312E81), Color(0xFF1E1B4B)],
-                        ),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: AppColors.accentGold.withValues(alpha: 0.6)),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.35),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
+    final isWide = MediaQuery.of(context).size.width >= 1000;
+
+    final mainContent = Stack(
+      children: [
+        IndexedStack(index: _currentIndex, children: _screens),
+        Positioned(
+          top: 0,
+          left: 0,
+          right: 0,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (widget.apiService != null && !widget.apiService!.isAuthenticated)
+                SafeArea(
+                  bottom: false,
+                  child: Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF312E81), Color(0xFF1E1B4B)],
                       ),
-                      child: Material(
-                        color: Colors.transparent,
-                        child: InkWell(
-                          borderRadius: BorderRadius.circular(12),
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => SettingsScreen(apiService: widget.apiService!),
-                              ),
-                            ).then((_) {
-                              if (mounted) setState(() {});
-                            });
-                          },
-                          child: const Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                            child: Row(
-                              children: [
-                                Icon(Icons.vpn_key_rounded, color: AppColors.accentGold, size: 20),
-                                SizedBox(width: 10),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        'Connect Your Workspace',
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.w700,
-                                          fontSize: 12.5,
-                                        ),
-                                      ),
-                                      Text(
-                                        'Tap to enter your API Token & sync live CRM',
-                                        style: TextStyle(
-                                          color: Colors.white70,
-                                          fontSize: 11,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                Icon(Icons.arrow_forward_ios_rounded, color: AppColors.accentGold, size: 14),
-                              ],
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: AppColors.accentGold.withValues(alpha: 0.6)),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.35),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(12),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => SettingsScreen(apiService: widget.apiService!),
                             ),
+                          ).then((_) {
+                            if (mounted) setState(() {});
+                          });
+                        },
+                        child: const Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                          child: Row(
+                            children: [
+                              Icon(Icons.vpn_key_rounded, color: AppColors.accentGold, size: 20),
+                              SizedBox(width: 10),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Connect Your Workspace',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: 12.5,
+                                      ),
+                                    ),
+                                    Text(
+                                      'Tap to enter your API Token & sync live CRM',
+                                      style: TextStyle(
+                                        color: Colors.white70,
+                                        fontSize: 11,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Icon(Icons.arrow_forward_ios_rounded, color: AppColors.accentGold, size: 14),
+                            ],
                           ),
                         ),
                       ),
                     ),
                   ),
-                LiveActivityBanner(
-                  onOpenLeadCrm: () {
-                    setState(() {
-                      _currentIndex = 1; // Switch to Leads CRM tab
-                    });
-                  },
                 ),
-                ActiveCallHud(
-                  onOpenLeadCrm: () {
-                    setState(() {
-                      _currentIndex = 1;
-                    });
-                  },
+              LiveActivityBanner(
+                onOpenLeadCrm: () {
+                  setState(() {
+                    _currentIndex = 1; // Switch to Leads CRM tab
+                  });
+                },
+              ),
+              ActiveCallHud(
+                onOpenLeadCrm: () {
+                  setState(() {
+                    _currentIndex = 1;
+                  });
+                },
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+
+    if (isWide) {
+      return Scaffold(
+        body: Row(
+          children: [
+            NavigationRail(
+              selectedIndex: _currentIndex,
+              onDestinationSelected: (index) => setState(() => _currentIndex = index),
+              backgroundColor: Theme.of(context).brightness == Brightness.light ? Colors.white : AppColors.surface,
+              selectedIconTheme: const IconThemeData(color: AppColors.accentGold),
+              unselectedIconTheme: IconThemeData(
+                color: Theme.of(context).brightness == Brightness.light ? AppColors.lightTextMuted : AppColors.textMuted,
+              ),
+              selectedLabelTextStyle: const TextStyle(color: AppColors.accentGold, fontWeight: FontWeight.bold, fontSize: 11),
+              unselectedLabelTextStyle: TextStyle(
+                color: Theme.of(context).brightness == Brightness.light ? AppColors.lightTextMuted : AppColors.textMuted,
+                fontSize: 11,
+              ),
+              labelType: NavigationRailLabelType.all,
+              leading: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                child: Container(
+                  width: 42,
+                  height: 42,
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(colors: [Color(0xFFF59E0B), Color(0xFFD97706)]),
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(color: AppColors.accentGold.withValues(alpha: 0.3), blurRadius: 8, offset: const Offset(0, 2)),
+                    ],
+                  ),
+                  child: const Center(
+                    child: Text(
+                      'TC',
+                      style: TextStyle(color: Colors.black, fontWeight: FontWeight.w900, fontSize: 16),
+                    ),
+                  ),
+                ),
+              ),
+              destinations: [
+                NavigationRailDestination(
+                  icon: Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      const Icon(Icons.phone_rounded),
+                      if (pendingCount > 0)
+                        Positioned(
+                          right: -6,
+                          top: -4,
+                          child: Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: const BoxDecoration(color: AppColors.errorRed, shape: BoxShape.circle),
+                            child: Text('$pendingCount', style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w700)),
+                          ),
+                        ),
+                    ],
+                  ),
+                  label: const Text('Dialer'),
+                ),
+                const NavigationRailDestination(
+                  icon: Icon(Icons.people_alt_rounded),
+                  label: Text('Leads CRM'),
+                ),
+                const NavigationRailDestination(
+                  icon: Icon(Icons.smart_toy_rounded),
+                  label: Text('AI Agents'),
+                ),
+                NavigationRailDestination(
+                  icon: Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      const Icon(Icons.chat_rounded),
+                      if (wpUnread > 0)
+                        Positioned(
+                          right: -8,
+                          top: -4,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: AppColors.successGreen,
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(color: Colors.white, width: 1),
+                            ),
+                            child: Text('$wpUnread', style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w700)),
+                          ),
+                        ),
+                    ],
+                  ),
+                  label: const Text('WhatsApp'),
+                ),
+                const NavigationRailDestination(
+                  icon: Icon(Icons.bar_chart_rounded),
+                  label: Text('Analytics'),
                 ),
               ],
             ),
-          ),
-        ],
-      ),
+            const VerticalDivider(width: 1, thickness: 1, color: AppColors.borderSubtle),
+            Expanded(child: mainContent),
+          ],
+        ),
+      );
+    }
+
+    return Scaffold(
+      body: mainContent,
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: Theme.of(context).brightness == Brightness.light ? Colors.white : AppColors.surface,

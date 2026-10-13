@@ -117,24 +117,27 @@ class _WhatsAppHubScreenState extends State<WhatsAppHubScreen> {
     );
   }
 
-  void _openThread(WhatsAppThread thread) {
+  void _openThread(WhatsAppThread thread, {bool forceFullscreen = false}) {
     final wp = context.read<WhatsAppProvider>();
     wp.selectThread(thread.id);
 
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => Scaffold(
-          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-          body: SafeArea(
-            child: WhatsAppTeamChatView(
-              thread: thread,
-              onBack: () => Navigator.pop(context),
+    final isWide = MediaQuery.of(context).size.width >= 900;
+    if (!isWide || forceFullscreen) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => Scaffold(
+            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+            body: SafeArea(
+              child: WhatsAppTeamChatView(
+                thread: thread,
+                onBack: () => Navigator.pop(context),
+              ),
             ),
           ),
         ),
-      ),
-    );
+      );
+    }
   }
 
   void _showNewWhatsAppLeadDialog(BuildContext context) {
@@ -400,6 +403,95 @@ class _WhatsAppHubScreenState extends State<WhatsAppHubScreen> {
   // TAB 0: SUPERFONE CENTRAL WHATSAPP & LEAD INBOX
   // ===========================================================================
   Widget _buildSuperfoneInboxTab(WhatsAppProvider wp) {
+    final isWide = MediaQuery.of(context).size.width >= 900;
+    if (isWide) {
+      final activeThread = wp.activeThread;
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          SizedBox(
+            width: 400,
+            child: _buildThreadsListView(wp, isWide: true),
+          ),
+          Container(
+            width: 1,
+            color: AppColors.borderSubtle,
+          ),
+          Expanded(
+            child: activeThread != null
+                ? WhatsAppTeamChatView(
+                    key: ValueKey(activeThread.id),
+                    thread: activeThread,
+                  )
+                : _buildNoActiveThreadPlaceholder(),
+          ),
+        ],
+      );
+    }
+
+    return _buildThreadsListView(wp, isWide: false);
+  }
+
+  Widget _buildNoActiveThreadPlaceholder() {
+    return Container(
+      color: const Color(0xFF0B132B),
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 80,
+                height: 80,
+                decoration: BoxDecoration(
+                  color: AppColors.whatsappGreen.withValues(alpha: 0.15),
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: AppColors.whatsappGreen.withValues(alpha: 0.4),
+                    width: 1.5,
+                  ),
+                ),
+                child: const Icon(Icons.forum_rounded, color: AppColors.whatsappGreen, size: 40),
+              ),
+              const SizedBox(height: 20),
+              const Text(
+                'TripCosmos Omnichannel Sales Hub',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 420),
+                child: const Text(
+                  'Select a conversation from the left to review traveler history, chat live via official WhatsApp (+91 93361 16210), assign AI Sales Personas, or dispatch itineraries.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: AppColors.textMuted, fontSize: 13, height: 1.4),
+                ),
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton.icon(
+                onPressed: () => _showNewWhatsAppLeadDialog(context),
+                icon: const Icon(Icons.add_comment_rounded, size: 16),
+                label: const Text('Start New WhatsApp Chat / Lead'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.whatsappGreen,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildThreadsListView(WhatsAppProvider wp, {required bool isWide}) {
     final threads = wp.filteredThreads;
 
     return Column(
@@ -502,7 +594,7 @@ class _WhatsAppHubScreenState extends State<WhatsAppHubScreen> {
                     separatorBuilder: (_, _) => const SizedBox(height: 8),
                     itemBuilder: (context, index) {
                       final th = threads[index];
-                      return _buildSuperfoneThreadTile(th, wp);
+                      return _buildSuperfoneThreadTile(th, wp, isWide: isWide);
                     },
                   ),
                 ),
@@ -543,12 +635,13 @@ class _WhatsAppHubScreenState extends State<WhatsAppHubScreen> {
     );
   }
 
-  Widget _buildSuperfoneThreadTile(WhatsAppThread th, WhatsAppProvider wp) {
+  Widget _buildSuperfoneThreadTile(WhatsAppThread th, WhatsAppProvider wp, {bool isWide = false}) {
     final isB2b = wp.isB2bThread(th);
     final stageColor = _getStageColor(th.stage);
     final timeLabel = th.timeAgo.isNotEmpty
         ? th.timeAgo
         : DateFormat('dd MMM, h:mm a').format(th.lastMessageTime);
+    final isSelected = isWide && wp.selectedThreadId == th.id;
 
     IconData channelIcon = Icons.chat_rounded;
     Color channelColor = AppColors.whatsappGreen;
@@ -569,16 +662,29 @@ class _WhatsAppHubScreenState extends State<WhatsAppHubScreen> {
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: th.unreadCount > 0
-              ? const Color(0xFF13233F)
-              : AppColors.surfaceCard,
+          color: isSelected
+              ? const Color(0xFF1E293B)
+              : (th.unreadCount > 0
+                  ? const Color(0xFF13233F)
+                  : AppColors.surfaceCard),
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: th.unreadCount > 0
-                ? AppColors.whatsappGreen.withValues(alpha: 0.6)
-                : AppColors.borderSubtle,
-            width: th.unreadCount > 0 ? 1.3 : 1.0,
+            color: isSelected
+                ? AppColors.accentGold
+                : (th.unreadCount > 0
+                    ? AppColors.whatsappGreen.withValues(alpha: 0.6)
+                    : AppColors.borderSubtle),
+            width: isSelected ? 1.6 : (th.unreadCount > 0 ? 1.3 : 1.0),
           ),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: AppColors.accentGold.withValues(alpha: 0.15),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : null,
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

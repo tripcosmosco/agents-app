@@ -10,7 +10,8 @@ import '../providers/lead_provider.dart';
 import '../widgets/b2b_partners_view.dart';
 import '../widgets/glass_card.dart';
 import '../widgets/live_activity_sheet.dart';
-import '../widgets/whatsapp_live_chat_sheet.dart';
+import '../widgets/whatsapp_team_chat_view.dart';
+import '../providers/whatsapp_provider.dart';
 import 'lead_detail_screen.dart';
 
 class LeadsScreen extends StatefulWidget {
@@ -798,14 +799,26 @@ class _LeadsScreenState extends State<LeadsScreen> {
               children: [
                 OutlinedButton.icon(
                   onPressed: () {
-                    WhatsAppLiveChatSheet.show(
-                      context,
-                      leadId: lead.id,
+                    final wp = context.read<WhatsAppProvider>();
+                    final thread = wp.getOrCreateThread(
+                      customerPhone: lead.phone,
                       customerName: lead.name,
-                      phone: lead.phone,
-                      destination: lead.destination,
-                      initialMessage:
-                          'Namaste ${lead.name} ji! Following up regarding your ${lead.destination} tour inquiry with TripCosmos.co.',
+                      circuit: lead.destination,
+                      initialMessage: '',
+                    );
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => Scaffold(
+                          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+                          body: SafeArea(
+                            child: WhatsAppTeamChatView(
+                              thread: thread,
+                              onBack: () => Navigator.pop(context),
+                            ),
+                          ),
+                        ),
+                      ),
                     );
                   },
                   icon: const Icon(
@@ -813,7 +826,7 @@ class _LeadsScreenState extends State<LeadsScreen> {
                     size: 14,
                     color: AppColors.whatsappGreen,
                   ),
-                  label: const Text('Chat', style: TextStyle(fontSize: 12)),
+                  label: const Text('WhatsApp', style: TextStyle(fontSize: 12)),
                   style: OutlinedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 12,

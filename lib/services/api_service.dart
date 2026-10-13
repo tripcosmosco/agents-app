@@ -138,7 +138,7 @@ class ApiService {
       final uri = Uri.parse('$baseUrl/mobile/call-queue');
       final response = await http
           .get(uri, headers: _headers)
-          .timeout(const Duration(seconds: 8));
+          .timeout(const Duration(seconds: 12));
 
       if (response.statusCode == 200) {
         final data = _safeJsonDecode(response.body);
@@ -147,8 +147,8 @@ class ApiService {
           return List<Map<String, dynamic>>.from(data['calls']);
         }
       }
-    } catch (e) {
-      debugPrint('Error fetching call queue: $e');
+    } catch (_) {
+      // Endpoint may be idle or offline
     }
     return [];
   }

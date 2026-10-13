@@ -136,7 +136,7 @@ class CallProvider extends ChangeNotifier {
 
   void startQueuePolling() {
     _queuePollTimer?.cancel();
-    _queuePollTimer = Timer.periodic(const Duration(seconds: 12), (
+    _queuePollTimer = Timer.periodic(const Duration(seconds: 30), (
       timer,
     ) async {
       await checkCallQueue();
@@ -150,10 +150,12 @@ class CallProvider extends ChangeNotifier {
     _isCheckingQueue = true;
     try {
       final queue = await apiService.fetchCallQueue();
-      _pendingQueue = queue;
-      notifyListeners();
-    } catch (e) {
-      debugPrint('Queue poll error: $e');
+      if (queue.isNotEmpty || _pendingQueue.isNotEmpty) {
+        _pendingQueue = queue;
+        notifyListeners();
+      }
+    } catch (_) {
+      // Gracefully continue without interrupting active call or UI
     } finally {
       _isCheckingQueue = false;
     }

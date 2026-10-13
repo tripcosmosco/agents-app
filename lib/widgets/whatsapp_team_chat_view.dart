@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 
 import '../core/constants/app_constants.dart';
 import '../core/theme/app_colors.dart';
-import '../models/ai_agent_model.dart';
 import '../models/lead_model.dart';
 import '../models/whatsapp_thread_model.dart';
 import '../providers/ai_agent_provider.dart';
