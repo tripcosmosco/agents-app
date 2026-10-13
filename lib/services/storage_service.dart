@@ -1,7 +1,7 @@
 import 'package:shared_preferences/shared_preferences.dart';
 
 class StorageService {
-  static const String _keyToken = 'tc_mobile_token';
+  static const String _keyToken = 'tc_mobile_api_token';
   static const String _keyAgentName = 'tc_agent_name';
   static const String _keyAiOutboundActive = 'tc_ai_outbound_active';
   static const String _keyAiReceptionistActive = 'tc_ai_receptionist_active';

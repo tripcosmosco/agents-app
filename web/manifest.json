@@ -1,11 +1,11 @@
 {
-    "name": "X-Agents",
-    "short_name": "X-Agents",
+    "name": "TripCosmos.co — X-Agents",
+    "short_name": "TripCosmos",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#0B132B",
+    "theme_color": "#0B132B",
+    "description": "TripCosmos.co — Premium AI Telephony, CRM & Multi-Source Lead Management App.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

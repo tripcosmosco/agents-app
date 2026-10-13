@@ -8,6 +8,9 @@ class TelephonyService {
     final uri = Uri.parse('tel:$cleanPhone');
 
     try {
+      if (kIsWeb) {
+        return await launchUrl(uri);
+      }
       if (await canLaunchUrl(uri)) {
         return await launchUrl(uri, mode: LaunchMode.externalApplication);
       }

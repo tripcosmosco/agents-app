@@ -24,6 +24,7 @@ class LeadProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
 
   LeadProvider({required this.apiService}) {
+    _leads = _buildInitialLeads();
     _initAgentIdentity();
     refreshLeadsFromServer();
   }
@@ -144,14 +145,112 @@ class LeadProvider extends ChangeNotifier {
 
     try {
       final serverLeads = await apiService.fetchLeads();
-      _leads = serverLeads;
-      _isLiveConnected = true;
+      if (serverLeads.isNotEmpty) {
+        _leads = serverLeads;
+        _isLiveConnected = true;
+      }
     } catch (e) {
       debugPrint('Error syncing leads from server: $e');
     } finally {
       _isLoading = false;
       notifyListeners();
     }
+  }
+
+  static List<LeadModel> _buildInitialLeads() {
+    final now = DateTime.now();
+    return [
+      LeadModel(
+        id: 'ld_varanasi_101',
+        name: 'Ramesh Chandra',
+        phone: '+91 98765 43210',
+        email: 'ramesh.chandra@gmail.com',
+        destination: 'Varanasi 3D Spiritual Circuit',
+        companyOrCity: 'Delhi NCR',
+        pax: 4,
+        budget: '₹25,000',
+        stage: 'new',
+        source: 'website_chat',
+        stickyAgent: 'Aditi',
+        score: 85,
+        createdAt: now.subtract(const Duration(minutes: 18)),
+        tags: ['VIP Sugam', 'Innova Crysta', 'Senior Citizens'],
+        notes: ['Wants Kashi Vishwanath Sugam Darshan passes & morning boat.'],
+        lastChatSummary: 'Requested quote for 4 pax, family coming from Delhi.',
+      ),
+      LeadModel(
+        id: 'ld_ayodhya_102',
+        name: 'Priya Sharma',
+        phone: '+91 98112 34567',
+        email: 'priya.s@yahoo.com',
+        destination: 'Ayodhya Ram Janmabhoomi 2D/1N',
+        companyOrCity: 'Mumbai',
+        pax: 2,
+        budget: '₹18,000',
+        stage: 'contacted',
+        source: 'whatsapp',
+        stickyAgent: 'Aditi',
+        score: 78,
+        createdAt: now.subtract(const Duration(hours: 2)),
+        tags: ['Ram Mandir VIP', 'Couple'],
+        notes: ['Spoke on WhatsApp. Sent hotel options near Kanak Bhavan.'],
+        lastChatSummary: 'Interested in Saryu AartiBajra and VIP Darshan.',
+      ),
+      LeadModel(
+        id: 'ld_circuit_103',
+        name: 'Vikram Malhotra',
+        phone: '+91 97123 45678',
+        email: 'vikram.m@corporatetravel.in',
+        destination: 'Kashi - Ayodhya - Prayagraj 4D/3N',
+        companyOrCity: 'Bangalore',
+        pax: 6,
+        budget: '₹48,000',
+        stage: 'quote_sent',
+        source: 'meta_ads',
+        stickyAgent: 'Santosh',
+        score: 92,
+        createdAt: now.subtract(const Duration(hours: 5)),
+        tags: ['Golden Circuit', 'High Intent'],
+        notes: ['Detailed itinerary sent via WhatsApp PDF.'],
+        lastChatSummary: 'Ready to pay 30% advance once flight timings align.',
+      ),
+      LeadModel(
+        id: 'ld_sangam_104',
+        name: 'Sneha Patel',
+        phone: '+91 99234 56789',
+        email: 'sneha.patel@gmail.com',
+        destination: 'Prayagraj Triveni Sangam 1-Day',
+        companyOrCity: 'Ahmedabad',
+        pax: 3,
+        budget: '₹12,000',
+        stage: 'advance_received',
+        source: 'phone_call',
+        stickyAgent: 'Santosh',
+        score: 96,
+        createdAt: now.subtract(const Duration(days: 1)),
+        tags: ['Advance Paid', 'Sedan AC'],
+        notes: ['₹4,000 advance received via UPI. Cab confirmed.'],
+        lastChatSummary: 'Wants pickup from Varanasi Cantt station at 6 AM.',
+      ),
+      LeadModel(
+        id: 'ld_bodhgaya_105',
+        name: 'Anand Verma',
+        phone: '+91 94123 89012',
+        email: '',
+        destination: 'Varanasi - Bodhgaya 2D/1N',
+        companyOrCity: 'Lucknow',
+        pax: 5,
+        budget: '₹28,000',
+        stage: 'new',
+        source: 'website_chat',
+        stickyAgent: 'Unassigned',
+        score: 70,
+        createdAt: now.subtract(const Duration(hours: 1)),
+        tags: ['Mahabodhi', 'Unassigned'],
+        notes: ['New lead from website chat. Needs assignment.'],
+        lastChatSummary: 'Enquiring about Buddhist circuit tour with vehicle.',
+      ),
+    ];
   }
 
   void updateLeadStage(String leadId, String newStage) {

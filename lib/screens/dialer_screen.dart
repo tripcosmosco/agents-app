@@ -6,6 +6,7 @@ import '../core/constants/app_constants.dart';
 import '../core/theme/app_colors.dart';
 import '../models/call_log_model.dart';
 import '../providers/call_provider.dart';
+import '../providers/lead_provider.dart';
 import '../providers/theme_provider.dart';
 import '../widgets/glass_card.dart';
 import '../widgets/cab_fare_dialog.dart';
@@ -82,28 +83,33 @@ class _DialerScreenState extends State<DialerScreen> {
                       style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
                     ),
                     const SizedBox(width: 6),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
-                      decoration: BoxDecoration(
-                        color: AppColors.successGreen.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: AppColors.successGreen.withValues(alpha: 0.5)),
-                      ),
-                      child: const Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.circle, size: 6, color: AppColors.successGreen),
-                          SizedBox(width: 4),
-                          Text(
-                            'Santosh (Online)',
-                            style: TextStyle(
-                              color: AppColors.successGreen,
-                              fontSize: 9.5,
-                              fontWeight: FontWeight.w700,
-                            ),
+                    Consumer<LeadProvider>(
+                      builder: (context, lp, _) {
+                        final agentName = lp.currentAgent.isNotEmpty ? lp.currentAgent : 'Sales Agent';
+                        return Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                          decoration: BoxDecoration(
+                            color: AppColors.successGreen.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: AppColors.successGreen.withValues(alpha: 0.5)),
                           ),
-                        ],
-                      ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.circle, size: 6, color: AppColors.successGreen),
+                              const SizedBox(width: 4),
+                              Text(
+                                '$agentName (Online)',
+                                style: const TextStyle(
+                                  color: AppColors.successGreen,
+                                  fontSize: 9.5,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
                     ),
                   ],
                 ),
