@@ -13,6 +13,7 @@ import '../widgets/live_activity_sheet.dart';
 import '../widgets/whatsapp_team_chat_view.dart';
 import '../providers/whatsapp_provider.dart';
 import 'lead_detail_screen.dart';
+import 'settings_screen.dart';
 
 class LeadsScreen extends StatefulWidget {
   const LeadsScreen({super.key});
@@ -193,6 +194,18 @@ class _LeadsScreenState extends State<LeadsScreen> {
             onPressed: () => leadProvider.refreshLeadsFromServer(),
             icon: const Icon(Icons.refresh, color: AppColors.accentGold),
             tooltip: 'Sync with Server',
+          ),
+          IconButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => SettingsScreen(apiService: leadProvider.apiService),
+                ),
+              );
+            },
+            icon: const Icon(Icons.settings_outlined, color: AppColors.accentGold),
+            tooltip: 'Server & Companion Settings',
           ),
         ],
       ),

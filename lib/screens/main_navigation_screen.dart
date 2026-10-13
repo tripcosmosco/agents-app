@@ -255,6 +255,30 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                   label: Text('Analytics'),
                 ),
               ],
+              trailing: Expanded(
+                child: Align(
+                  alignment: Alignment.bottomCenter,
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    child: IconButton(
+                      icon: const Icon(Icons.settings_outlined, color: AppColors.accentGold, size: 22),
+                      tooltip: 'Server & Companion Settings',
+                      onPressed: () {
+                        if (widget.apiService != null) {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => SettingsScreen(apiService: widget.apiService!),
+                            ),
+                          ).then((_) {
+                            if (mounted) setState(() {});
+                          });
+                        }
+                      },
+                    ),
+                  ),
+                ),
+              ),
             ),
             const VerticalDivider(width: 1, thickness: 1, color: AppColors.borderSubtle),
             Expanded(child: mainContent),

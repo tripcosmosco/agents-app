@@ -155,6 +155,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           final data = snapshot.data;
           final state = data?['state']?.toString() ?? 'unknown';
           final qr = data?['qr']?.toString() ?? '';
+          final pairingCode = data?['pairing_code']?.toString() ?? '';
           final isOpen = data?['is_open'] == true || state == 'open';
 
           return Padding(
@@ -253,15 +254,43 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           BoxShadow(color: Colors.black26, blurRadius: 10, offset: Offset(0, 4)),
                         ],
                       ),
-                      child: qr.startsWith('data:image')
-                          ? Image.network(qr, width: 220, height: 220, fit: BoxFit.contain)
-                          : Image.memory(
-                              base64Decode(qr.replaceFirst(RegExp(r'data:image\/[a-zA-Z]+;base64,'), '')),
-                              width: 220,
-                              height: 220,
-                            ),
+                      child: Builder(
+                        builder: (_) {
+                          if (qr.startsWith('http://') || qr.startsWith('https://')) {
+                            return Image.network(qr, width: 220, height: 220, fit: BoxFit.contain);
+                          }
+                          try {
+                            final base64String = qr.contains(',') ? qr.split(',').last : qr;
+                            final cleanString = base64String.replaceAll(RegExp(r'\s+'), '');
+                            final bytes = base64Decode(cleanString);
+                            return Image.memory(bytes, width: 220, height: 220, fit: BoxFit.contain);
+                          } catch (e) {
+                            return Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: Text('Error decoding QR: $e', style: const TextStyle(color: Colors.black, fontSize: 11)),
+                            );
+                          }
+                        },
+                      ),
                     ),
                   ),
+                  if (pairingCode.isNotEmpty) ...[
+                    const SizedBox(height: 10),
+                    Center(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF1E293B),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: AppColors.accentGold.withValues(alpha: 0.5)),
+                        ),
+                        child: Text(
+                          'Pairing Code: $pairingCode',
+                          style: const TextStyle(color: AppColors.accentGold, fontWeight: FontWeight.bold, fontSize: 13),
+                        ),
+                      ),
+                    ),
+                  ],
                 ] else ...[
                   Container(
                     padding: const EdgeInsets.all(14),

@@ -46,4 +46,18 @@ class TelephonyService {
     }
     return false;
   }
+
+  /// Launch external browser URL
+  static Future<bool> launchBrowser(String url) async {
+    final uri = Uri.parse(url);
+    try {
+      if (kIsWeb) {
+        return await launchUrl(uri, mode: LaunchMode.platformDefault);
+      }
+      return await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } catch (e) {
+      debugPrint('Error launching browser URL: $e');
+      return false;
+    }
+  }
 }

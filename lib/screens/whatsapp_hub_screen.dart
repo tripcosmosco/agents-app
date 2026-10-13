@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -15,6 +16,7 @@ import '../services/telephony_service.dart';
 import '../widgets/glass_card.dart';
 import '../widgets/live_activity_sheet.dart';
 import '../widgets/whatsapp_team_chat_view.dart';
+import 'settings_screen.dart';
 import 'web_chat_detail_screen.dart';
 
 class WhatsAppHubScreen extends StatefulWidget {
@@ -255,6 +257,234 @@ class _WhatsAppHubScreenState extends State<WhatsAppHubScreen> {
     );
   }
 
+  void _showEvolutionGatewayModal(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: const Color(0xFF1E293B),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => FutureBuilder<Map<String, dynamic>?>(
+        future: _apiService.fetchEvolutionStatus(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Padding(
+              padding: EdgeInsets.all(40),
+              child: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    CircularProgressIndicator(color: AppColors.whatsappGreen),
+                    SizedBox(height: 16),
+                    Text(
+                      'Checking Evolution API Gateway Status...',
+                      style: TextStyle(color: Colors.white, fontSize: 13),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }
+
+          final data = snapshot.data;
+          final state = data?['state']?.toString() ?? 'unknown';
+          final qr = data?['qr']?.toString() ?? '';
+          final pairingCode = data?['pairing_code']?.toString() ?? '';
+          final isOpen = data?['is_open'] == true || state == 'open';
+
+          return Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: (isOpen ? AppColors.successGreen : AppColors.errorRed).withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Icon(
+                        isOpen ? Icons.check_circle_rounded : Icons.qr_code_scanner_rounded,
+                        color: isOpen ? AppColors.successGreen : AppColors.accentGold,
+                        size: 24,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Evolution WhatsApp Gateway',
+                            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                          ),
+                          Text(
+                            'wa.vmstudio.digital • Instance: TripCosmos.co',
+                            style: TextStyle(color: Colors.white54, fontSize: 11),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                if (isOpen) ...[
+                  Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: AppColors.successGreen.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: AppColors.successGreen.withValues(alpha: 0.4)),
+                    ),
+                    child: const Row(
+                      children: [
+                        Icon(Icons.verified_rounded, color: AppColors.successGreen, size: 20),
+                        SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            'Your WhatsApp session (+91 93361 16210) is active and connected. Real-time message sending and delivery receipts are functioning.',
+                            style: TextStyle(color: Colors.white, fontSize: 12),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ] else if (qr.isNotEmpty) ...[
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF0F172A),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: Colors.white12),
+                    ),
+                    child: const Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Instructions to Link Device:',
+                          style: TextStyle(color: AppColors.accentGold, fontSize: 12, fontWeight: FontWeight.bold),
+                        ),
+                        SizedBox(height: 4),
+                        Text(
+                          '1. Open WhatsApp on office phone (+91 93361 16210)\n'
+                          '2. Tap Settings / 3-dots Menu (⋮) -> Linked Devices\n'
+                          '3. Tap "Link a Device" and scan the QR code below:',
+                          style: TextStyle(color: Colors.white70, fontSize: 11.5, height: 1.4),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  Center(
+                    child: Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: const [
+                          BoxShadow(color: Colors.black26, blurRadius: 10, offset: Offset(0, 4)),
+                        ],
+                      ),
+                      child: Builder(
+                        builder: (_) {
+                          if (qr.startsWith('http://') || qr.startsWith('https://')) {
+                            return Image.network(qr, width: 220, height: 220, fit: BoxFit.contain);
+                          }
+                          try {
+                            final base64String = qr.contains(',') ? qr.split(',').last : qr;
+                            final cleanString = base64String.replaceAll(RegExp(r'\s+'), '');
+                            final bytes = base64Decode(cleanString);
+                            return Image.memory(bytes, width: 220, height: 220, fit: BoxFit.contain);
+                          } catch (e) {
+                            return Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: Text('Error decoding QR: $e', style: const TextStyle(color: Colors.black, fontSize: 11)),
+                            );
+                          }
+                        },
+                      ),
+                    ),
+                  ),
+                  if (pairingCode.isNotEmpty) ...[
+                    const SizedBox(height: 10),
+                    Center(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF1E293B),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: AppColors.accentGold.withValues(alpha: 0.5)),
+                        ),
+                        child: Text(
+                          'Pairing Code: $pairingCode',
+                          style: const TextStyle(color: AppColors.accentGold, fontWeight: FontWeight.bold, fontSize: 13),
+                        ),
+                      ),
+                    ),
+                  ],
+                ] else ...[
+                  Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF0F172A),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: AppColors.errorRed.withValues(alpha: 0.4)),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          '⚠️ Session State: Disconnected / Closed',
+                          style: TextStyle(color: AppColors.errorRed, fontWeight: FontWeight.bold, fontSize: 13),
+                        ),
+                        const SizedBox(height: 6),
+                        const Text(
+                          'Baileys session disconnected on wa.vmstudio.digital. You can initialize a new pairing QR directly from the Evolution web dashboard:',
+                          style: TextStyle(color: Colors.white70, fontSize: 12),
+                        ),
+                        const SizedBox(height: 12),
+                        ElevatedButton.icon(
+                          onPressed: () {
+                            TelephonyService.launchBrowser('https://wa.vmstudio.digital/manager');
+                          },
+                          icon: const Icon(Icons.open_in_new, size: 16),
+                          label: const Text('Open Evolution Manager Dashboard'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.whatsappGreen,
+                            foregroundColor: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      context.read<WhatsAppProvider>().fetchThreadsFromServer();
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF334155),
+                      foregroundColor: Colors.white,
+                    ),
+                    child: const Text('Close'),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final wp = Provider.of<WhatsAppProvider>(context);
@@ -324,12 +554,32 @@ class _WhatsAppHubScreenState extends State<WhatsAppHubScreen> {
             tooltip: 'Live Website Visitor Radar',
           ),
           IconButton(
+            onPressed: () => _showEvolutionGatewayModal(context),
+            icon: Icon(
+              Icons.qr_code_scanner_rounded,
+              color: wp.evolutionOnline ? AppColors.whatsappGreen : AppColors.errorRed,
+            ),
+            tooltip: 'WhatsApp Gateway & QR Reconnect',
+          ),
+          IconButton(
             onPressed: () {
               wp.fetchThreadsFromServer();
               _fetchWebChats();
             },
             icon: const Icon(Icons.refresh, color: AppColors.accentGold),
             tooltip: 'Sync Evolution WhatsApp & CRM',
+          ),
+          IconButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => SettingsScreen(apiService: _apiService),
+                ),
+              );
+            },
+            icon: const Icon(Icons.settings_outlined, color: AppColors.accentGold),
+            tooltip: 'Server & Companion Settings',
           ),
         ],
       ),
@@ -348,6 +598,51 @@ class _WhatsAppHubScreenState extends State<WhatsAppHubScreen> {
       body: SafeArea(
         child: Column(
           children: [
+            if (!wp.evolutionOnline)
+              Container(
+                margin: const EdgeInsets.fromLTRB(14, 8, 14, 4),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF3B0764), Color(0xFF1E1B4B)],
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppColors.accentGold.withValues(alpha: 0.6)),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.qr_code_2_rounded, color: AppColors.accentGold, size: 24),
+                    const SizedBox(width: 10),
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'WhatsApp Gateway Disconnected',
+                            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
+                          ),
+                          Text(
+                            'Office phone (+91 93361 16210) unlinked. Scan QR to restore live messaging.',
+                            style: TextStyle(color: Colors.white70, fontSize: 11),
+                          ),
+                        ],
+                      ),
+                    ),
+                    ElevatedButton.icon(
+                      onPressed: () => _showEvolutionGatewayModal(context),
+                      icon: const Icon(Icons.qr_code_scanner, size: 14),
+                      label: const Text('Scan QR', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.whatsappGreen,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             // Top Mode Switcher Bar
             Padding(
               padding: const EdgeInsets.fromLTRB(14, 10, 14, 6),
