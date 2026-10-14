@@ -39,6 +39,10 @@ class TelephonyService {
       if (kIsWeb) {
         return await launchUrl(uri, mode: LaunchMode.platformDefault);
       }
+      final nativeUri = Uri.parse('whatsapp://send?phone=$cleanPhone&text=$encodedMessage');
+      if (await canLaunchUrl(nativeUri)) {
+        return await launchUrl(nativeUri, mode: LaunchMode.externalApplication);
+      }
       if (await canLaunchUrl(uri)) {
         return await launchUrl(uri, mode: LaunchMode.externalApplication);
       } else {

@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 
@@ -26,13 +27,43 @@ class LeadProvider extends ChangeNotifier {
   LeadProvider({required this.apiService}) {
     _leads = _buildInitialLeads();
     _initAgentIdentity();
+    _loadCachedLeads();
     refreshLeadsFromServer();
+  }
+
+  Future<void> _loadCachedLeads() async {
+    try {
+      final cachedJson = await StorageService.getCachedLeads();
+      if (cachedJson != null && cachedJson.isNotEmpty) {
+        final decoded = jsonDecode(cachedJson);
+        if (decoded is List && decoded.isNotEmpty) {
+          final list = decoded
+              .map((item) => LeadModel.fromJson(Map<String, dynamic>.from(item as Map)))
+              .toList();
+          if (list.isNotEmpty) {
+            _leads = list;
+            notifyListeners();
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('Error loading cached leads: $e');
+    }
+  }
+
+  Future<void> _saveLeadsToCache() async {
+    try {
+      final jsonStr = jsonEncode(_leads.map((l) => l.toJson()).toList());
+      await StorageService.setCachedLeads(jsonStr);
+    } catch (e) {
+      debugPrint('Error saving leads to cache: $e');
+    }
   }
 
   String _ownerFilter = 'all'; // 'all', 'my_leads', 'unassigned', 'follow_ups'
   String get ownerFilter => _ownerFilter;
 
-  String _currentAgent = '';
+  String _currentAgent = 'Nishkarsh';
   String get currentAgent => _currentAgent;
 
   Future<void> _initAgentIdentity() async {
@@ -65,11 +96,23 @@ class LeadProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Helper: Check if lead is assigned to agent or their team AI persona (Team Nishkarsh / Team Aditi)
+  static bool isLeadAssignedToAgent(String stickyAgent, String agent) {
+    if (stickyAgent.isEmpty || agent.isEmpty) return false;
+    final s = stickyAgent.toLowerCase().trim();
+    final a = agent.toLowerCase().trim();
+    if (s == a) return true;
+    if (a.contains('nishkarsh') && s.contains('nishkarsh')) return true;
+    if (a.contains('aditi') && s.contains('aditi')) return true;
+    if (a.contains('adity') && (s.contains('aditi') || s.contains('adity'))) return true;
+    return false;
+  }
+
   int get myLeadsCount {
     if (_currentAgent.isEmpty) return 0;
     return _leads.where((l) =>
       l.stickyAgent.isNotEmpty &&
-      l.stickyAgent.toLowerCase() == _currentAgent.toLowerCase()
+      isLeadAssignedToAgent(l.stickyAgent, _currentAgent)
     ).length;
   }
 
@@ -105,7 +148,7 @@ class LeadProvider extends ChangeNotifier {
 
       final isMyLead = _currentAgent.isNotEmpty &&
           lead.stickyAgent.isNotEmpty &&
-          lead.stickyAgent.toLowerCase() == _currentAgent.toLowerCase();
+          isLeadAssignedToAgent(lead.stickyAgent, _currentAgent);
       final isUnassigned = lead.stickyAgent.isEmpty ||
           lead.stickyAgent.toLowerCase() == 'unassigned' ||
           lead.stickyAgent.toLowerCase() == 'admin';
@@ -148,6 +191,7 @@ class LeadProvider extends ChangeNotifier {
       if (serverLeads.isNotEmpty) {
         _leads = serverLeads;
         _isLiveConnected = true;
+        _saveLeadsToCache();
       }
     } catch (e) {
       debugPrint('Error syncing leads from server: $e');
@@ -171,7 +215,7 @@ class LeadProvider extends ChangeNotifier {
         budget: '₹25,000',
         stage: 'new',
         source: 'website_chat',
-        stickyAgent: 'Aditi',
+        stickyAgent: 'Nishkarsh AI',
         score: 85,
         createdAt: now.subtract(const Duration(minutes: 18)),
         tags: ['VIP Sugam', 'Innova Crysta', 'Senior Citizens'],
@@ -189,7 +233,7 @@ class LeadProvider extends ChangeNotifier {
         budget: '₹18,000',
         stage: 'contacted',
         source: 'whatsapp',
-        stickyAgent: 'Aditi',
+        stickyAgent: 'Nishkarsh',
         score: 78,
         createdAt: now.subtract(const Duration(hours: 2)),
         tags: ['Ram Mandir VIP', 'Couple'],
@@ -207,7 +251,7 @@ class LeadProvider extends ChangeNotifier {
         budget: '₹48,000',
         stage: 'quote_sent',
         source: 'meta_ads',
-        stickyAgent: 'Santosh',
+        stickyAgent: 'Aditi AI',
         score: 92,
         createdAt: now.subtract(const Duration(hours: 5)),
         tags: ['Golden Circuit', 'High Intent'],
@@ -225,7 +269,7 @@ class LeadProvider extends ChangeNotifier {
         budget: '₹12,000',
         stage: 'advance_received',
         source: 'phone_call',
-        stickyAgent: 'Santosh',
+        stickyAgent: 'Aditi',
         score: 96,
         createdAt: now.subtract(const Duration(days: 1)),
         tags: ['Advance Paid', 'Sedan AC'],
@@ -262,6 +306,7 @@ class LeadProvider extends ChangeNotifier {
         lastContactAt: DateTime.now(),
       );
       _leads[index] = updated;
+      _saveLeadsToCache();
       notifyListeners();
 
       apiService.updateLead(
@@ -286,6 +331,7 @@ class LeadProvider extends ChangeNotifier {
         notes: currentNotes,
         lastContactAt: DateTime.now(),
       );
+      _saveLeadsToCache();
       notifyListeners();
 
       apiService.updateLead(
@@ -298,14 +344,20 @@ class LeadProvider extends ChangeNotifier {
     }
   }
 
-  void assignLeadOwner(String leadId, String newOwner) {
+  void assignLeadOwner(String leadId, String newOwner) async {
     final index = _leads.indexWhere((l) => l.id == leadId);
     if (index != -1) {
       final lead = _leads[index];
       _leads[index] = lead.copyWith(stickyAgent: newOwner);
+      _saveLeadsToCache();
       notifyListeners();
 
-      apiService.updateLead(
+      // Call assign-lead endpoint first to execute database updates and activity logging
+      await apiService.assignLead(
+        leadId: leadId,
+        managerName: newOwner,
+      );
+      await apiService.updateLead(
         leadId: leadId,
         phone: lead.phone,
         name: lead.name,
@@ -319,6 +371,7 @@ class LeadProvider extends ChangeNotifier {
     if (index != -1) {
       final lead = _leads[index];
       _leads[index] = lead.copyWith(nextFollowUpAt: followUpAt);
+      _saveLeadsToCache();
       notifyListeners();
 
       apiService.updateLead(
@@ -341,6 +394,7 @@ class LeadProvider extends ChangeNotifier {
     String stage = 'new',
     String? note,
     DateTime? nextFollowUpAt,
+    String owner = 'Nishkarsh AI',
   }) async {
     final tempLead = LeadModel(
       id: 'ld_${const Uuid().v4().substring(0, 8)}',
@@ -352,12 +406,14 @@ class LeadProvider extends ChangeNotifier {
       budget: budget,
       stage: stage,
       source: source,
+      stickyAgent: owner,
       createdAt: DateTime.now(),
       nextFollowUpAt: nextFollowUpAt,
       notes: note != null && note.isNotEmpty ? [note] : [],
     );
 
     _leads.insert(0, tempLead);
+    _saveLeadsToCache();
     notifyListeners();
 
     final res = await apiService.createLead(
@@ -370,6 +426,7 @@ class LeadProvider extends ChangeNotifier {
       pax: pax,
       stage: stage,
       nextFollowUpAt: nextFollowUpAt?.toIso8601String(),
+      owner: owner,
     );
 
     if (res != null && res['ok'] == true) {

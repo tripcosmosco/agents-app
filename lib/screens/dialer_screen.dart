@@ -79,10 +79,15 @@ class _DialerScreenState extends State<DialerScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Text(
-                        AppConstants.appName,
-                        style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+                      const Flexible(
+                        child: Text(
+                          AppConstants.appName,
+                          style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
                       const SizedBox(width: 6),
                       Consumer<LeadProvider>(
@@ -100,12 +105,17 @@ class _DialerScreenState extends State<DialerScreen> {
                               children: [
                                 const Icon(Icons.circle, size: 5, color: AppColors.successGreen),
                                 const SizedBox(width: 3),
-                                Text(
-                                  agentName,
-                                  style: const TextStyle(
-                                    color: AppColors.successGreen,
-                                    fontSize: 9,
-                                    fontWeight: FontWeight.w700,
+                                ConstrainedBox(
+                                  constraints: const BoxConstraints(maxWidth: 75),
+                                  child: Text(
+                                    agentName,
+                                    style: const TextStyle(
+                                      color: AppColors.successGreen,
+                                      fontSize: 9,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
                               ],

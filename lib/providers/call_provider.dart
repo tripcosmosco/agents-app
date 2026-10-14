@@ -1,10 +1,12 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 
 import '../models/call_log_model.dart';
 import '../services/api_service.dart';
+import '../services/storage_service.dart';
 import '../services/telephony_service.dart';
 
 enum CallState { idle, ringing, dialing, connected, ended }
@@ -122,14 +124,45 @@ class CallProvider extends ChangeNotifier {
   }
 
   CallProvider({required this.apiService}) {
+    _loadCachedCallLogs();
     fetchCallLogsFromServer();
     startQueuePolling();
+  }
+
+  Future<void> _loadCachedCallLogs() async {
+    try {
+      final cachedJson = await StorageService.getCachedCallLogs();
+      if (cachedJson != null && cachedJson.isNotEmpty) {
+        final decoded = jsonDecode(cachedJson);
+        if (decoded is List && decoded.isNotEmpty) {
+          final list = decoded
+              .map((item) => CallLogModel.fromJson(Map<String, dynamic>.from(item as Map)))
+              .toList();
+          if (list.isNotEmpty) {
+            _callLogs = list;
+            notifyListeners();
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('Error loading cached call logs: $e');
+    }
+  }
+
+  Future<void> _saveCallLogsToCache() async {
+    try {
+      final jsonStr = jsonEncode(_callLogs.map((c) => c.toJson()).toList());
+      await StorageService.setCachedCallLogs(jsonStr);
+    } catch (e) {
+      debugPrint('Error saving call logs to cache: $e');
+    }
   }
 
   Future<void> fetchCallLogsFromServer() async {
     final logs = await apiService.fetchCallLogs();
     if (logs.isNotEmpty) {
       _callLogs = logs;
+      _saveCallLogsToCache();
       notifyListeners();
     }
   }
@@ -311,6 +344,7 @@ class CallProvider extends ChangeNotifier {
 
     _callLogs.insert(0, newLog);
     _lastCompletedCall = newLog;
+    _saveCallLogsToCache();
     notifyListeners();
 
     // Report completion to WordPress

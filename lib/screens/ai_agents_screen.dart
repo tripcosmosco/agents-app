@@ -67,18 +67,24 @@ class _AiAgentsScreenState extends State<AiAgentsScreen> {
                   child: const Icon(Icons.school_rounded, color: AppColors.accentGold, size: 24),
                 ),
                 const SizedBox(width: 12),
-                const Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'AI Agent Training & Knowledge Base',
-                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
-                    ),
-                    Text(
-                      'Tour Packages, Pricing Rules & Fleet Tariffs',
-                      style: TextStyle(color: Colors.white54, fontSize: 12),
-                    ),
-                  ],
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'AI Agent Knowledge Base',
+                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      Text(
+                        'Tour Packages, Pricing Rules & Fleet Tariffs',
+                        style: TextStyle(color: Colors.white54, fontSize: 11.5),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -497,29 +503,36 @@ class _AiAgentsScreenState extends State<AiAgentsScreen> {
                   children: [
                     Row(
                       children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: AppColors.accentGold.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: const Row(
-                            children: [
-                              Icon(Icons.handshake_rounded, size: 14, color: AppColors.accentGold),
-                              SizedBox(width: 5),
-                              Text(
-                                'HUMAN + AI SALES CO-PILOT DUO',
-                                style: TextStyle(
-                                  color: AppColors.accentGold,
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w800,
-                                  letterSpacing: 0.8,
+                        Flexible(
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: AppColors.accentGold.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.handshake_rounded, size: 13, color: AppColors.accentGold),
+                                SizedBox(width: 4),
+                                Flexible(
+                                  child: Text(
+                                    'HUMAN + AI DUO',
+                                    style: TextStyle(
+                                      color: AppColors.accentGold,
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w800,
+                                      letterSpacing: 0.6,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ),
-                        const Spacer(),
+                        const SizedBox(width: 8),
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                           decoration: BoxDecoration(
@@ -546,29 +559,35 @@ class _AiAgentsScreenState extends State<AiAgentsScreen> {
                       children: [
                         // Human Specialist Avatar
                         CircleAvatar(
-                          radius: 20,
+                          radius: 19,
                           backgroundColor: const Color(0xFF334155),
                           child: Text(
                             humanAgent.isNotEmpty ? humanAgent.split(' ').map((e) => e.isNotEmpty ? e[0] : '').take(2).join() : 'SY',
-                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
                           ),
                         ),
                         const SizedBox(width: 8),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              humanAgent.isNotEmpty ? humanAgent : 'Santosh Yadav',
-                              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
-                            ),
-                            const Text(
-                              'Human Sales Specialist',
-                              style: TextStyle(color: Colors.white54, fontSize: 11),
-                            ),
-                          ],
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                humanAgent.isNotEmpty ? humanAgent : 'Santosh Yadav',
+                                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const Text(
+                                'Human Rep',
+                                style: TextStyle(color: Colors.white54, fontSize: 11),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
                         ),
                         const Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 10),
+                          padding: EdgeInsets.symmetric(horizontal: 6),
                           child: Icon(Icons.compare_arrows_rounded, color: AppColors.accentGold, size: 20),
                         ),
                         // AI Agent Avatar
@@ -579,9 +598,9 @@ class _AiAgentsScreenState extends State<AiAgentsScreen> {
                             border: Border.all(color: AppColors.accentGold, width: 1.5),
                           ),
                           child: const CircleAvatar(
-                            radius: 18,
+                            radius: 17,
                             backgroundColor: AppColors.accentGold,
-                            child: Icon(Icons.smart_toy_rounded, color: Colors.black, size: 20),
+                            child: Icon(Icons.smart_toy_rounded, color: Colors.black, size: 18),
                           ),
                         ),
                         const SizedBox(width: 8),
@@ -592,10 +611,14 @@ class _AiAgentsScreenState extends State<AiAgentsScreen> {
                               Text(
                                 pairedAiName,
                                 style: const TextStyle(color: AppColors.accentGold, fontWeight: FontWeight.bold, fontSize: 13),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
                               const Text(
-                                'AI Closer & Co-Pilot',
+                                'AI Co-Pilot',
                                 style: TextStyle(color: Colors.white54, fontSize: 11),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ],
                           ),

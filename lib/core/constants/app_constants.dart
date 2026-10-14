@@ -51,13 +51,36 @@ class AppConstants {
     {'id': 'lost', 'label': 'Lost', 'color': 0xFFEF4444},
   ];
 
-  // Team Telecallers / Lead Owners (Human + AI Co-Pilot Duo)
+  // Team Telecallers / Lead Owners: Team Nishkarsh & Team Aditi (Human + AI Co-Pilots)
   static const List<Map<String, String>> teamMembers = [
-    {'name': 'Aditi', 'initials': 'AD', 'role': 'Sales & Pilgrimage Specialist (Duo: Aditi AI)', 'email': 'aditi@tripcosmos.co', 'phone': '+91 93361 16210'},
-    {'name': 'Santosh Yadav', 'initials': 'SY', 'role': 'Senior Sales Specialist (Duo: Puffer Voice)', 'email': 'santosh@tripcosmos.co', 'phone': '+91 93361 16210'},
-    {'name': 'Ajay Verma', 'initials': 'AV', 'role': 'Inbound Lead Manager', 'email': 'ajay@tripcosmos.co', 'phone': '+91 98190 55432'},
-    {'name': 'Nishkarsh Pushpam', 'initials': 'NP', 'role': 'Operations & Booking Lead', 'email': 'operations@tripcosmos.co', 'phone': '+91 74640 42539'},
-    {'name': 'TripCosmos Admin', 'initials': 'TC', 'role': 'Master SuperAdmin', 'email': 'admin@tripcosmos.co', 'phone': '+91 93361 16210'},
+    {
+      'name': 'Nishkarsh AI',
+      'initials': 'NA',
+      'role': 'Team Nishkarsh AI Lead (Auto-Assignment Default)',
+      'email': 'operations@tripcosmos.co',
+      'phone': '+91 84332 84773',
+    },
+    {
+      'name': 'Nishkarsh',
+      'initials': 'NP',
+      'role': 'Team Nishkarsh Operations & Lead Manager',
+      'email': 'hellonishkarsh@gmail.com',
+      'phone': '+91 84332 84773',
+    },
+    {
+      'name': 'Aditi AI',
+      'initials': 'AA',
+      'role': 'Team Aditi AI Specialist & Tour Closer',
+      'email': 'aditi@tripcosmos.co',
+      'phone': '+91 93361 16210',
+    },
+    {
+      'name': 'Aditi',
+      'initials': 'AK',
+      'role': 'Team Aditi Sales & Pilgrimage Specialist',
+      'email': 'aditikarna000@gmail.com',
+      'phone': '+91 93361 16210',
+    },
   ];
 
   // Tour Circuits for 1-Tap Post-Call Actions

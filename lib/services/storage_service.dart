@@ -70,6 +70,40 @@ class StorageService {
     return prefs.setBool(_keyAiReceptionistActive, active);
   }
 
+  static const String _keyCachedLeads = 'tc_cached_leads_json';
+  static const String _keyCachedThreads = 'tc_cached_threads_json';
+  static const String _keyCachedCallLogs = 'tc_cached_call_logs_json';
+
+  static Future<String?> getCachedLeads() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_keyCachedLeads);
+  }
+
+  static Future<void> setCachedLeads(String jsonStr) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_keyCachedLeads, jsonStr);
+  }
+
+  static Future<String?> getCachedThreads() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_keyCachedThreads);
+  }
+
+  static Future<void> setCachedThreads(String jsonStr) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_keyCachedThreads, jsonStr);
+  }
+
+  static Future<String?> getCachedCallLogs() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_keyCachedCallLogs);
+  }
+
+  static Future<void> setCachedCallLogs(String jsonStr) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_keyCachedCallLogs, jsonStr);
+  }
+
   static Future<String?> getString(String key) async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString(key);

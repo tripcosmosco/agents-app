@@ -649,17 +649,15 @@ class _WhatsAppHubScreenState extends State<WhatsAppHubScreen> {
               child: Row(
                 children: [
                   Expanded(
-                    flex: 5,
                     child: _buildTabPill(
                       index: 0,
-                      label: 'WhatsApp Hub',
+                      label: 'WhatsApp',
                       badge: '${wp.threads.length}',
                       icon: Icons.chat_bubble_rounded,
                     ),
                   ),
                   const SizedBox(width: 8),
                   Expanded(
-                    flex: 4,
                     child: _buildTabPill(
                       index: 1,
                       label: 'Web Live',
@@ -669,7 +667,6 @@ class _WhatsAppHubScreenState extends State<WhatsAppHubScreen> {
                   ),
                   const SizedBox(width: 8),
                   Expanded(
-                    flex: 3,
                     child: _buildTabPill(
                       index: 2,
                       label: 'Quotes',
@@ -1567,46 +1564,46 @@ class _WhatsAppHubScreenState extends State<WhatsAppHubScreen> {
             width: isSelected ? 1.5 : 1,
           ),
         ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              icon,
-              size: 15,
-              color: isSelected ? AppColors.whatsappGreen : AppColors.textMuted,
-            ),
-            const SizedBox(width: 5),
-            Flexible(
-              child: Text(
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                icon,
+                size: 14,
+                color: isSelected ? AppColors.whatsappGreen : AppColors.textMuted,
+              ),
+              const SizedBox(width: 5),
+              Text(
                 label,
                 style: TextStyle(
                   color: isSelected ? Colors.white : AppColors.textMuted,
                   fontSize: 11.5,
                   fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
                 ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
               ),
-            ),
-            if (badge != null && badge != '0') ...[
-              const SizedBox(width: 5),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
-                decoration: BoxDecoration(
-                  color: isSelected ? AppColors.whatsappGreen : AppColors.borderSubtle,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  badge,
-                  style: TextStyle(
-                    color: isSelected ? Colors.black : Colors.white,
-                    fontSize: 9.5,
-                    fontWeight: FontWeight.w900,
+              if (badge != null && badge != '0') ...[
+                const SizedBox(width: 5),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                  decoration: BoxDecoration(
+                    color: isSelected ? AppColors.whatsappGreen : AppColors.borderSubtle,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    badge,
+                    style: TextStyle(
+                      color: isSelected ? Colors.black : Colors.white,
+                      fontSize: 9.5,
+                      fontWeight: FontWeight.w900,
+                    ),
                   ),
                 ),
-              ),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );

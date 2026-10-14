@@ -648,6 +648,168 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
               const SizedBox(height: 14),
 
+              // Active Team Persona Selector (Team Nishkarsh vs Team Aditi)
+              Consumer2<LeadProvider, WhatsAppProvider>(
+                builder: (context, leadProvider, waProvider, _) {
+                  final currentAgent = leadProvider.currentAgent.isNotEmpty
+                      ? leadProvider.currentAgent
+                      : 'Nishkarsh';
+                  final isNishkarsh = currentAgent.toLowerCase().contains('nishkarsh');
+
+                  return GlassCard(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Row(
+                          children: [
+                            Icon(Icons.badge_rounded, color: AppColors.accentGold, size: 20),
+                            SizedBox(width: 8),
+                            Text(
+                              'Active Team Persona & AI Co-Pilot',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        const Text(
+                          'Select your active operational team for lead filtering, assignment, and companion sync:',
+                          style: TextStyle(fontSize: 11, color: AppColors.textMuted),
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: InkWell(
+                                borderRadius: BorderRadius.circular(12),
+                                onTap: () {
+                                  leadProvider.setCurrentAgent('Nishkarsh');
+                                  waProvider.setCurrentAgent('Nishkarsh');
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('✓ Switched active team to Team Nishkarsh (Nishkarsh & Nishkarsh AI)'),
+                                      duration: Duration(seconds: 2),
+                                    ),
+                                  );
+                                },
+                                child: Container(
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: isNishkarsh
+                                        ? AppColors.accentBlue.withValues(alpha: 0.2)
+                                        : AppColors.surfaceCard,
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: isNishkarsh
+                                          ? AppColors.accentBlue
+                                          : AppColors.borderSubtle,
+                                      width: isNishkarsh ? 1.5 : 1.0,
+                                    ),
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          CircleAvatar(
+                                            radius: 14,
+                                            backgroundColor: isNishkarsh ? AppColors.accentBlue : const Color(0xFF334155),
+                                            child: const Text('NA', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white)),
+                                          ),
+                                          const SizedBox(width: 8),
+                                          const Expanded(
+                                            child: Text(
+                                              'Team Nishkarsh',
+                                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ),
+                                          if (isNishkarsh)
+                                            const Icon(Icons.check_circle_rounded, color: AppColors.successGreen, size: 16),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 6),
+                                      const Text(
+                                        'Human: Nishkarsh\nAI: Nishkarsh AI (Default)',
+                                        style: TextStyle(fontSize: 10.5, color: Colors.white70, height: 1.3),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: InkWell(
+                                borderRadius: BorderRadius.circular(12),
+                                onTap: () {
+                                  leadProvider.setCurrentAgent('Aditi');
+                                  waProvider.setCurrentAgent('Aditi');
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('✓ Switched active team to Team Aditi (Aditi & Aditi AI)'),
+                                      duration: Duration(seconds: 2),
+                                    ),
+                                  );
+                                },
+                                child: Container(
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: !isNishkarsh
+                                        ? AppColors.accentBlue.withValues(alpha: 0.2)
+                                        : AppColors.surfaceCard,
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: !isNishkarsh
+                                          ? AppColors.accentBlue
+                                          : AppColors.borderSubtle,
+                                      width: !isNishkarsh ? 1.5 : 1.0,
+                                    ),
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          CircleAvatar(
+                                            radius: 14,
+                                            backgroundColor: !isNishkarsh ? AppColors.accentBlue : const Color(0xFF334155),
+                                            child: const Text('AA', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white)),
+                                          ),
+                                          const SizedBox(width: 8),
+                                          const Expanded(
+                                            child: Text(
+                                              'Team Aditi',
+                                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ),
+                                          if (!isNishkarsh)
+                                            const Icon(Icons.check_circle_rounded, color: AppColors.successGreen, size: 16),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 6),
+                                      const Text(
+                                        'Human: Aditi\nAI: Aditi AI (Closer)',
+                                        style: TextStyle(fontSize: 10.5, color: Colors.white70, height: 1.3),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(height: 14),
+
               // App Privacy & Security Gate Card
               GlassCard(
                 padding: const EdgeInsets.all(16),

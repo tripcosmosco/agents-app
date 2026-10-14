@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import '../models/whatsapp_thread_model.dart';
 import '../services/api_service.dart';
@@ -27,7 +28,7 @@ class WhatsAppProvider extends ChangeNotifier {
   bool _evolutionOnline = true;
   bool get evolutionOnline => _evolutionOnline;
 
-  String _currentAgentName = '';
+  String _currentAgentName = 'Nishkarsh';
   String get currentAgentName => _currentAgentName;
 
   int get totalUnreadCount => _threads.fold(0, (sum, th) => sum + th.unreadCount);
@@ -37,7 +38,40 @@ class WhatsAppProvider extends ChangeNotifier {
 
   WhatsAppProvider({required this.apiService}) {
     _initAgentName();
+    _loadCachedThreads();
     fetchThreadsFromServer();
+  }
+
+  Future<void> _loadCachedThreads() async {
+    try {
+      final cachedJson = await StorageService.getCachedThreads();
+      if (cachedJson != null && cachedJson.isNotEmpty) {
+        final decoded = jsonDecode(cachedJson);
+        if (decoded is List && decoded.isNotEmpty) {
+          final list = decoded
+              .map((item) => WhatsAppThread.fromJson(Map<String, dynamic>.from(item as Map)))
+              .toList();
+          if (list.isNotEmpty) {
+            _threads = list;
+            if (_selectedThreadId == null && _threads.isNotEmpty) {
+              _selectedThreadId = _threads.first.id;
+            }
+            notifyListeners();
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('Error loading cached WhatsApp threads: $e');
+    }
+  }
+
+  Future<void> _saveThreadsToCache() async {
+    try {
+      final jsonStr = jsonEncode(_threads.map((t) => t.toJson()).toList());
+      await StorageService.setCachedThreads(jsonStr);
+    } catch (e) {
+      debugPrint('Error saving threads to cache: $e');
+    }
   }
 
   Future<void> _initAgentName() async {
@@ -75,7 +109,10 @@ class WhatsAppProvider extends ChangeNotifier {
           (_filter == 'quoted' && (th.stage == 'quote_sent' || th.stage == 'qualified' || th.dealValue > 0)) ||
           (_filter == 'followup' && th.nextFollowUpAt != null) ||
           (_filter == 'b2b' && isB2bThread(th)) ||
-          (_filter == 'mine' && th.assignedAgent.toLowerCase() == _currentAgentName.toLowerCase()) ||
+          (_filter == 'mine' && (th.assignedAgent.toLowerCase() == _currentAgentName.toLowerCase() ||
+              (_currentAgentName.toLowerCase().contains('nishkarsh') && th.assignedAgent.toLowerCase().contains('nishkarsh')) ||
+              (_currentAgentName.toLowerCase().contains('aditi') && th.assignedAgent.toLowerCase().contains('aditi')) ||
+              (_currentAgentName.toLowerCase().contains('adity') && (th.assignedAgent.toLowerCase().contains('aditi') || th.assignedAgent.toLowerCase().contains('adity'))))) ||
           (_filter == 'ai_active' && th.isAiAssisted);
 
       return matchesSearch && matchesFilter;
@@ -177,6 +214,7 @@ class WhatsAppProvider extends ChangeNotifier {
       final th = _threads[index];
       final nextState = !th.isAiAssisted;
       _threads[index] = th.copyWith(isAiAssisted: nextState);
+      _saveThreadsToCache();
       notifyListeners();
 
       await apiService.updateLead(
@@ -193,6 +231,7 @@ class WhatsAppProvider extends ChangeNotifier {
     if (index != -1) {
       final th = _threads[index];
       _threads[index] = th.copyWith(assignedAgent: newAgent);
+      _saveThreadsToCache();
       notifyListeners();
 
       await apiService.updateLead(
@@ -209,6 +248,7 @@ class WhatsAppProvider extends ChangeNotifier {
     if (index != -1 && newName.trim().isNotEmpty) {
       final th = _threads[index];
       _threads[index] = th.copyWith(customerName: newName.trim());
+      _saveThreadsToCache();
       notifyListeners();
 
       await apiService.updateLead(
@@ -307,6 +347,7 @@ class WhatsAppProvider extends ChangeNotifier {
           messages: msgs,
           lastMessageStatus: ok ? 'delivered' : 'failed',
         );
+        _saveThreadsToCache();
         notifyListeners();
       }
     }
@@ -336,6 +377,7 @@ class WhatsAppProvider extends ChangeNotifier {
       timeAgo: 'Just now',
       messages: updatedMessages,
     );
+    _saveThreadsToCache();
     notifyListeners();
 
     await apiService.updateLead(
@@ -389,6 +431,7 @@ class WhatsAppProvider extends ChangeNotifier {
             lastMessageTime: lastMsg.timestamp,
             lastMessageFromMe: !lastMsg.isFromCustomer,
           );
+          _saveThreadsToCache();
         }
       }
     } catch (e) {
@@ -446,9 +489,9 @@ class WhatsAppProvider extends ChangeNotifier {
                 'Spiritual Circuit';
             final stage = item['stage']?.toString() ?? 'new';
             final rawOwner = item['assigned_agent']?.toString() ?? item['owner']?.toString();
-            final owner = (rawOwner != null && rawOwner.trim().isNotEmpty)
+            final owner = (rawOwner != null && rawOwner.trim().isNotEmpty && rawOwner.trim().toLowerCase() != 'unassigned')
                 ? rawOwner.trim()
-                : (_currentAgentName.isNotEmpty ? _currentAgentName : 'Unassigned');
+                : 'Nishkarsh AI';
             final unreadCount = int.tryParse(item['unread_count']?.toString() ?? '0') ?? 0;
             final contactId = int.tryParse(item['contact_id']?.toString() ?? '0') ?? 0;
             final callCount = int.tryParse(item['call_count']?.toString() ?? '0') ?? 0;
@@ -520,6 +563,7 @@ class WhatsAppProvider extends ChangeNotifier {
           if (_selectedThreadId == null && _threads.isNotEmpty) {
             _selectedThreadId = _threads.first.id;
           }
+          _saveThreadsToCache();
         }
       }
     } catch (e) {
@@ -572,6 +616,7 @@ class WhatsAppProvider extends ChangeNotifier {
       ],
     );
     _threads.insert(0, newThread);
+    _saveThreadsToCache();
     _selectedThreadId = newThread.id;
     notifyListeners();
     loadThreadMessages(newThread.id);

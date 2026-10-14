@@ -517,13 +517,22 @@ class _TravelQuoteDialogState extends State<TravelQuoteDialog> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text(
-                              'Suggested Retail: ${currencyFormatter.format(_retailPrice)}',
-                              style: const TextStyle(fontSize: 11, color: Colors.white70),
+                            Flexible(
+                              child: Text(
+                                'Retail: ${currencyFormatter.format(_retailPrice)}',
+                                style: const TextStyle(fontSize: 11, color: Colors.white70),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ),
-                            Text(
-                              'Agency Profit: +${currencyFormatter.format(_agentMargin)} (16%)',
-                              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Color(0xFF34D399)),
+                            const SizedBox(width: 8),
+                            Flexible(
+                              child: Text(
+                                'Profit: +${currencyFormatter.format(_agentMargin)} (16%)',
+                                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Color(0xFF34D399)),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ),
                           ],
                         ),

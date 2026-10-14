@@ -6,6 +6,7 @@ import '../core/theme/app_colors.dart';
 import '../models/call_log_model.dart';
 import '../providers/call_provider.dart';
 import '../providers/lead_provider.dart';
+import '../services/telephony_service.dart';
 import 'glass_card.dart';
 
 class PostCallActionSheet extends StatefulWidget {
@@ -236,6 +237,59 @@ Har Har Mahadev! 🙏
               ),
             ),
             const SizedBox(height: 10),
+
+            // Direct WhatsApp Chat with Traveler Button
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8.0),
+              child: GlassCard(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                backgroundColor: AppColors.whatsappGreen.withValues(alpha: 0.12),
+                borderColor: AppColors.whatsappGreen.withValues(alpha: 0.35),
+                onTap: () async {
+                  final tailoredText = '''Namaste ${widget.callLog.customerName} ji! 🙏
+Thank you for speaking with TripCosmos.co regarding your ${widget.callLog.tourInterest ?? "Varanasi Pilgrimage"}.
+
+I am your dedicated tour coordinator from our Varanasi desk (+91 93361 16210). Let me know if you would like me to share hotel options, VIP darshan passes, or a dedicated AC cab itinerary!''';
+                  await TelephonyService.openWhatsApp(
+                    phoneNumber: widget.callLog.phone,
+                    message: tailoredText,
+                  );
+                },
+                child: const Row(
+                  children: [
+                    Icon(Icons.chat_bubble_outline_rounded, color: AppColors.whatsappGreen, size: 18),
+                    SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Direct WhatsApp Chat with Traveler',
+                            style: TextStyle(
+                              color: AppColors.whatsappGreen,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          Text(
+                            'Opens WhatsApp app directly with personalized greeting',
+                            style: TextStyle(
+                              color: AppColors.textSecondary,
+                              fontSize: 11,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Icon(
+                      Icons.open_in_new_rounded,
+                      color: AppColors.whatsappGreen,
+                      size: 16,
+                    ),
+                  ],
+                ),
+              ),
+            ),
 
             ...AppConstants.quickBrochures.map((item) {
               return Padding(

@@ -98,7 +98,7 @@ class WhatsAppThread {
     required this.lastMessageTime,
     this.unreadCount = 0,
     this.isAiAssisted = false,
-    this.assignedAgent = 'Santosh Yadav',
+    this.assignedAgent = 'Nishkarsh AI',
     this.circuit = 'Varanasi Pilgrimage',
     this.stage = 'new',
     this.dealValue = 0.0,
@@ -109,6 +109,74 @@ class WhatsAppThread {
     this.callCount = 0,
     this.messages = const [],
   });
+
+  factory WhatsAppThread.fromJson(Map<String, dynamic> json) {
+    List<WhatsAppMessage> parsedMsgs = [];
+    if (json['messages'] is List) {
+      parsedMsgs = (json['messages'] as List)
+          .map((m) => WhatsAppMessage.fromJson(
+              m is Map<String, dynamic> ? m : Map<String, dynamic>.from(m as Map)))
+          .toList();
+    }
+
+    return WhatsAppThread(
+      id: json['id']?.toString() ?? '',
+      contactId: int.tryParse(json['contact_id']?.toString() ?? '0') ?? 0,
+      remoteJid: json['remote_jid']?.toString() ?? '',
+      customerPhone: json['customer_phone']?.toString() ?? '',
+      customerName: json['customer_name']?.toString() ?? 'Traveler',
+      profilePicUrl: json['profile_pic_url']?.toString() ?? '',
+      lastMessage: json['last_message']?.toString() ?? '',
+      lastMessageFromMe: json['last_message_from_me'] == true,
+      lastMessageStatus: json['last_message_status']?.toString() ?? 'read',
+      timeAgo: json['time_ago']?.toString() ?? '',
+      lastMessageTime: json['last_message_time'] != null
+          ? DateTime.tryParse(json['last_message_time'].toString())?.toLocal() ?? DateTime.now()
+          : DateTime.now(),
+      unreadCount: int.tryParse(json['unread_count']?.toString() ?? '0') ?? 0,
+      isAiAssisted: json['is_ai_assisted'] == true,
+      assignedAgent: json['assigned_agent']?.toString() ?? 'Nishkarsh AI',
+      circuit: json['circuit']?.toString() ?? 'Varanasi Pilgrimage',
+      stage: json['stage']?.toString() ?? 'new',
+      dealValue: double.tryParse(json['deal_value']?.toString() ?? '0') ?? 0.0,
+      sourceChannel: json['source_channel']?.toString() ?? 'whatsapp',
+      hasWhatsappChat: json['has_whatsapp_chat'] != false,
+      isB2b: json['is_b2b'] == true,
+      nextFollowUpAt: json['next_follow_up_at'] != null
+          ? DateTime.tryParse(json['next_follow_up_at'].toString())
+          : null,
+      callCount: int.tryParse(json['call_count']?.toString() ?? '0') ?? 0,
+      messages: parsedMsgs,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'contact_id': contactId,
+      'remote_jid': remoteJid,
+      'customer_phone': customerPhone,
+      'customer_name': customerName,
+      'profile_pic_url': profilePicUrl,
+      'last_message': lastMessage,
+      'last_message_from_me': lastMessageFromMe,
+      'last_message_status': lastMessageStatus,
+      'time_ago': timeAgo,
+      'last_message_time': lastMessageTime.toIso8601String(),
+      'unread_count': unreadCount,
+      'is_ai_assisted': isAiAssisted,
+      'assigned_agent': assignedAgent,
+      'circuit': circuit,
+      'stage': stage,
+      'deal_value': dealValue,
+      'source_channel': sourceChannel,
+      'has_whatsapp_chat': hasWhatsappChat,
+      'is_b2b': isB2b,
+      'next_follow_up_at': nextFollowUpAt?.toIso8601String(),
+      'call_count': callCount,
+      'messages': messages.map((m) => m.toJson()).toList(),
+    };
+  }
 
   String get stageLabel {
     switch (stage.toLowerCase()) {

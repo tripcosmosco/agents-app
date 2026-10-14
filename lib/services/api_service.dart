@@ -484,6 +484,33 @@ class ApiService {
     }
   }
 
+  /// 10a. Assign Lead to Manager or AI Persona (Team Nishkarsh / Team Aditi)
+  Future<bool> assignLead({
+    required String leadId,
+    required String managerName,
+    bool notifyManager = false,
+  }) async {
+    final cleanId = int.tryParse(leadId.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;
+    if (cleanId == 0 || managerName.trim().isEmpty) return false;
+
+    try {
+      final uri = Uri.parse('$baseUrl/mobile/assign-lead');
+      final payload = <String, dynamic>{
+        'lead_id': cleanId,
+        'manager_name': managerName.trim(),
+        'notify_manager': notifyManager,
+      };
+
+      final response = await http
+          .post(uri, headers: _headers, body: json.encode(payload))
+          .timeout(const Duration(seconds: 10));
+      return response.statusCode == 200;
+    } catch (e) {
+      debugPrint('Error assigning lead on server: $e');
+      return false;
+    }
+  }
+
   /// Create new lead on server (auto-syncs to TripCosmos CRM & FluentCRM)
   Future<Map<String, dynamic>?> createLead({
     required String name,
@@ -495,6 +522,7 @@ class ApiService {
     int pax = 2,
     String stage = 'new',
     String? nextFollowUpAt,
+    String owner = 'Nishkarsh AI',
   }) async {
     try {
       final uri = Uri.parse('$baseUrl/mobile/create-lead');
@@ -508,6 +536,7 @@ class ApiService {
         'pax': pax,
         'stage': stage,
         if (nextFollowUpAt != null && nextFollowUpAt.isNotEmpty) 'next_follow_up_at': nextFollowUpAt,
+        'owner': owner,
       });
 
       final response = await http
@@ -922,5 +951,128 @@ class ApiService {
     }
     return null;
   }
+
+  /// 24. Real-Time Financials & Revenue Analytics
+  Future<Map<String, dynamic>?> fetchFinancials() async {
+    try {
+      final uri = Uri.parse('$baseUrl/mobile/financials');
+      final response = await http.get(uri, headers: _headers).timeout(const Duration(seconds: 12));
+      if (response.statusCode == 200) {
+        return _safeJsonDecode(response.body);
+      }
+    } catch (e) {
+      debugPrint('Error fetching financials: $e');
+    }
+    return null;
+  }
+
+  /// 25. Chauffeur & Vehicle Allocation WhatsApp Dispatch (Trip Sheet)
+  Future<Map<String, dynamic>?> dispatchDriver({
+    required int leadId,
+    required String driverName,
+    required String driverPhone,
+    required String vehicleNumber,
+    String vehicleModel = 'AC Sedan',
+    String reportingTime = '',
+    String pickupLocation = 'Varanasi',
+    String dropLocation = '',
+    double balanceAmount = 0.0,
+    bool notifyCustomer = true,
+    bool notifyDriver = true,
+  }) async {
+    try {
+      final uri = Uri.parse('$baseUrl/mobile/dispatch-driver');
+      final body = json.encode({
+        'lead_id': leadId,
+        'driver_name': driverName,
+        'driver_phone': driverPhone,
+        'vehicle_number': vehicleNumber,
+        'vehicle_model': vehicleModel,
+        'reporting_time': reportingTime,
+        'pickup_location': pickupLocation,
+        'drop_location': dropLocation,
+        'balance_amount': balanceAmount,
+        'notify_customer': notifyCustomer,
+        'notify_driver': notifyDriver,
+      });
+      final response = await http.post(uri, headers: _headers, body: body).timeout(const Duration(seconds: 15));
+      if (response.statusCode == 200) {
+        return _safeJsonDecode(response.body);
+      }
+    } catch (e) {
+      debugPrint('Error dispatching driver: $e');
+    }
+    return null;
+  }
+
+  /// 26. Smart Incoming Caller-ID Live Lookup
+  Future<Map<String, dynamic>?> lookupCaller(String phone) async {
+    try {
+      final clean = phone.replaceAll(RegExp(r'[^0-9]'), '');
+      final uri = Uri.parse('$baseUrl/mobile/caller-lookup?phone=$clean');
+      final response = await http.get(uri, headers: _headers).timeout(const Duration(seconds: 8));
+      if (response.statusCode == 200) {
+        return _safeJsonDecode(response.body);
+      }
+    } catch (e) {
+      debugPrint('Error looking up caller: $e');
+    }
+    return null;
+  }
+
+  /// 27. Audio Voice-Note Transcription & Field AI Lead Ingestion
+  Future<Map<String, dynamic>?> submitVoiceNoteSummary({
+    int? leadId,
+    String? phone,
+    required String transcript,
+    String? stage,
+    double? dealValue,
+    String? followUpDate,
+  }) async {
+    try {
+      final uri = Uri.parse('$baseUrl/mobile/voice-note-summary');
+      final body = json.encode({
+        if (leadId != null && leadId > 0) 'lead_id': leadId,
+        if (phone != null && phone.isNotEmpty) 'phone': phone,
+        'transcript': transcript,
+        if (stage != null && stage.isNotEmpty) 'stage': stage,
+        if (dealValue != null && dealValue >= 0) 'deal_value': dealValue,
+        if (followUpDate != null && followUpDate.isNotEmpty) 'follow_up_date': followUpDate,
+      });
+      final response = await http.post(uri, headers: _headers, body: body).timeout(const Duration(seconds: 15));
+      if (response.statusCode == 200) {
+        return _safeJsonDecode(response.body);
+      }
+    } catch (e) {
+      debugPrint('Error submitting voice note summary: $e');
+    }
+    return null;
+  }
+
+  /// 28. 1-Tap WhatsApp Advance UPI & Cashfree Payment Link Generator
+  Future<Map<String, dynamic>?> generatePaymentLink({
+    required int leadId,
+    required double amount,
+    String purpose = 'TripCosmos Pilgrimage Advance',
+    bool sendWhatsApp = true,
+  }) async {
+    try {
+      final uri = Uri.parse('$baseUrl/mobile/payments/generate-link');
+      final body = json.encode({
+        'lead_id': leadId,
+        'amount': amount,
+        'purpose': purpose,
+        'send_whatsapp': sendWhatsApp,
+      });
+      final response = await http.post(uri, headers: _headers, body: body).timeout(const Duration(seconds: 15));
+      if (response.statusCode == 200) {
+        return _safeJsonDecode(response.body);
+      }
+    } catch (e) {
+      debugPrint('Error generating payment link: $e');
+    }
+    return null;
+  }
 }
+
 

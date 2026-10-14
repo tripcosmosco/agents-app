@@ -257,6 +257,607 @@ class _LeadDetailScreenState extends State<LeadDetailScreen> with SingleTickerPr
   );
   }
 
+  void _showDispatchDriverSheet(BuildContext context, LeadModel lead) {
+    final driverNameCtrl = TextEditingController();
+    final driverPhoneCtrl = TextEditingController();
+    final vehicleNumCtrl = TextEditingController();
+    final pickupLocCtrl = TextEditingController(text: lead.destination.isNotEmpty ? lead.destination : 'Varanasi');
+    final reportingTimeCtrl = TextEditingController(text: 'Tomorrow 07:30 AM');
+    final balanceCtrl = TextEditingController(text: lead.dealValue > 0 ? (lead.dealValue * 0.7).round().toString() : '5000');
+    String selectedModel = 'Innova Crysta';
+    bool notifyTraveler = true;
+    bool notifyDriver = true;
+    bool isSubmitting = false;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: const Color(0xFF1E293B),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setSheetState) => Padding(
+          padding: EdgeInsets.only(
+            left: 20,
+            right: 20,
+            top: 20,
+            bottom: MediaQuery.of(ctx).viewInsets.bottom + 20,
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Row(
+                      children: [
+                        Icon(Icons.local_taxi_rounded, color: Color(0xFF38BDF8), size: 20),
+                        SizedBox(width: 8),
+                        Text(
+                          'Dispatch Chauffeur & Vehicle',
+                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white),
+                        ),
+                      ],
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close, color: Colors.white54, size: 20),
+                      onPressed: () => Navigator.pop(ctx),
+                    ),
+                  ],
+                ),
+                const Text(
+                  'Auto-formats and sends WhatsApp trip sheet to Traveler & Driver simultaneously.',
+                  style: TextStyle(fontSize: 11, color: Colors.white60),
+                ),
+                const SizedBox(height: 14),
+
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: driverNameCtrl,
+                        style: const TextStyle(color: Colors.white, fontSize: 13),
+                        decoration: InputDecoration(
+                          labelText: 'Chauffeur Name *',
+                          labelStyle: const TextStyle(color: Colors.white60, fontSize: 12),
+                          hintText: 'e.g. Ramesh Kumar',
+                          hintStyle: const TextStyle(color: Colors.white30, fontSize: 12),
+                          filled: true,
+                          fillColor: const Color(0xFF0F172A),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: TextField(
+                        controller: driverPhoneCtrl,
+                        keyboardType: TextInputType.phone,
+                        style: const TextStyle(color: Colors.white, fontSize: 13),
+                        decoration: InputDecoration(
+                          labelText: 'Driver Mobile *',
+                          labelStyle: const TextStyle(color: Colors.white60, fontSize: 12),
+                          hintText: 'e.g. 9876543210',
+                          hintStyle: const TextStyle(color: Colors.white30, fontSize: 12),
+                          filled: true,
+                          fillColor: const Color(0xFF0F172A),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+
+                Row(
+                  children: [
+                    Expanded(
+                      child: DropdownButtonFormField<String>(
+                        initialValue: selectedModel,
+                        dropdownColor: const Color(0xFF1E293B),
+                        style: const TextStyle(color: Colors.white, fontSize: 13),
+                        decoration: InputDecoration(
+                          labelText: 'Vehicle Model',
+                          labelStyle: const TextStyle(color: Colors.white60, fontSize: 12),
+                          filled: true,
+                          fillColor: const Color(0xFF0F172A),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+                        ),
+                        items: ['Innova Crysta', 'Swift Dzire AC', 'Ertiga Hybrid', 'Tempo Traveller 12S', 'Toyota Fortuner'].map((v) => DropdownMenuItem(value: v, child: Text(v))).toList(),
+                        onChanged: (val) {
+                          if (val != null) setSheetState(() => selectedModel = val);
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: TextField(
+                        controller: vehicleNumCtrl,
+                        textCapitalization: TextCapitalization.characters,
+                        style: const TextStyle(color: Colors.white, fontSize: 13),
+                        decoration: InputDecoration(
+                          labelText: 'Vehicle Plate *',
+                          labelStyle: const TextStyle(color: Colors.white60, fontSize: 12),
+                          hintText: 'UP 65 AB 1234',
+                          hintStyle: const TextStyle(color: Colors.white30, fontSize: 12),
+                          filled: true,
+                          fillColor: const Color(0xFF0F172A),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: reportingTimeCtrl,
+                        style: const TextStyle(color: Colors.white, fontSize: 13),
+                        decoration: InputDecoration(
+                          labelText: 'Reporting Time',
+                          labelStyle: const TextStyle(color: Colors.white60, fontSize: 12),
+                          filled: true,
+                          fillColor: const Color(0xFF0F172A),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: TextField(
+                        controller: balanceCtrl,
+                        keyboardType: TextInputType.number,
+                        style: const TextStyle(color: Colors.white, fontSize: 13),
+                        decoration: InputDecoration(
+                          labelText: 'Duty Balance (₹)',
+                          labelStyle: const TextStyle(color: Colors.white60, fontSize: 12),
+                          filled: true,
+                          fillColor: const Color(0xFF0F172A),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+
+                TextField(
+                  controller: pickupLocCtrl,
+                  style: const TextStyle(color: Colors.white, fontSize: 13),
+                  decoration: InputDecoration(
+                    labelText: 'Pickup Location / Hotel',
+                    labelStyle: const TextStyle(color: Colors.white60, fontSize: 12),
+                    filled: true,
+                    fillColor: const Color(0xFF0F172A),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+                  ),
+                ),
+                const SizedBox(height: 12),
+
+                Row(
+                  children: [
+                    Expanded(
+                      child: CheckboxListTile(
+                        value: notifyTraveler,
+                        onChanged: (v) => setSheetState(() => notifyTraveler = v ?? true),
+                        title: const Text('Send WhatsApp to Traveler', style: TextStyle(color: Colors.white70, fontSize: 11)),
+                        contentPadding: EdgeInsets.zero,
+                        controlAffinity: ListTileControlAffinity.leading,
+                      ),
+                    ),
+                    Expanded(
+                      child: CheckboxListTile(
+                        value: notifyDriver,
+                        onChanged: (v) => setSheetState(() => notifyDriver = v ?? true),
+                        title: const Text('Send WhatsApp to Driver', style: TextStyle(color: Colors.white70, fontSize: 11)),
+                        contentPadding: EdgeInsets.zero,
+                        controlAffinity: ListTileControlAffinity.leading,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+
+                SizedBox(
+                  width: double.infinity,
+                  height: 46,
+                  child: ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF0284C7),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    onPressed: isSubmitting
+                        ? null
+                        : () async {
+                            final dName = driverNameCtrl.text.trim();
+                            final dPhone = driverPhoneCtrl.text.trim();
+                            final vPlate = vehicleNumCtrl.text.trim();
+                            if (dName.isEmpty || dPhone.isEmpty || vPlate.isEmpty) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Please fill Driver Name, Mobile, and Vehicle Number')),
+                              );
+                              return;
+                            }
+                            setSheetState(() => isSubmitting = true);
+                            final leadProv = Provider.of<LeadProvider>(context, listen: false);
+                            final numericLeadId = int.tryParse(lead.id) ?? 0;
+                            final res = await leadProv.apiService.dispatchDriver(
+                              leadId: numericLeadId,
+                              driverName: dName,
+                              driverPhone: dPhone,
+                              vehicleNumber: vPlate,
+                              vehicleModel: selectedModel,
+                              reportingTime: reportingTimeCtrl.text.trim(),
+                              pickupLocation: pickupLocCtrl.text.trim(),
+                              balanceAmount: double.tryParse(balanceCtrl.text.trim()) ?? 0.0,
+                              notifyCustomer: notifyTraveler,
+                              notifyDriver: notifyDriver,
+                            );
+                            if (ctx.mounted) {
+                              Navigator.pop(ctx);
+                              final custSent = res?['traveler_notified'] == true;
+                              final drvSent = res?['driver_notified'] == true;
+                              leadProv.addLeadNote(
+                                lead.id,
+                                '🚖 Chauffeur Dispatched: $dName ($dPhone) on $selectedModel ($vPlate). Traveler: ${custSent ? "Sent" : "Skipped"}, Driver: ${drvSent ? "Sent" : "Skipped"}',
+                              );
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Chauffeur trip sheet dispatched! (Traveler: ${custSent ? "✓" : "—"}, Driver: ${drvSent ? "✓" : "—"})'),
+                                  backgroundColor: AppColors.successGreen,
+                                  behavior: SnackBarBehavior.floating,
+                                ),
+                              );
+                            }
+                          },
+                    icon: isSubmitting
+                        ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                        : const Icon(Icons.send_rounded, color: Colors.white, size: 18),
+                    label: Text(
+                      isSubmitting ? 'Dispatching...' : 'Dispatch Trip Sheets Now',
+                      style: const TextStyle(fontWeight: FontWeight.w700, color: Colors.white, fontSize: 14),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showPaymentLinkSheet(BuildContext context, LeadModel lead) {
+    final amountCtrl = TextEditingController(text: '1500');
+    final purposeCtrl = TextEditingController(text: 'Kashi Pilgrimage Advance Booking');
+    bool sendWhatsApp = true;
+    bool isGenerating = false;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: const Color(0xFF1E293B),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setSheetState) => Padding(
+          padding: EdgeInsets.only(
+            left: 20,
+            right: 20,
+            top: 20,
+            bottom: MediaQuery.of(ctx).viewInsets.bottom + 20,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Row(
+                    children: [
+                      Icon(Icons.payment_rounded, color: AppColors.accentGold, size: 20),
+                      SizedBox(width: 8),
+                      Text(
+                        '1-Tap Advance UPI & Payment Link',
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white),
+                      ),
+                    ],
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close, color: Colors.white54, size: 20),
+                    onPressed: () => Navigator.pop(ctx),
+                  ),
+                ],
+              ),
+              const Text(
+                'Generates Cashfree payment gateway link & instant UPI deep link, dispatched via WhatsApp.',
+                style: TextStyle(fontSize: 11, color: Colors.white60),
+              ),
+              const SizedBox(height: 14),
+
+              // Quick Amount Chips
+              Wrap(
+                spacing: 8,
+                children: ['1000', '2500', '5000', '10000'].map((amt) {
+                  return ActionChip(
+                    backgroundColor: amountCtrl.text == amt ? AppColors.accentGold.withValues(alpha: 0.25) : const Color(0xFF0F172A),
+                    side: BorderSide(color: amountCtrl.text == amt ? AppColors.accentGold : Colors.white12),
+                    label: Text('₹$amt', style: TextStyle(color: amountCtrl.text == amt ? AppColors.accentGold : Colors.white70, fontSize: 12, fontWeight: FontWeight.w700)),
+                    onPressed: () {
+                      setSheetState(() => amountCtrl.text = amt);
+                    },
+                  );
+                }).toList(),
+              ),
+              const SizedBox(height: 10),
+
+              TextField(
+                controller: amountCtrl,
+                keyboardType: TextInputType.number,
+                style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700),
+                decoration: InputDecoration(
+                  labelText: 'Advance Amount (₹)',
+                  labelStyle: const TextStyle(color: Colors.white60, fontSize: 12),
+                  filled: true,
+                  fillColor: const Color(0xFF0F172A),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+                ),
+              ),
+              const SizedBox(height: 10),
+
+              TextField(
+                controller: purposeCtrl,
+                style: const TextStyle(color: Colors.white, fontSize: 13),
+                decoration: InputDecoration(
+                  labelText: 'Payment Purpose',
+                  labelStyle: const TextStyle(color: Colors.white60, fontSize: 12),
+                  filled: true,
+                  fillColor: const Color(0xFF0F172A),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+                ),
+              ),
+              const SizedBox(height: 10),
+
+              CheckboxListTile(
+                value: sendWhatsApp,
+                onChanged: (v) => setSheetState(() => sendWhatsApp = v ?? true),
+                title: Text('Instantly dispatch via WhatsApp to ${lead.phone}', style: const TextStyle(color: Colors.white70, fontSize: 12)),
+                contentPadding: EdgeInsets.zero,
+                controlAffinity: ListTileControlAffinity.leading,
+              ),
+              const SizedBox(height: 14),
+
+              SizedBox(
+                width: double.infinity,
+                height: 46,
+                child: ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.accentGold,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  onPressed: isGenerating
+                      ? null
+                      : () async {
+                          final amt = double.tryParse(amountCtrl.text.trim()) ?? 0.0;
+                          if (amt <= 0) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Please enter a valid amount')),
+                            );
+                            return;
+                          }
+                          setSheetState(() => isGenerating = true);
+                          final leadProv = Provider.of<LeadProvider>(context, listen: false);
+                          final numericLeadId = int.tryParse(lead.id) ?? 0;
+                          final res = await leadProv.apiService.generatePaymentLink(
+                            leadId: numericLeadId,
+                            amount: amt,
+                            purpose: purposeCtrl.text.trim(),
+                            sendWhatsApp: sendWhatsApp,
+                          );
+                          if (ctx.mounted) {
+                            Navigator.pop(ctx);
+                            final waSent = res?['whatsapp_sent'] == true;
+                            final primaryUrl = res?['primary_url'] ?? res?['cashfree_url'] ?? res?['upi_url'] ?? '';
+                            if (primaryUrl.toString().isNotEmpty) {
+                              Clipboard.setData(ClipboardData(text: primaryUrl.toString()));
+                            }
+                            leadProv.addLeadNote(
+                              lead.id,
+                              '💳 Advance Payment Link generated: ₹$amt. WhatsApp sent: ${waSent ? "Yes" : "No"}. URL: $primaryUrl',
+                            );
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Payment link generated! ${waSent ? "Dispatched to WhatsApp." : "Copied to clipboard."}'),
+                                backgroundColor: AppColors.successGreen,
+                                behavior: SnackBarBehavior.floating,
+                              ),
+                            );
+                          }
+                        },
+                  icon: isGenerating
+                      ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
+                      : const Icon(Icons.flash_on_rounded, color: Colors.black, size: 18),
+                  label: Text(
+                    isGenerating ? 'Generating...' : 'Generate & Dispatch Link',
+                    style: const TextStyle(fontWeight: FontWeight.w800, color: Colors.black, fontSize: 14),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showVoiceNoteSheet(BuildContext context, LeadModel lead) {
+    final noteCtrl = TextEditingController();
+    final dealValueCtrl = TextEditingController(text: lead.dealValue > 0 ? lead.dealValue.toInt().toString() : '');
+    String selectedStage = lead.stage;
+    bool isSaving = false;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: const Color(0xFF1E293B),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setSheetState) => Padding(
+          padding: EdgeInsets.only(
+            left: 20,
+            right: 20,
+            top: 20,
+            bottom: MediaQuery.of(ctx).viewInsets.bottom + 20,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Row(
+                    children: [
+                      Icon(Icons.mic_rounded, color: Colors.purpleAccent, size: 20),
+                      SizedBox(width: 8),
+                      Text(
+                        'Voice Note & Field AI Ingestion',
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white),
+                      ),
+                    ],
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close, color: Colors.white54, size: 20),
+                    onPressed: () => Navigator.pop(ctx),
+                  ),
+                ],
+              ),
+              const Text(
+                'Record or dictate call brief in Hindi/English. Automatically updates pipeline stage and deal value.',
+                style: TextStyle(fontSize: 11, color: Colors.white60),
+              ),
+              const SizedBox(height: 14),
+
+              TextField(
+                controller: noteCtrl,
+                maxLines: 4,
+                style: const TextStyle(color: Colors.white, fontSize: 13),
+                decoration: InputDecoration(
+                  hintText: 'e.g. Guest finalized 3D2N VIP Kashi package for 4 adults. Deal amount ₹35,000. Advance ₹5,000 promised by evening.',
+                  hintStyle: const TextStyle(color: Colors.white30, fontSize: 12),
+                  filled: true,
+                  fillColor: const Color(0xFF0F172A),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+                ),
+              ),
+              const SizedBox(height: 10),
+
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: dealValueCtrl,
+                      keyboardType: TextInputType.number,
+                      style: const TextStyle(color: Colors.white, fontSize: 13),
+                      decoration: InputDecoration(
+                        labelText: 'Deal Value (₹)',
+                        labelStyle: const TextStyle(color: Colors.white60, fontSize: 12),
+                        filled: true,
+                        fillColor: const Color(0xFF0F172A),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: DropdownButtonFormField<String>(
+                      initialValue: selectedStage,
+                      dropdownColor: const Color(0xFF1E293B),
+                      style: const TextStyle(color: Colors.white, fontSize: 12),
+                      decoration: InputDecoration(
+                        labelText: 'Pipeline Stage',
+                        labelStyle: const TextStyle(color: Colors.white60, fontSize: 12),
+                        filled: true,
+                        fillColor: const Color(0xFF0F172A),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+                      ),
+                      items: AppConstants.travelPipelineStages
+                          .where((s) => s['id'] != 'all')
+                          .map((s) => DropdownMenuItem(value: s['id'] as String, child: Text(s['label'] as String)))
+                          .toList(),
+                      onChanged: (val) {
+                        if (val != null) setSheetState(() => selectedStage = val);
+                      },
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+
+              SizedBox(
+                width: double.infinity,
+                height: 46,
+                child: ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.purpleAccent,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  onPressed: isSaving
+                      ? null
+                      : () async {
+                          final text = noteCtrl.text.trim();
+                          if (text.isEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Please enter or dictate a note summary')),
+                            );
+                            return;
+                          }
+                          setSheetState(() => isSaving = true);
+                          final leadProv = Provider.of<LeadProvider>(context, listen: false);
+                          final numericLeadId = int.tryParse(lead.id) ?? 0;
+                          final parsedVal = double.tryParse(dealValueCtrl.text.trim());
+                          await leadProv.apiService.submitVoiceNoteSummary(
+                            leadId: numericLeadId,
+                            phone: lead.phone,
+                            transcript: text,
+                            stage: selectedStage,
+                            dealValue: parsedVal,
+                          );
+                          if (ctx.mounted) {
+                            Navigator.pop(ctx);
+                            leadProv.addLeadNote(lead.id, '🎙️ Field AI Note: $text');
+                            if (selectedStage != lead.stage) {
+                              leadProv.updateLeadStage(lead.id, selectedStage);
+                            }
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Field intelligence & deal value updated in CRM!'),
+                                backgroundColor: AppColors.successGreen,
+                                behavior: SnackBarBehavior.floating,
+                              ),
+                            );
+                          }
+                        },
+                  icon: isSaving
+                      ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                      : const Icon(Icons.cloud_upload_rounded, color: Colors.white, size: 18),
+                  label: Text(
+                    isSaving ? 'Saving...' : 'Ingest Intelligence to CRM',
+                    style: const TextStyle(fontWeight: FontWeight.w700, color: Colors.white, fontSize: 14),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   void _sendQuickMessage(LeadModel lead) async {
     final text = _quickReplyController.text.trim();
     if (text.isEmpty) return;
@@ -350,9 +951,81 @@ class _LeadDetailScreenState extends State<LeadDetailScreen> with SingleTickerPr
               );
             },
           ),
-          IconButton(
+          PopupMenuButton<String>(
             icon: const Icon(Icons.more_vert, color: Colors.white),
-            onPressed: () => _showChangeStageSheet(context, lead),
+            color: const Color(0xFF1E293B),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            onSelected: (val) {
+              switch (val) {
+                case 'stage':
+                  _showChangeStageSheet(context, lead);
+                  break;
+                case 'reassign':
+                  _showReassignOwnerSheet(context, lead);
+                  break;
+                case 'dispatch':
+                  _showDispatchDriverSheet(context, lead);
+                  break;
+                case 'payment':
+                  _showPaymentLinkSheet(context, lead);
+                  break;
+                case 'voice_note':
+                  _showVoiceNoteSheet(context, lead);
+                  break;
+              }
+            },
+            itemBuilder: (ctx) => [
+              const PopupMenuItem(
+                value: 'stage',
+                child: Row(
+                  children: [
+                    Icon(Icons.swap_horiz_rounded, color: AppColors.accentBlue, size: 18),
+                    SizedBox(width: 10),
+                    Text('Update Stage', style: TextStyle(color: Colors.white, fontSize: 13)),
+                  ],
+                ),
+              ),
+              const PopupMenuItem(
+                value: 'reassign',
+                child: Row(
+                  children: [
+                    Icon(Icons.person_add_alt_1_rounded, color: Color(0xFF8B5CF6), size: 18),
+                    SizedBox(width: 10),
+                    Text('Assign Owner', style: TextStyle(color: Colors.white, fontSize: 13)),
+                  ],
+                ),
+              ),
+              const PopupMenuItem(
+                value: 'dispatch',
+                child: Row(
+                  children: [
+                    Icon(Icons.local_taxi_rounded, color: AppColors.accentGold, size: 18),
+                    SizedBox(width: 10),
+                    Text('Dispatch Driver (Trip Sheet)', style: TextStyle(color: Colors.white, fontSize: 13)),
+                  ],
+                ),
+              ),
+              const PopupMenuItem(
+                value: 'payment',
+                child: Row(
+                  children: [
+                    Icon(Icons.payment_rounded, color: AppColors.successGreen, size: 18),
+                    SizedBox(width: 10),
+                    Text('Generate UPI Payment Link', style: TextStyle(color: Colors.white, fontSize: 13)),
+                  ],
+                ),
+              ),
+              const PopupMenuItem(
+                value: 'voice_note',
+                child: Row(
+                  children: [
+                    Icon(Icons.mic_rounded, color: Colors.cyanAccent, size: 18),
+                    SizedBox(width: 10),
+                    Text('Record AI Voice Note', style: TextStyle(color: Colors.white, fontSize: 13)),
+                  ],
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -447,9 +1120,13 @@ class _LeadDetailScreenState extends State<LeadDetailScreen> with SingleTickerPr
                   children: [
                     Row(
                       children: [
-                        Text(
-                          lead.name,
-                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Colors.white),
+                        Flexible(
+                          child: Text(
+                            lead.name,
+                            style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: Colors.white),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
                         const SizedBox(width: 8),
                         InkWell(

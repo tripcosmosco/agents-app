@@ -11,6 +11,7 @@ import '../providers/call_provider.dart';
 import '../providers/whatsapp_provider.dart';
 import 'cab_fare_dialog.dart';
 import 'travel_quote_dialog.dart';
+import '../services/telephony_service.dart';
 
 class WhatsAppTeamChatView extends StatefulWidget {
   final WhatsAppThread thread;
@@ -111,9 +112,24 @@ class _WhatsAppTeamChatViewState extends State<WhatsAppTeamChatView> {
       final ok = await provider.sendMessage(widget.thread.id, text);
       if (mounted && !ok) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('⚠️ Message queued on server. Check Evolution WhatsApp connection if delayed.'),
-            backgroundColor: Color(0xFF1E293B),
+          SnackBar(
+            behavior: SnackBarBehavior.floating,
+            margin: const EdgeInsets.only(bottom: 80, left: 14, right: 14),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            content: const Text(
+              '⚠️ Gateway offline (HTTP 500). Send directly via WhatsApp App?',
+              style: TextStyle(fontSize: 12, color: Colors.white),
+            ),
+            backgroundColor: const Color(0xFF1E293B),
+            duration: const Duration(seconds: 8),
+            action: SnackBarAction(
+              label: 'Open App ↗',
+              textColor: AppColors.whatsappGreen,
+              onPressed: () => TelephonyService.openWhatsApp(
+                phoneNumber: widget.thread.customerPhone,
+                message: text,
+              ),
+            ),
           ),
         );
       }
@@ -446,10 +462,10 @@ class _WhatsAppTeamChatViewState extends State<WhatsAppTeamChatView> {
                       _showEvolutionQrSheet(context, provider);
                     },
                     icon: const Icon(Icons.qr_code_2_rounded, size: 16, color: AppColors.accentGold),
-                    label: const Text('Check QR / Reconnect', style: TextStyle(fontSize: 12)),
+                    label: const Text('Check QR', style: TextStyle(fontSize: 12)),
                   ),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: 8),
                 Expanded(
                   child: ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
@@ -459,10 +475,13 @@ class _WhatsAppTeamChatViewState extends State<WhatsAppTeamChatView> {
                     ),
                     onPressed: () {
                       Navigator.pop(ctx);
-                      _sendMessage(provider, msg.text);
+                      TelephonyService.openWhatsApp(
+                        phoneNumber: thread.customerPhone,
+                        message: msg.text,
+                      );
                     },
-                    icon: const Icon(Icons.refresh_rounded, size: 16),
-                    label: const Text('Retry Sending', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                    icon: const Icon(Icons.open_in_new_rounded, size: 16),
+                    label: const Text('Open in App', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
                   ),
                 ),
               ],
@@ -627,7 +646,7 @@ class _WhatsAppTeamChatViewState extends State<WhatsAppTeamChatView> {
                     subtitle: Text('${persona.title} • ${persona.skills.where((s) => s.isEnabled).length} active skills', style: const TextStyle(color: Colors.white54, fontSize: 11)),
                     trailing: isCurrent ? const Icon(Icons.check_circle_rounded, color: AppColors.successGreen) : null,
                     onTap: () {
-                      provider.assignThreadAgent(currentThread.id, '${persona.name} (AI)');
+                      provider.assignThreadAgent(currentThread.id, persona.name);
                       if (!currentThread.isAiAssisted) {
                         provider.toggleAiTakeover(currentThread.id);
                       }
@@ -783,61 +802,95 @@ class _WhatsAppTeamChatViewState extends State<WhatsAppTeamChatView> {
           ],
         ),
         actions: [
+          // 1-Tap Open in WhatsApp App
+          if (currentThread.customerPhone.isNotEmpty)
+            IconButton(
+              visualDensity: VisualDensity.compact,
+              tooltip: 'Open in WhatsApp App ↗',
+              icon: const Icon(Icons.open_in_new_rounded, color: AppColors.whatsappGreen, size: 20),
+              onPressed: () => TelephonyService.openWhatsApp(
+                phoneNumber: currentThread.customerPhone,
+              ),
+            ),
+
           // 1-Tap Phone Call (SIM vs AI Voice Agent)
           if (currentThread.customerPhone.isNotEmpty)
             IconButton(
+              visualDensity: VisualDensity.compact,
               tooltip: 'Call ${currentThread.displayName}',
               icon: const Icon(Icons.call_rounded, color: AppColors.successGreen, size: 20),
               onPressed: () => _showCallModeSelector(context, currentThread),
             ),
 
-          // 1-Tap B2B / Retail Quote Generator
-          IconButton(
-            tooltip: provider.isB2bThread(currentThread) ? 'Send B2B Net DMC Quote ⚡' : 'Send Package Quote ⚡',
-            icon: const Icon(Icons.bolt, color: Color(0xFFFBBF24), size: 20),
-            onPressed: () {
-              final tempLead = LeadModel(
-                id: currentThread.id,
-                name: currentThread.customerName,
-                phone: currentThread.customerPhone,
-                destination: currentThread.circuit,
-                pax: provider.isB2bThread(currentThread) ? 12 : 4,
-                stage: currentThread.stage,
-                source: provider.isB2bThread(currentThread) ? 'b2b_partner' : 'whatsapp',
-                createdAt: DateTime.now(),
-              );
-              TravelQuoteDialog.show(
-                context,
-                tempLead,
-                initialB2bMode: provider.isB2bThread(currentThread),
-              );
+          // Compact More Tools Menu (Quote Generator, Cab Fare Calculator, Live Sync)
+          PopupMenuButton<String>(
+            tooltip: 'Sales Tools & Sync',
+            icon: const Icon(Icons.more_vert_rounded, color: Colors.white70, size: 20),
+            onSelected: (val) {
+              if (val == 'quote') {
+                final tempLead = LeadModel(
+                  id: currentThread.id,
+                  name: currentThread.customerName,
+                  phone: currentThread.customerPhone,
+                  destination: currentThread.circuit,
+                  pax: provider.isB2bThread(currentThread) ? 12 : 4,
+                  stage: currentThread.stage,
+                  source: provider.isB2bThread(currentThread) ? 'b2b_partner' : 'whatsapp',
+                  createdAt: DateTime.now(),
+                );
+                TravelQuoteDialog.show(
+                  context,
+                  tempLead,
+                  initialB2bMode: provider.isB2bThread(currentThread),
+                );
+              } else if (val == 'cab') {
+                final tempLead = LeadModel(
+                  id: currentThread.id,
+                  name: currentThread.customerName,
+                  phone: currentThread.customerPhone,
+                  destination: currentThread.circuit,
+                  pax: 4,
+                  stage: currentThread.stage,
+                  source: 'whatsapp',
+                  createdAt: DateTime.now(),
+                );
+                CabFareDialog.show(context, lead: tempLead);
+              } else if (val == 'sync') {
+                provider.loadThreadMessages(currentThread.id);
+              }
             },
-          ),
-
-          // 1-Tap Cab Fare Calculator
-          IconButton(
-            tooltip: 'Calculate Cab Fare 🚕',
-            icon: const Icon(Icons.local_taxi_rounded, color: Color(0xFF38BDF8), size: 19),
-            onPressed: () {
-              final tempLead = LeadModel(
-                id: currentThread.id,
-                name: currentThread.customerName,
-                phone: currentThread.customerPhone,
-                destination: currentThread.circuit,
-                pax: 4,
-                stage: currentThread.stage,
-                source: 'whatsapp',
-                createdAt: DateTime.now(),
-              );
-              CabFareDialog.show(context, lead: tempLead);
-            },
-          ),
-
-          // Refresh Thread History
-          IconButton(
-            tooltip: 'Sync Live Evolution WhatsApp History',
-            icon: const Icon(Icons.sync_rounded, color: Colors.white70, size: 18),
-            onPressed: () => provider.loadThreadMessages(currentThread.id),
+            itemBuilder: (ctx) => [
+              PopupMenuItem(
+                value: 'quote',
+                child: Row(
+                  children: [
+                    const Icon(Icons.bolt, color: Color(0xFFFBBF24), size: 18),
+                    const SizedBox(width: 8),
+                    Text(provider.isB2bThread(currentThread) ? 'Send B2B Net DMC Quote ⚡' : 'Send Package Quote ⚡'),
+                  ],
+                ),
+              ),
+              const PopupMenuItem(
+                value: 'cab',
+                child: Row(
+                  children: [
+                    Icon(Icons.local_taxi_rounded, color: Color(0xFF38BDF8), size: 18),
+                    SizedBox(width: 8),
+                    Text('Calculate Cab Fare 🚕'),
+                  ],
+                ),
+              ),
+              const PopupMenuItem(
+                value: 'sync',
+                child: Row(
+                  children: [
+                    Icon(Icons.sync_rounded, color: Colors.white70, size: 18),
+                    SizedBox(width: 8),
+                    Text('Sync Evolution WhatsApp History'),
+                  ],
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -1130,15 +1183,41 @@ class _WhatsAppTeamChatViewState extends State<WhatsAppTeamChatView> {
                           const SizedBox(width: 6),
                           const Expanded(
                             child: Text(
-                              'WhatsApp Gateway session disconnected on server (+91 9336116210)',
+                              'WhatsApp Gateway offline (+91 9336116210)',
                               style: TextStyle(color: Colors.white70, fontSize: 10.5),
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
                           InkWell(
+                            onTap: () => TelephonyService.openWhatsApp(
+                              phoneNumber: currentThread.customerPhone,
+                              message: _textController.text.trim(),
+                            ),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              margin: const EdgeInsets.only(right: 6),
+                              decoration: BoxDecoration(
+                                color: AppColors.whatsappGreen.withValues(alpha: 0.25),
+                                borderRadius: BorderRadius.circular(4),
+                                border: Border.all(color: AppColors.whatsappGreen.withValues(alpha: 0.5)),
+                              ),
+                              child: const Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.open_in_new_rounded, size: 10, color: AppColors.whatsappGreen),
+                                  SizedBox(width: 3),
+                                  Text(
+                                    'Open App ↗',
+                                    style: TextStyle(color: AppColors.whatsappGreen, fontSize: 10, fontWeight: FontWeight.bold),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          InkWell(
                             onTap: () => _showEvolutionQrSheet(context, provider),
                             child: const Text(
-                              'Link QR / Status',
+                              'QR / Status',
                               style: TextStyle(color: AppColors.accentGold, fontSize: 10.5, fontWeight: FontWeight.bold),
                             ),
                           ),
@@ -1150,78 +1229,83 @@ class _WhatsAppTeamChatViewState extends State<WhatsAppTeamChatView> {
                   // Mode Selector Pill (WhatsApp vs Internal Whisper)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 6),
-                    child: Row(
-                      children: [
-                        InkWell(
-                          onTap: () => setState(() => _isInternalNoteMode = false),
-                          borderRadius: BorderRadius.circular(12),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: !_isInternalNoteMode
-                                  ? AppColors.whatsappGreen.withValues(alpha: 0.25)
-                                  : Colors.transparent,
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: !_isInternalNoteMode ? AppColors.whatsappGreen : Colors.white12,
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: [
+                          InkWell(
+                            onTap: () => setState(() => _isInternalNoteMode = false),
+                            borderRadius: BorderRadius.circular(12),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: !_isInternalNoteMode
+                                    ? AppColors.whatsappGreen.withValues(alpha: 0.25)
+                                    : Colors.transparent,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: !_isInternalNoteMode ? AppColors.whatsappGreen : Colors.white12,
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.chat_bubble_rounded,
+                                    size: 11,
+                                    color: !_isInternalNoteMode ? AppColors.whatsappGreen : Colors.white38,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    'WhatsApp (+91 93361 16210)',
+                                    style: TextStyle(
+                                      fontSize: 10.5,
+                                      fontWeight: !_isInternalNoteMode ? FontWeight.bold : FontWeight.normal,
+                                      color: !_isInternalNoteMode ? Colors.white : Colors.white54,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
-                            child: Row(
-                              children: [
-                                Icon(
-                                  Icons.chat_bubble_rounded,
-                                  size: 11,
-                                  color: !_isInternalNoteMode ? AppColors.whatsappGreen : Colors.white38,
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  'Official WhatsApp (+91 93361 16210)',
-                                  style: TextStyle(
-                                    fontSize: 10.5,
-                                    fontWeight: !_isInternalNoteMode ? FontWeight.bold : FontWeight.normal,
-                                    color: !_isInternalNoteMode ? Colors.white : Colors.white54,
-                                  ),
-                                ),
-                              ],
-                            ),
                           ),
-                        ),
-                        const SizedBox(width: 8),
-                        InkWell(
-                          onTap: () => setState(() => _isInternalNoteMode = true),
-                          borderRadius: BorderRadius.circular(12),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: _isInternalNoteMode
-                                  ? const Color(0xFFF59E0B).withValues(alpha: 0.25)
-                                  : Colors.transparent,
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: _isInternalNoteMode ? const Color(0xFFF59E0B) : Colors.white12,
+                          const SizedBox(width: 8),
+                          InkWell(
+                            onTap: () => setState(() => _isInternalNoteMode = true),
+                            borderRadius: BorderRadius.circular(12),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: _isInternalNoteMode
+                                    ? const Color(0xFFF59E0B).withValues(alpha: 0.25)
+                                    : Colors.transparent,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: _isInternalNoteMode ? const Color(0xFFF59E0B) : Colors.white12,
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.lock_rounded,
+                                    size: 11,
+                                    color: _isInternalNoteMode ? const Color(0xFFFBBF24) : Colors.white38,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    'Private CRM Note',
+                                    style: TextStyle(
+                                      fontSize: 10.5,
+                                      fontWeight: _isInternalNoteMode ? FontWeight.bold : FontWeight.normal,
+                                      color: _isInternalNoteMode ? const Color(0xFFFDE68A) : Colors.white54,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
-                            child: Row(
-                              children: [
-                                Icon(
-                                  Icons.lock_rounded,
-                                  size: 11,
-                                  color: _isInternalNoteMode ? const Color(0xFFFBBF24) : Colors.white38,
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  'Team Note (Saved to CRM)',
-                                  style: TextStyle(
-                                    fontSize: 10.5,
-                                    fontWeight: _isInternalNoteMode ? FontWeight.bold : FontWeight.normal,
-                                    color: _isInternalNoteMode ? const Color(0xFFFDE68A) : Colors.white54,
-                                  ),
-                                ),
-                              ],
-                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
 

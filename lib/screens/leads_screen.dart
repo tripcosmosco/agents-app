@@ -12,6 +12,7 @@ import '../widgets/glass_card.dart';
 import '../widgets/live_activity_sheet.dart';
 import '../widgets/whatsapp_team_chat_view.dart';
 import '../providers/whatsapp_provider.dart';
+import '../services/telephony_service.dart';
 import 'lead_detail_screen.dart';
 import 'settings_screen.dart';
 
@@ -34,6 +35,7 @@ class _LeadsScreenState extends State<LeadsScreen> {
     );
     final budgetController = TextEditingController(text: '₹25,000');
     final noteController = TextEditingController();
+    String selectedOwner = 'Nishkarsh AI';
 
     showDialog(
       context: context,
@@ -99,6 +101,27 @@ class _LeadsScreenState extends State<LeadsScreen> {
                   hintText: 'e.g. 4 pax, needs Innova',
                 ),
               ),
+              const SizedBox(height: 12),
+              DropdownButtonFormField<String>(
+                initialValue: selectedOwner,
+                decoration: const InputDecoration(
+                  labelText: 'Assign Lead Owner (Auto-Assign Default: Nishkarsh AI)',
+                  prefixIcon: Icon(Icons.support_agent_rounded, size: 20),
+                ),
+                dropdownColor: Theme.of(context).cardColor,
+                items: AppConstants.teamMembers.map((member) {
+                  return DropdownMenuItem<String>(
+                    value: member['name'],
+                    child: Text(
+                      '${member['name']} (${member['role']!.contains('AI') ? 'AI Co-Pilot' : 'Human'})',
+                      style: const TextStyle(fontSize: 13),
+                    ),
+                  );
+                }).toList(),
+                onChanged: (val) {
+                  if (val != null) selectedOwner = val;
+                },
+              ),
             ],
           ),
         ),
@@ -121,6 +144,7 @@ class _LeadsScreenState extends State<LeadsScreen> {
                   destination: destController.text.trim(),
                   budget: budgetController.text.trim(),
                   note: noteController.text.trim(),
+                  owner: selectedOwner,
                 );
                 Navigator.pop(ctx);
               }
@@ -129,6 +153,86 @@ class _LeadsScreenState extends State<LeadsScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  void _showReassignOwnerSheet(BuildContext context, LeadModel lead) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF1E293B),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        return SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Assign Lead Owner',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                const Text(
+                  'Assign this lead to an AI Specialist or Team Rep:',
+                  style: TextStyle(fontSize: 12, color: Colors.white60),
+                ),
+                const SizedBox(height: 16),
+                ...AppConstants.teamMembers.map((member) {
+                  final isCurrent = lead.stickyAgent == member['name'];
+                  return ListTile(
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    leading: CircleAvatar(
+                      radius: 18,
+                      backgroundColor: isCurrent ? AppColors.accentBlue : const Color(0xFF334155),
+                      child: Text(
+                        member['initials']!,
+                        style: const TextStyle(fontWeight: FontWeight.w700, color: Colors.white, fontSize: 13),
+                      ),
+                    ),
+                    title: Text(
+                      member['name']!,
+                      style: TextStyle(
+                        fontWeight: isCurrent ? FontWeight.w700 : FontWeight.w500,
+                        color: Colors.white,
+                        fontSize: 14,
+                      ),
+                    ),
+                    subtitle: Text(
+                      member['role']!,
+                      style: const TextStyle(color: Colors.white54, fontSize: 11),
+                    ),
+                    trailing: isCurrent
+                        ? const Icon(Icons.check_circle, color: AppColors.successGreen, size: 20)
+                        : null,
+                    onTap: () {
+                      Provider.of<LeadProvider>(context, listen: false).assignLeadOwner(
+                        lead.id,
+                        member['name']!,
+                      );
+                      Navigator.pop(ctx);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('✓ Lead #${lead.id} assigned to ${member['name']}'),
+                          backgroundColor: const Color(0xFF1E293B),
+                          behavior: SnackBarBehavior.floating,
+                        ),
+                      );
+                    },
+                  );
+                }),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -149,9 +253,11 @@ class _LeadsScreenState extends State<LeadsScreen> {
             ),
             Text(
               _isB2bMode
-                  ? 'Pan-India Travel Agencies • 16% Net Rates • White-Label'
-                  : 'TripCosmos.co Multi-Source Pipeline (10,000+ Storage)',
+                  ? 'Pan-India Agencies • 16% Net Rates'
+                  : 'Multi-Source Pipeline • 10k CRM',
               style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ],
         ),
@@ -179,7 +285,7 @@ class _LeadsScreenState extends State<LeadsScreen> {
                 ),
                 style: TextButton.styleFrom(
                   backgroundColor: AppColors.surfaceCard,
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                     side: BorderSide(
@@ -191,8 +297,13 @@ class _LeadsScreenState extends State<LeadsScreen> {
             },
           ),
           IconButton(
+            onPressed: () => _showAddLeadDialog(context),
+            icon: const Icon(Icons.person_add_alt_1, color: AppColors.accentGold, size: 20),
+            tooltip: 'Capture New Lead',
+          ),
+          IconButton(
             onPressed: () => leadProvider.refreshLeadsFromServer(),
-            icon: const Icon(Icons.refresh, color: AppColors.accentGold),
+            icon: const Icon(Icons.refresh, color: AppColors.accentGold, size: 20),
             tooltip: 'Sync with Server',
           ),
           IconButton(
@@ -204,7 +315,7 @@ class _LeadsScreenState extends State<LeadsScreen> {
                 ),
               );
             },
-            icon: const Icon(Icons.settings_outlined, color: AppColors.accentGold),
+            icon: const Icon(Icons.settings_outlined, color: AppColors.accentGold, size: 20),
             tooltip: 'Server & Companion Settings',
           ),
         ],
@@ -322,28 +433,28 @@ class _LeadsScreenState extends State<LeadsScreen> {
                   children: [
                     _buildSegmentButton(
                       context: context,
-                      title: 'All Leads',
+                      title: 'All',
                       count: leadProvider.leads.length,
                       isSelected: leadProvider.ownerFilter == 'all',
                       onTap: () => leadProvider.setOwnerFilter('all'),
                     ),
                     _buildSegmentButton(
                       context: context,
-                      title: 'My Leads',
+                      title: 'Mine',
                       count: leadProvider.myLeadsCount,
                       isSelected: leadProvider.ownerFilter == 'my_leads',
                       onTap: () => leadProvider.setOwnerFilter('my_leads'),
                     ),
                     _buildSegmentButton(
                       context: context,
-                      title: 'Follow-ups',
+                      title: 'Due',
                       count: leadProvider.followUpsDueCount,
                       isSelected: leadProvider.ownerFilter == 'follow_ups',
                       onTap: () => leadProvider.setOwnerFilter('follow_ups'),
                     ),
                     _buildSegmentButton(
                       context: context,
-                      title: 'Unassigned',
+                      title: 'Open',
                       count: leadProvider.unassignedLeadsCount,
                       isSelected: leadProvider.ownerFilter == 'unassigned',
                       onTap: () => leadProvider.setOwnerFilter('unassigned'),
@@ -523,6 +634,9 @@ class _LeadsScreenState extends State<LeadsScreen> {
                       onSelected: (_) => leadProvider.setStageFilter(stage),
                       selectedColor: AppColors.accentGold,
                       backgroundColor: AppColors.surfaceCard,
+                      visualDensity: VisualDensity.compact,
+                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
                       labelStyle: TextStyle(
                         color: isSelected
                             ? AppColors.primaryDark
@@ -530,7 +644,7 @@ class _LeadsScreenState extends State<LeadsScreen> {
                         fontWeight: isSelected
                             ? FontWeight.w700
                             : FontWeight.w500,
-                        fontSize: 12,
+                        fontSize: 11.5,
                       ),
                     ),
                   );
@@ -567,7 +681,7 @@ class _LeadsScreenState extends State<LeadsScreen> {
                         left: 16,
                         right: 16,
                         top: 10,
-                        bottom: 84,
+                        bottom: 96,
                       ),
                       itemCount: leadProvider.filteredLeads.length,
                       itemBuilder: (context, index) {
@@ -582,12 +696,13 @@ class _LeadsScreenState extends State<LeadsScreen> {
       ),
       floatingActionButton: _isB2bMode
           ? null
-          : FloatingActionButton.extended(
+          : FloatingActionButton(
               backgroundColor: AppColors.accentGold,
               foregroundColor: AppColors.primaryDark,
+              elevation: 4,
               onPressed: () => _showAddLeadDialog(context),
-              icon: const Icon(Icons.person_add_alt_1),
-              label: const Text('Add Lead'),
+              tooltip: 'Capture New Lead',
+              child: const Icon(Icons.person_add_alt_1),
             ),
     );
   }
@@ -736,41 +851,47 @@ class _LeadsScreenState extends State<LeadsScreen> {
                   ),
                 ),
                 const SizedBox(width: 6),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 3,
-                  ),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF1E293B),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.white12),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      CircleAvatar(
-                        radius: 8,
-                        backgroundColor: const Color(0xFF8B5CF6),
-                        child: Text(
-                          lead.ownerInitials,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 8,
-                            fontWeight: FontWeight.w800,
+                InkWell(
+                  onTap: () => _showReassignOwnerSheet(context, lead),
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 3,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF1E293B),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: lead.stickyAgent.isEmpty ? Colors.amber.withValues(alpha: 0.5) : Colors.white12),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        CircleAvatar(
+                          radius: 8,
+                          backgroundColor: const Color(0xFF8B5CF6),
+                          child: Text(
+                            lead.ownerInitials,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 8,
+                              fontWeight: FontWeight.w800,
+                            ),
                           ),
                         ),
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        lead.stickyAgent,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 10,
-                          fontWeight: FontWeight.w600,
+                        const SizedBox(width: 6),
+                        Text(
+                          lead.stickyAgent.isNotEmpty ? lead.stickyAgent : 'Unassigned',
+                          style: TextStyle(
+                            color: lead.stickyAgent.isNotEmpty ? Colors.white : Colors.amber,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
-                      ),
-                    ],
+                        const SizedBox(width: 3),
+                        const Icon(Icons.arrow_drop_down, color: Colors.white38, size: 14),
+                      ],
+                    ),
                   ),
                 ),
                 const Spacer(),
@@ -806,67 +927,85 @@ class _LeadsScreenState extends State<LeadsScreen> {
             const Divider(height: 1, color: AppColors.borderSubtle),
             const SizedBox(height: 8),
 
-            // Quick Call & WhatsApp Buttons
+            // Quick Call & WhatsApp Action Buttons (Ergonomic 50/50 Split)
             Row(
-              mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                OutlinedButton.icon(
-                  onPressed: () {
-                    final wp = context.read<WhatsAppProvider>();
-                    final thread = wp.getOrCreateThread(
-                      customerPhone: lead.phone,
-                      customerName: lead.name,
-                      circuit: lead.destination,
-                      initialMessage: '',
-                    );
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => Scaffold(
-                          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-                          body: SafeArea(
-                            child: WhatsAppTeamChatView(
-                              thread: thread,
-                              onBack: () => Navigator.pop(context),
+                Expanded(
+                  child: Tooltip(
+                    message: 'Tap for Team Chat • Long-press for direct WhatsApp App',
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        final wp = context.read<WhatsAppProvider>();
+                        final thread = wp.getOrCreateThread(
+                          customerPhone: lead.phone,
+                          customerName: lead.name,
+                          circuit: lead.destination,
+                          initialMessage: '',
+                        );
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => Scaffold(
+                              backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+                              body: SafeArea(
+                                child: WhatsAppTeamChatView(
+                                  thread: thread,
+                                  onBack: () => Navigator.pop(context),
+                                ),
+                              ),
                             ),
                           ),
+                        );
+                      },
+                      onLongPress: () {
+                        TelephonyService.openWhatsApp(
+                          phoneNumber: lead.phone,
+                          message: 'Hello ${lead.name}, this is regarding your ${lead.destination} tour with TripCosmos...',
+                        );
+                      },
+                      icon: const Icon(
+                        Icons.chat_bubble_outline_rounded,
+                        size: 14,
+                        color: AppColors.whatsappGreen,
+                      ),
+                      label: const Text('WhatsApp', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+                      style: OutlinedButton.styleFrom(
+                        side: BorderSide(color: AppColors.whatsappGreen.withValues(alpha: 0.5)),
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 9,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
                         ),
                       ),
-                    );
-                  },
-                  icon: const Icon(
-                    Icons.chat_bubble_outline_rounded,
-                    size: 14,
-                    color: AppColors.whatsappGreen,
-                  ),
-                  label: const Text('WhatsApp', style: TextStyle(fontSize: 12)),
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 8,
                     ),
                   ),
                 ),
-                const SizedBox(width: 8),
-                ElevatedButton.icon(
-                  onPressed: () {
-                    callProvider.startOutboundCall(
-                      phone: lead.phone,
-                      name: lead.name,
-                      tourInterest: lead.destination,
-                    );
-                  },
-                  icon: const Icon(Icons.call, size: 14),
-                  label: const Text(
-                    'Call Jio ₹0',
-                    style: TextStyle(fontSize: 12),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.successGreen,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 8,
+                const SizedBox(width: 10),
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      callProvider.startOutboundCall(
+                        phone: lead.phone,
+                        name: lead.name,
+                        tourInterest: lead.destination,
+                      );
+                    },
+                    icon: const Icon(Icons.call, size: 14),
+                    label: const Text(
+                      'Call Jio ₹0',
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.successGreen,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 9,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      elevation: 0,
                     ),
                   ),
                 ),
@@ -905,36 +1044,43 @@ class _LeadsScreenState extends State<LeadsScreen> {
                   ]
                 : null,
           ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                title,
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                  color: isSelected ? Colors.white : AppColors.textMuted,
-                ),
-              ),
-              const SizedBox(width: 6),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(
-                  color: isSelected
-                      ? Colors.white.withValues(alpha: 0.25)
-                      : Colors.white.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Text(
-                  '$count',
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w700,
-                    color: isSelected ? Colors.white : AppColors.textMuted,
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 11.5,
+                      fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                      color: isSelected ? Colors.white : AppColors.textMuted,
+                    ),
                   ),
-                ),
+                  const SizedBox(width: 4),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                    decoration: BoxDecoration(
+                      color: isSelected
+                          ? Colors.white.withValues(alpha: 0.28)
+                          : Colors.white.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      '$count',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800,
+                        color: isSelected ? Colors.white : AppColors.textMuted,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ),

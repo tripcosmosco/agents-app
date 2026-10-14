@@ -503,17 +503,19 @@ class _B2bPartnersViewState extends State<B2bPartnersView> {
                   style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w800, color: Colors.white),
                 ),
                 const SizedBox(height: 6),
-                Row(
-                  children: [
-                    _buildMiniStat('Agencies', '${_agencies.length}', Colors.white),
-                    const SizedBox(width: 14),
-                    _buildMiniStat('In CRM Drip', '${_counts['in_crm'] ?? 2}', const Color(0xFF34D399)),
-                    const SizedBox(width: 14),
-                    _buildMiniStat('Contacted', '${_counts['contacted'] ?? 2}', const Color(0xFF38BDF8)),
-                    const Spacer(),
-                    TextButton.icon(
-                      onPressed: () {
-                        const masterSheet = '''
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
+                      _buildMiniStat('Agencies', '${_agencies.length}', Colors.white),
+                      const SizedBox(width: 14),
+                      _buildMiniStat('In CRM Drip', '${_counts['in_crm'] ?? 2}', const Color(0xFF34D399)),
+                      const SizedBox(width: 14),
+                      _buildMiniStat('Contacted', '${_counts['contacted'] ?? 2}', const Color(0xFF38BDF8)),
+                      const SizedBox(width: 12),
+                      TextButton.icon(
+                        onPressed: () {
+                          const masterSheet = '''
 🏢 *TRIPCOSMOS VARANASI — B2B DMC NET TARIFF SHEET (2026)*
 ──────────────────────────────────────
 🤝 *100% White-Label Ground Handling (Your Agency Placard)*
@@ -535,19 +537,20 @@ class _B2bPartnersViewState extends State<B2bPartnersView> {
 ──────────────────────────────────────
 📞 *Varanasi B2B Partner Desk:* +91 93361 16210
 ''';
-                        Clipboard.setData(const ClipboardData(text: masterSheet));
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('✓ Master B2B DMC Net Tariff Sheet copied! Paste in any WhatsApp group.'),
-                            backgroundColor: Color(0xFF10B981),
-                          ),
-                        );
-                      },
-                      icon: const Icon(Icons.copy_rounded, size: 13, color: Color(0xFFFBBF24)),
-                      label: const Text('Copy B2B Tariff', style: TextStyle(fontSize: 11, color: Color(0xFFFBBF24), fontWeight: FontWeight.w700)),
-                      style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2)),
-                    ),
-                  ],
+                          Clipboard.setData(const ClipboardData(text: masterSheet));
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('✓ Master B2B DMC Net Tariff Sheet copied! Paste in any WhatsApp group.'),
+                              backgroundColor: Color(0xFF10B981),
+                            ),
+                          );
+                        },
+                        icon: const Icon(Icons.copy_rounded, size: 13, color: Color(0xFFFBBF24)),
+                        label: const Text('Copy B2B Tariff', style: TextStyle(fontSize: 11, color: Color(0xFFFBBF24), fontWeight: FontWeight.w700)),
+                        style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2)),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),

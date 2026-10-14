@@ -384,7 +384,11 @@ _To confirm this cab, reply *YES* or pay ₹1,000 booking token advance._
                       final rate = (e.value['rate'] as double).toInt();
                       return DropdownMenuItem(
                         value: e.key,
-                        child: Text('$name ($cap) • ₹$rate/km'),
+                        child: Text(
+                          '$name ($cap) • ₹$rate/km',
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                        ),
                       );
                     }).toList(),
                     onChanged: (val) {
