@@ -258,26 +258,7 @@ class ApiService {
   }
 
   /// 5. Smart Caller ID Lookup
-  Future<Map<String, dynamic>?> lookupCallerId(String phone) async {
-    try {
-      final uri = Uri.parse(
-        '$baseUrl/mobile/caller-id?phone=${Uri.encodeComponent(phone)}',
-      );
-      final response = await http
-          .get(uri, headers: _headers)
-          .timeout(const Duration(seconds: 6));
-
-      if (response.statusCode == 200) {
-        final data = _safeJsonDecode(response.body);
-        if (data != null && data['ok'] == true) {
-          return Map<String, dynamic>.from(data);
-        }
-      }
-    } catch (e) {
-      debugPrint('Error looking up caller ID: $e');
-    }
-    return null;
-  }
+  Future<Map<String, dynamic>?> lookupCallerId(String phone) => lookupCaller(phone);
 
   /// 6. Generate Dynamic Tour Quote & Tariff
   Future<QuoteModel?> generateQuote({

@@ -68,10 +68,14 @@ class LeadModel {
       parsedTags = (json['tags'] as String).split(',').map((e) => e.trim()).toList();
     }
 
-    final rawStage = (json['stage'] ?? json['status'] ?? 'new').toString().trim().toLowerCase();
-    final normalizedStage = (rawStage == 'inquiry' || rawStage == 'inquiries' || rawStage.isEmpty)
-        ? 'new'
-        : rawStage;
+    final rawStage = (json['mobile_stage'] ?? json['stage'] ?? json['status'] ?? 'new').toString().trim().toLowerCase();
+    final normalizedStage = () {
+      if (rawStage == 'inquiry' || rawStage == 'inquiries' || rawStage.isEmpty) return 'new';
+      if (rawStage == 'proposal' || rawStage == 'quotation_sent') return 'quote_sent';
+      if (rawStage == 'negotiation') return 'follow_up';
+      if (rawStage == 'trip_completed') return 'completed';
+      return rawStage;
+    }();
 
     return LeadModel(
       id: json['id']?.toString() ?? '',

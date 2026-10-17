@@ -1826,6 +1826,25 @@ class _LeadDetailScreenState extends State<LeadDetailScreen> with SingleTickerPr
             onTap: () => CabFareDialog.show(context, lead: lead),
           ),
         ),
+        const SizedBox(height: 10),
+
+        // Action 3: 1-Tap Advance UPI & Payment Link
+        Card(
+          color: const Color(0xFF1E293B),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14), side: const BorderSide(color: Colors.white10)),
+          child: ListTile(
+            contentPadding: const EdgeInsets.all(14),
+            leading: Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(color: const Color(0xFF10B981).withValues(alpha: 0.2), borderRadius: BorderRadius.circular(10)),
+              child: const Icon(Icons.payment_rounded, color: Color(0xFF10B981), size: 24),
+            ),
+            title: const Text('1-Tap Advance UPI & Payment Link 💳', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Colors.white)),
+            subtitle: const Text('Instant Cashfree payment gateway link with auto WhatsApp dispatch', style: TextStyle(fontSize: 11.5, color: Colors.white54)),
+            trailing: const Icon(Icons.arrow_forward_ios, size: 14, color: Colors.white38),
+            onTap: () => _showPaymentLinkSheet(context, lead),
+          ),
+        ),
       ],
     );
   }
