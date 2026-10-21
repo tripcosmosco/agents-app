@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import '../core/constants/app_constants.dart';
 import '../core/theme/app_colors.dart';
 import '../models/quote_model.dart';
+import '../models/lead_model.dart';
 import '../models/whatsapp_thread_model.dart';
 import '../providers/call_provider.dart';
 import '../providers/event_provider.dart';
@@ -15,6 +16,7 @@ import '../services/api_service.dart';
 import '../services/telephony_service.dart';
 import '../widgets/glass_card.dart';
 import '../widgets/live_activity_sheet.dart';
+import '../widgets/travel_quote_dialog.dart';
 import '../widgets/whatsapp_team_chat_view.dart';
 import 'settings_screen.dart';
 import 'web_chat_detail_screen.dart';
@@ -143,116 +145,10 @@ class _WhatsAppHubScreenState extends State<WhatsAppHubScreen> {
   }
 
   void _showNewWhatsAppLeadDialog(BuildContext context) {
-    final nameCtrl = TextEditingController();
-    final phoneCtrl = TextEditingController(text: '+91 ');
-    final circuitCtrl = TextEditingController(text: 'Varanasi & Ayodhya');
-    final msgCtrl = TextEditingController(
-      text: 'Namaste! 🙏 Sharing your requested TripCosmos Varanasi spiritual tour details.',
-    );
-
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF1E293B),
-        title: const Text(
-          'New WhatsApp Chat & CRM Lead',
-          style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700),
-        ),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: nameCtrl,
-                style: const TextStyle(color: Colors.white),
-                decoration: const InputDecoration(
-                  labelText: 'Customer / Agency Name',
-                  hintText: 'e.g. Harshal Thakker',
-                  isDense: true,
-                ),
-              ),
-              const SizedBox(height: 10),
-              TextField(
-                controller: phoneCtrl,
-                keyboardType: TextInputType.phone,
-                style: const TextStyle(color: Colors.white),
-                decoration: const InputDecoration(
-                  labelText: 'WhatsApp Phone Number',
-                  hintText: '+91 9876543210',
-                  isDense: true,
-                ),
-              ),
-              const SizedBox(height: 10),
-              TextField(
-                controller: circuitCtrl,
-                style: const TextStyle(color: Colors.white),
-                decoration: const InputDecoration(
-                  labelText: 'Tour Circuit / Requirement',
-                  isDense: true,
-                ),
-              ),
-              const SizedBox(height: 10),
-              TextField(
-                controller: msgCtrl,
-                maxLines: 3,
-                style: const TextStyle(color: Colors.white, fontSize: 13),
-                decoration: const InputDecoration(
-                  labelText: 'Initial WhatsApp Message (Optional)',
-                  isDense: true,
-                ),
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel', style: TextStyle(color: Colors.white54)),
-          ),
-          ElevatedButton.icon(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.whatsappGreen,
-              foregroundColor: Colors.white,
-            ),
-            icon: const Icon(Icons.chat_rounded, size: 16),
-            label: const Text('Open Chat & Save Lead'),
-            onPressed: () async {
-              final phone = phoneCtrl.text.trim();
-              if (phone.length < 8) return;
-              final name = nameCtrl.text.trim().isNotEmpty ? nameCtrl.text.trim() : 'Pilgrim ($phone)';
-              final circuit = circuitCtrl.text.trim().isNotEmpty ? circuitCtrl.text.trim() : 'Varanasi';
-              final initialMsg = msgCtrl.text.trim();
-
-              Navigator.pop(ctx);
-
-              final wp = context.read<WhatsAppProvider>();
-              final leadProv = context.read<LeadProvider>();
-
-              await leadProv.createNewLead(
-                name: name,
-                phone: phone,
-                destination: circuit,
-                source: 'whatsapp',
-                note: initialMsg,
-              );
-
-              final thread = wp.getOrCreateThread(
-                customerPhone: phone,
-                customerName: name,
-                circuit: circuit,
-                initialMessage: initialMsg,
-              );
-
-              if (initialMsg.isNotEmpty) {
-                await wp.sendMessage(thread.id, initialMsg);
-              }
-
-              if (mounted) {
-                _openThread(thread);
-              }
-            },
-          ),
-        ],
+      builder: (ctx) => _NewWhatsAppLeadDialog(
+        onOpenThread: _openThread,
       ),
     );
   }
@@ -261,226 +157,228 @@ class _WhatsAppHubScreenState extends State<WhatsAppHubScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: const Color(0xFF1E293B),
+      backgroundColor: AppColors.getCard(context),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (ctx) => FutureBuilder<Map<String, dynamic>?>(
-        future: _apiService.fetchEvolutionStatus(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Padding(
-              padding: EdgeInsets.all(40),
-              child: Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    CircularProgressIndicator(color: AppColors.whatsappGreen),
-                    SizedBox(height: 16),
-                    Text(
-                      'Checking Evolution API Gateway Status...',
-                      style: TextStyle(color: Colors.white, fontSize: 13),
+      builder: (ctx) => SafeArea(
+        child: SingleChildScrollView(
+          padding: EdgeInsets.fromLTRB(20, 20, 20, 20 + MediaQuery.of(ctx).padding.bottom),
+          child: FutureBuilder<Map<String, dynamic>?>(
+            future: _apiService.fetchEvolutionStatus(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return Padding(
+                  padding: const EdgeInsets.all(40),
+                  child: Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const CircularProgressIndicator(color: AppColors.whatsappGreen),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Checking Evolution API Gateway Status...',
+                          style: TextStyle(color: AppColors.getTextPrimary(context), fontSize: 13),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-              ),
-            );
-          }
+                  ),
+                );
+              }
 
-          final data = snapshot.data;
-          final state = data?['state']?.toString() ?? 'unknown';
-          final qr = data?['qr']?.toString() ?? '';
-          final pairingCode = data?['pairing_code']?.toString() ?? '';
-          final isOpen = data?['is_open'] == true || state == 'open';
+              final data = snapshot.data;
+              final state = data?['state']?.toString() ?? 'unknown';
+              final qr = data?['qr']?.toString() ?? '';
+              final pairingCode = data?['pairing_code']?.toString() ?? '';
+              final isOpen = data?['is_open'] == true || state == 'open';
 
-          return Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: (isOpen ? AppColors.successGreen : AppColors.errorRed).withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Icon(
+                          isOpen ? Icons.check_circle_rounded : Icons.qr_code_scanner_rounded,
+                          color: isOpen ? AppColors.successGreen : AppColors.accentGold,
+                          size: 24,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Evolution WhatsApp Gateway',
+                              style: TextStyle(color: AppColors.getTextPrimary(context), fontWeight: FontWeight.bold, fontSize: 16),
+                            ),
+                            Text(
+                              'wa.vmstudio.digital • Instance: TripCosmos.co',
+                              style: TextStyle(color: AppColors.getTextSecondary(context), fontSize: 11),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 14),
+                  if (isOpen) ...[
                     Container(
-                      padding: const EdgeInsets.all(8),
+                      padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
-                        color: (isOpen ? AppColors.successGreen : AppColors.errorRed).withValues(alpha: 0.15),
+                        color: AppColors.successGreen.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: AppColors.successGreen.withValues(alpha: 0.4)),
                       ),
-                      child: Icon(
-                        isOpen ? Icons.check_circle_rounded : Icons.qr_code_scanner_rounded,
-                        color: isOpen ? AppColors.successGreen : AppColors.accentGold,
-                        size: 24,
+                      child: Row(
+                        children: [
+                          const Icon(Icons.verified_rounded, color: AppColors.successGreen, size: 20),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              'Your WhatsApp session (+91 93361 16210) is active and connected. Real-time message sending and delivery receipts are functioning.',
+                              style: TextStyle(color: AppColors.getTextPrimary(context), fontSize: 12),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(width: 12),
-                    const Expanded(
+                  ] else if (qr.isNotEmpty) ...[
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: AppColors.getElevated(context),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: AppColors.getBorder(context)),
+                      ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            'Evolution WhatsApp Gateway',
-                            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                          const Text(
+                            'Instructions to Link Device:',
+                            style: TextStyle(color: AppColors.accentGold, fontSize: 12, fontWeight: FontWeight.bold),
                           ),
+                          const SizedBox(height: 4),
                           Text(
-                            'wa.vmstudio.digital • Instance: TripCosmos.co',
-                            style: TextStyle(color: Colors.white54, fontSize: 11),
+                            '1. Open WhatsApp on office phone (+91 93361 16210)\n'
+                            '2. Tap Settings / 3-dots Menu (⋮) -> Linked Devices\n'
+                            '3. Tap "Link a Device" and scan the QR code below:',
+                            style: TextStyle(color: AppColors.getTextSecondary(context), fontSize: 11.5, height: 1.4),
                           ),
                         ],
                       ),
                     ),
-                  ],
-                ),
-                const SizedBox(height: 14),
-                if (isOpen) ...[
-                  Container(
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: AppColors.successGreen.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: AppColors.successGreen.withValues(alpha: 0.4)),
-                    ),
-                    child: const Row(
-                      children: [
-                        Icon(Icons.verified_rounded, color: AppColors.successGreen, size: 20),
-                        SizedBox(width: 10),
-                        Expanded(
-                          child: Text(
-                            'Your WhatsApp session (+91 93361 16210) is active and connected. Real-time message sending and delivery receipts are functioning.',
-                            style: TextStyle(color: Colors.white, fontSize: 12),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ] else if (qr.isNotEmpty) ...[
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF0F172A),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: Colors.white12),
-                    ),
-                    child: const Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Instructions to Link Device:',
-                          style: TextStyle(color: AppColors.accentGold, fontSize: 12, fontWeight: FontWeight.bold),
-                        ),
-                        SizedBox(height: 4),
-                        Text(
-                          '1. Open WhatsApp on office phone (+91 93361 16210)\n'
-                          '2. Tap Settings / 3-dots Menu (⋮) -> Linked Devices\n'
-                          '3. Tap "Link a Device" and scan the QR code below:',
-                          style: TextStyle(color: Colors.white70, fontSize: 11.5, height: 1.4),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-                  Center(
-                    child: Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: const [
-                          BoxShadow(color: Colors.black26, blurRadius: 10, offset: Offset(0, 4)),
-                        ],
-                      ),
-                      child: Builder(
-                        builder: (_) {
-                          if (qr.startsWith('http://') || qr.startsWith('https://')) {
-                            return Image.network(qr, width: 220, height: 220, fit: BoxFit.contain);
-                          }
-                          try {
-                            final base64String = qr.contains(',') ? qr.split(',').last : qr;
-                            final cleanString = base64String.replaceAll(RegExp(r'\s+'), '');
-                            final bytes = base64Decode(cleanString);
-                            return Image.memory(bytes, width: 220, height: 220, fit: BoxFit.contain);
-                          } catch (e) {
-                            return Padding(
-                              padding: const EdgeInsets.all(16),
-                              child: Text('Error decoding QR: $e', style: const TextStyle(color: Colors.black, fontSize: 11)),
-                            );
-                          }
-                        },
-                      ),
-                    ),
-                  ),
-                  if (pairingCode.isNotEmpty) ...[
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 14),
                     Center(
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                        padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF1E293B),
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: AppColors.accentGold.withValues(alpha: 0.5)),
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: const [
+                            BoxShadow(color: Colors.black26, blurRadius: 10, offset: Offset(0, 4)),
+                          ],
                         ),
-                        child: Text(
-                          'Pairing Code: $pairingCode',
-                          style: const TextStyle(color: AppColors.accentGold, fontWeight: FontWeight.bold, fontSize: 13),
+                        child: Builder(
+                          builder: (_) {
+                            if (qr.startsWith('http://') || qr.startsWith('https://')) {
+                              return Image.network(qr, width: 220, height: 220, fit: BoxFit.contain);
+                            }
+                            try {
+                              final base64String = qr.contains(',') ? qr.split(',').last : qr;
+                              final cleanString = base64String.replaceAll(RegExp(r'\s+'), '');
+                              final bytes = base64Decode(cleanString);
+                              return Image.memory(bytes, width: 220, height: 220, fit: BoxFit.contain);
+                            } catch (e) {
+                              return Padding(
+                                padding: const EdgeInsets.all(16),
+                                child: Text('Error decoding QR: $e', style: const TextStyle(color: Colors.black, fontSize: 11)),
+                              );
+                            }
+                          },
                         ),
                       ),
                     ),
-                  ],
-                ] else ...[
-                  Container(
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF0F172A),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: AppColors.errorRed.withValues(alpha: 0.4)),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          '⚠️ Session State: Disconnected / Closed',
-                          style: TextStyle(color: AppColors.errorRed, fontWeight: FontWeight.bold, fontSize: 13),
-                        ),
-                        const SizedBox(height: 6),
-                        const Text(
-                          'Baileys session disconnected on wa.vmstudio.digital. You can initialize a new pairing QR directly from the Evolution web dashboard:',
-                          style: TextStyle(color: Colors.white70, fontSize: 12),
-                        ),
-                        const SizedBox(height: 12),
-                        ElevatedButton.icon(
-                          onPressed: () {
-                            TelephonyService.launchBrowser('https://wa.vmstudio.digital/manager');
-                          },
-                          icon: const Icon(Icons.open_in_new, size: 16),
-                          label: const Text('Open Evolution Manager Dashboard'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.whatsappGreen,
-                            foregroundColor: Colors.white,
+                    if (pairingCode.isNotEmpty) ...[
+                      const SizedBox(height: 10),
+                      Center(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: AppColors.getElevated(context),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: AppColors.accentGold.withValues(alpha: 0.5)),
+                          ),
+                          child: Text(
+                            'Pairing Code: $pairingCode',
+                            style: const TextStyle(color: AppColors.accentGold, fontWeight: FontWeight.bold, fontSize: 13),
                           ),
                         ),
-                      ],
+                      ),
+                    ],
+                  ] else ...[
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: AppColors.getElevated(context),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: AppColors.errorRed.withValues(alpha: 0.4)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            '⚠️ Session State: Disconnected / Closed',
+                            style: TextStyle(color: AppColors.errorRed, fontWeight: FontWeight.bold, fontSize: 13),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            'Baileys session disconnected on wa.vmstudio.digital. You can initialize a new pairing QR directly from the Evolution web dashboard:',
+                            style: TextStyle(color: AppColors.getTextSecondary(context), fontSize: 12),
+                          ),
+                          const SizedBox(height: 12),
+                          ElevatedButton.icon(
+                            onPressed: () {
+                              TelephonyService.launchBrowser('https://wa.vmstudio.digital/manager');
+                            },
+                            icon: const Icon(Icons.open_in_new, size: 16),
+                            label: const Text('Open Evolution Manager Dashboard'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.whatsappGreen,
+                              foregroundColor: Colors.white,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(ctx);
+                        context.read<WhatsAppProvider>().fetchThreadsFromServer();
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF334155),
+                        foregroundColor: Colors.white,
+                      ),
+                      child: const Text('Close'),
                     ),
                   ),
                 ],
-                const SizedBox(height: 16),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.pop(ctx);
-                      context.read<WhatsAppProvider>().fetchThreadsFromServer();
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF334155),
-                      foregroundColor: Colors.white,
-                    ),
-                    child: const Text('Close'),
-                  ),
-                ),
-              ],
-            ),
-          );
-        },
+              );
+            },
+          ),
+        ),
       ),
     );
   }
@@ -726,7 +624,7 @@ class _WhatsAppHubScreenState extends State<WhatsAppHubScreen> {
 
   Widget _buildNoActiveThreadPlaceholder() {
     return Container(
-      color: const Color(0xFF0B132B),
+      color: AppColors.getSurface(context),
       child: Center(
         child: Padding(
           padding: const EdgeInsets.all(32),
@@ -747,10 +645,10 @@ class _WhatsAppHubScreenState extends State<WhatsAppHubScreen> {
                 child: const Icon(Icons.forum_rounded, color: AppColors.whatsappGreen, size: 40),
               ),
               const SizedBox(height: 20),
-              const Text(
+              Text(
                 'TripCosmos Omnichannel Sales Hub',
                 style: TextStyle(
-                  color: Colors.white,
+                  color: AppColors.getTextPrimary(context),
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
                 ),
@@ -758,10 +656,10 @@ class _WhatsAppHubScreenState extends State<WhatsAppHubScreen> {
               const SizedBox(height: 8),
               ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 420),
-                child: const Text(
+                child: Text(
                   'Select a conversation from the left to review traveler history, chat live via official WhatsApp (+91 93361 16210), assign AI Sales Personas, or dispatch itineraries.',
                   textAlign: TextAlign.center,
-                  style: TextStyle(color: AppColors.textMuted, fontSize: 13, height: 1.4),
+                  style: TextStyle(color: AppColors.getTextSecondary(context), fontSize: 13, height: 1.4),
                 ),
               ),
               const SizedBox(height: 24),
@@ -794,14 +692,14 @@ class _WhatsAppHubScreenState extends State<WhatsAppHubScreen> {
           child: TextField(
             controller: _searchController,
             onChanged: wp.setSearchQuery,
-            style: const TextStyle(color: Colors.white, fontSize: 13),
+            style: TextStyle(color: AppColors.getTextPrimary(context), fontSize: 13),
             decoration: InputDecoration(
               hintText: 'Search by name, +91 phone, circuit, or message...',
               hintStyle: const TextStyle(color: AppColors.textMuted, fontSize: 12.5),
               prefixIcon: const Icon(Icons.search, size: 18, color: AppColors.accentGold),
               suffixIcon: wp.searchQuery.isNotEmpty
                   ? IconButton(
-                      icon: const Icon(Icons.clear, size: 16, color: Colors.white54),
+                      icon: Icon(Icons.clear, size: 16, color: AppColors.getTextSecondary(context)),
                       onPressed: () {
                         _searchController.clear();
                         wp.setSearchQuery('');
@@ -858,8 +756,8 @@ class _WhatsAppHubScreenState extends State<WhatsAppHubScreen> {
                         wp.isLoading
                             ? 'Loading real WhatsApp & CRM threads...'
                             : 'No threads match this filter',
-                        style: const TextStyle(
-                          color: AppColors.textPrimary,
+                        style: TextStyle(
+                          color: AppColors.getTextPrimary(context),
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
                         ),
@@ -897,6 +795,7 @@ class _WhatsAppHubScreenState extends State<WhatsAppHubScreen> {
 
   Widget _buildFilterChip(WhatsAppProvider wp, String key, String label) {
     final isSelected = wp.filter == key;
+    final isLight = Theme.of(context).brightness == Brightness.light;
     return Padding(
       padding: const EdgeInsets.only(right: 6),
       child: InkWell(
@@ -907,17 +806,19 @@ class _WhatsAppHubScreenState extends State<WhatsAppHubScreen> {
           decoration: BoxDecoration(
             color: isSelected
                 ? AppColors.whatsappGreen.withValues(alpha: 0.22)
-                : AppColors.surfaceCard,
+                : AppColors.getCard(context),
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: isSelected ? AppColors.whatsappGreen : AppColors.borderSubtle,
+              color: isSelected ? AppColors.whatsappGreen : AppColors.getBorder(context),
               width: isSelected ? 1.4 : 1.0,
             ),
           ),
           child: Text(
             label,
             style: TextStyle(
-              color: isSelected ? Colors.white : AppColors.textSecondary,
+              color: isSelected
+                  ? (isLight ? const Color(0xFF065F46) : Colors.white)
+                  : AppColors.getTextSecondary(context),
               fontSize: 11,
               fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
             ),
@@ -934,6 +835,7 @@ class _WhatsAppHubScreenState extends State<WhatsAppHubScreen> {
         ? th.timeAgo
         : DateFormat('dd MMM, h:mm a').format(th.lastMessageTime);
     final isSelected = isWide && wp.selectedThreadId == th.id;
+    final isLight = Theme.of(context).brightness == Brightness.light;
 
     IconData channelIcon = Icons.chat_rounded;
     Color channelColor = AppColors.whatsappGreen;
@@ -955,17 +857,17 @@ class _WhatsAppHubScreenState extends State<WhatsAppHubScreen> {
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: isSelected
-              ? const Color(0xFF1E293B)
+              ? AppColors.getElevated(context)
               : (th.unreadCount > 0
-                  ? const Color(0xFF13233F)
-                  : AppColors.surfaceCard),
+                  ? (isLight ? const Color(0xFFF0FDF4) : const Color(0xFF13233F))
+                  : AppColors.getCard(context)),
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
             color: isSelected
                 ? AppColors.accentGold
                 : (th.unreadCount > 0
                     ? AppColors.whatsappGreen.withValues(alpha: 0.6)
-                    : AppColors.borderSubtle),
+                    : AppColors.getBorder(context)),
             width: isSelected ? 1.6 : (th.unreadCount > 0 ? 1.3 : 1.0),
           ),
           boxShadow: isSelected
@@ -1014,7 +916,7 @@ class _WhatsAppHubScreenState extends State<WhatsAppHubScreen> {
                       child: Container(
                         padding: const EdgeInsets.all(2.5),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF0F172A),
+                          color: AppColors.getSurface(context),
                           shape: BoxShape.circle,
                           border: Border.all(color: channelColor, width: 1),
                         ),
@@ -1036,7 +938,7 @@ class _WhatsAppHubScreenState extends State<WhatsAppHubScreen> {
                             child: Text(
                               th.displayName,
                               style: TextStyle(
-                                color: Colors.white,
+                                color: AppColors.getTextPrimary(context),
                                 fontSize: 14.5,
                                 fontWeight: th.unreadCount > 0 ? FontWeight.w800 : FontWeight.w700,
                               ),
@@ -1058,8 +960,8 @@ class _WhatsAppHubScreenState extends State<WhatsAppHubScreen> {
                       const SizedBox(height: 2),
                       Text(
                         th.customerPhone,
-                        style: const TextStyle(
-                          color: Colors.white60,
+                        style: TextStyle(
+                          color: AppColors.getTextSecondary(context),
                           fontSize: 11,
                           fontFamily: 'monospace',
                         ),
@@ -1075,7 +977,7 @@ class _WhatsAppHubScreenState extends State<WhatsAppHubScreen> {
                               size: 13,
                               color: th.lastMessageStatus == 'read'
                                   ? Colors.cyanAccent
-                                  : Colors.white54,
+                                  : AppColors.getTextMuted(context),
                             ),
                             const SizedBox(width: 4),
                           ],
@@ -1083,7 +985,7 @@ class _WhatsAppHubScreenState extends State<WhatsAppHubScreen> {
                             child: Text(
                               th.lastMessage,
                               style: TextStyle(
-                                color: th.unreadCount > 0 ? Colors.white : AppColors.textSecondary,
+                                color: th.unreadCount > 0 ? AppColors.getTextPrimary(context) : AppColors.getTextSecondary(context),
                                 fontSize: 12.5,
                                 fontWeight: th.unreadCount > 0 ? FontWeight.w600 : FontWeight.w400,
                               ),
@@ -1191,14 +1093,14 @@ class _WhatsAppHubScreenState extends State<WhatsAppHubScreen> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
                     decoration: BoxDecoration(
-                      color: AppColors.surface,
+                      color: AppColors.getElevated(context),
                       borderRadius: BorderRadius.circular(6),
-                      border: Border.all(color: AppColors.borderSubtle),
+                      border: Border.all(color: AppColors.getBorder(context)),
                     ),
                     child: Text(
                       th.circuit,
-                      style: const TextStyle(
-                        color: AppColors.textSecondary,
+                      style: TextStyle(
+                        color: AppColors.getTextSecondary(context),
                         fontSize: 9.5,
                         fontWeight: FontWeight.w600,
                       ),
@@ -1246,13 +1148,13 @@ class _WhatsAppHubScreenState extends State<WhatsAppHubScreen> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2.5),
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.05),
+                    color: AppColors.getElevated(context),
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text(
                     '👤 ${th.assignedAgent}',
-                    style: const TextStyle(
-                      color: Colors.white70,
+                    style: TextStyle(
+                      color: AppColors.getTextSecondary(context),
                       fontSize: 9.5,
                     ),
                   ),
@@ -1288,10 +1190,10 @@ class _WhatsAppHubScreenState extends State<WhatsAppHubScreen> {
                 color: AppColors.textMuted.withValues(alpha: 0.4),
               ),
               const SizedBox(height: 12),
-              const Text(
+              Text(
                 'No active website chatbot sessions right now',
                 style: TextStyle(
-                  color: AppColors.textPrimary,
+                  color: AppColors.getTextPrimary(context),
                   fontSize: 15,
                   fontWeight: FontWeight.w700,
                 ),
@@ -1384,10 +1286,10 @@ class _WhatsAppHubScreenState extends State<WhatsAppHubScreen> {
                             Flexible(
                               child: Text(
                                 visitorName,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 15,
                                   fontWeight: FontWeight.w700,
-                                  color: AppColors.textPrimary,
+                                  color: AppColors.getTextPrimary(context),
                                 ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
@@ -1690,10 +1592,10 @@ class _WhatsAppHubScreenState extends State<WhatsAppHubScreen> {
                         Expanded(
                           child: Text(
                             item['title']!,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w700,
-                              color: AppColors.textPrimary,
+                              color: AppColors.getTextPrimary(context),
                             ),
                           ),
                         ),
@@ -1724,62 +1626,119 @@ class _WhatsAppHubScreenState extends State<WhatsAppHubScreen> {
                     const SizedBox(height: 6),
                     Text(
                       item['summary']!,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
-                        color: AppColors.textSecondary,
+                        color: AppColors.getTextSecondary(context),
                       ),
                     ),
                     const SizedBox(height: 10),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
-                          item['price']!,
-                          style: const TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.accentGold,
+                        InkWell(
+                          onTap: () {
+                            final phone = _targetPhoneController.text.trim().isNotEmpty
+                                ? _targetPhoneController.text.trim()
+                                : AppConstants.officeJioPhone;
+                            final tempLead = LeadModel(
+                              id: 'brochure_${DateTime.now().millisecondsSinceEpoch}',
+                              name: 'Valued Traveler',
+                              phone: phone,
+                              destination: item['title'] ?? 'Varanasi',
+                              budget: item['price'] ?? '₹18,500',
+                              stage: 'quote_sent',
+                              source: 'whatsapp',
+                              notes: [item['summary'] ?? ''],
+                              createdAt: DateTime.now(),
+                            );
+                            TravelQuoteDialog.show(context, tempLead, initialB2bMode: _rateType == 'b2b');
+                          },
+                          borderRadius: BorderRadius.circular(6),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 4),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  item['price']!,
+                                  style: const TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.accentGold,
+                                  ),
+                                ),
+                                const SizedBox(width: 4),
+                                const Icon(Icons.edit_note_rounded, size: 16, color: AppColors.accentGold),
+                              ],
+                            ),
                           ),
                         ),
-                        ElevatedButton.icon(
-                          onPressed: () async {
-                            final phone =
-                                _targetPhoneController.text.trim().isNotEmpty
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            OutlinedButton.icon(
+                              onPressed: () {
+                                final phone = _targetPhoneController.text.trim().isNotEmpty
                                     ? _targetPhoneController.text.trim()
                                     : AppConstants.officeJioPhone;
-                            final message =
-                                "Namaste! 🙏 Here is the requested TripCosmos itinerary:\n\n*${item['title']}*\nRate: ${item['price']}\nInclusions: ${item['summary']}\n\nShall I reserve your booking slot?";
-                            final delivered = await _apiService.sendWhatsAppMessage(
-                              phone: phone,
-                              message: message,
-                            );
-                            if (mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    delivered
-                                        ? '✓ Itinerary sent to $phone via Official WhatsApp (+91 93361 16210)'
-                                        : '⚠️ Itinerary queued for delivery to $phone via Official WhatsApp',
-                                  ),
-                                  backgroundColor: delivered ? AppColors.successGreen : const Color(0xFF1E293B),
-                                ),
-                              );
-                            }
-                          },
-                          icon: const Icon(Icons.send_rounded, size: 14),
-                          label: const Text('Send In-App'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.whatsappGreen,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 14,
-                              vertical: 8,
+                                final tempLead = LeadModel(
+                                  id: 'brochure_${DateTime.now().millisecondsSinceEpoch}',
+                                  name: 'Valued Traveler',
+                                  phone: phone,
+                                  destination: item['title'] ?? 'Varanasi',
+                                  budget: item['price'] ?? '₹18,500',
+                                  stage: 'quote_sent',
+                                  source: 'whatsapp',
+                                  notes: [item['summary'] ?? ''],
+                                  createdAt: DateTime.now(),
+                                );
+                                TravelQuoteDialog.show(context, tempLead, initialB2bMode: _rateType == 'b2b');
+                              },
+                              icon: const Icon(Icons.tune_rounded, size: 13),
+                              label: const Text('Customize'),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: AppColors.accentGold,
+                                side: BorderSide(color: AppColors.accentGold.withValues(alpha: 0.6)),
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                textStyle: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+                              ),
                             ),
-                            textStyle: const TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
+                            const SizedBox(width: 8),
+                            ElevatedButton.icon(
+                              onPressed: () async {
+                                final phone =
+                                    _targetPhoneController.text.trim().isNotEmpty
+                                        ? _targetPhoneController.text.trim()
+                                        : AppConstants.officeJioPhone;
+                                final message =
+                                    "Namaste! 🙏 Here is the requested TripCosmos itinerary:\n\n*${item['title']}*\nRate: ${item['price']}\nInclusions: ${item['summary']}\n\nShall I reserve your booking slot?";
+                                final delivered = await _apiService.sendWhatsAppMessage(
+                                  phone: phone,
+                                  message: message,
+                                );
+                                if (mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        delivered
+                                            ? '✓ Itinerary sent to $phone via Official WhatsApp (+91 93361 16210)'
+                                            : '⚠️ Itinerary queued for delivery to $phone via Official WhatsApp',
+                                      ),
+                                      backgroundColor: delivered ? AppColors.successGreen : const Color(0xFF1E293B),
+                                    ),
+                                  );
+                                }
+                              },
+                              icon: const Icon(Icons.send_rounded, size: 13),
+                              label: const Text('Send'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.whatsappGreen,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                textStyle: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+                              ),
                             ),
-                          ),
+                          ],
                         ),
                       ],
                     ),
@@ -1791,10 +1750,78 @@ class _WhatsAppHubScreenState extends State<WhatsAppHubScreen> {
 
           const SizedBox(height: 18),
 
-          const Text(
-            'DYNAMIC TARIFF & QUOTE ENGINE',
+          // Customizable Itinerary & Tariff Studio Banner
+          GlassCard(
+            padding: const EdgeInsets.all(14),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: AppColors.accentGold.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(Icons.tune_rounded, color: AppColors.accentGold, size: 24),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Customizable Itinerary & Tariff Studio',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.getTextPrimary(context),
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Edit per-pax rates, custom route, travel dates & token advance',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: AppColors.getTextSecondary(context),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    final targetPhone = _targetPhoneController.text.trim().isNotEmpty
+                        ? _targetPhoneController.text.trim()
+                        : AppConstants.officeJioPhone;
+                    final tempLead = LeadModel(
+                      id: 'draft_${DateTime.now().millisecondsSinceEpoch}',
+                      name: 'Valued Traveler',
+                      phone: targetPhone,
+                      email: '',
+                      destination: _selectedDestination,
+                      budget: '₹25,000',
+                      stage: 'new',
+                      source: 'whatsapp',
+                      notes: ['Quote generated from WhatsApp Hub'],
+                      createdAt: DateTime.now(),
+                    );
+                    TravelQuoteDialog.show(context, tempLead, initialB2bMode: _rateType == 'b2b');
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.accentGold,
+                    foregroundColor: AppColors.primaryDark,
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  ),
+                  child: const Text('Open Studio', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 18),
+
+          Text(
+            'QUICK TARIFF CALCULATOR',
             style: TextStyle(
-              color: AppColors.textMuted,
+              color: AppColors.getTextMuted(context),
               fontSize: 11,
               fontWeight: FontWeight.w700,
               letterSpacing: 0.5,
@@ -1815,7 +1842,7 @@ class _WhatsAppHubScreenState extends State<WhatsAppHubScreen> {
                     labelText: 'Select Tour Circuit',
                     isDense: true,
                   ),
-                  dropdownColor: AppColors.surfaceCard,
+                  dropdownColor: AppColors.getCard(context),
                   items: const [
                     DropdownMenuItem(
                       value: 'Varanasi 3D2N',
@@ -1849,7 +1876,7 @@ class _WhatsAppHubScreenState extends State<WhatsAppHubScreen> {
                           labelText: 'No. of Pax',
                           isDense: true,
                         ),
-                        dropdownColor: AppColors.surfaceCard,
+                        dropdownColor: AppColors.getCard(context),
                         items: List.generate(
                           10,
                           (i) => DropdownMenuItem(
@@ -1870,7 +1897,7 @@ class _WhatsAppHubScreenState extends State<WhatsAppHubScreen> {
                           labelText: 'Rate Type',
                           isDense: true,
                         ),
-                        dropdownColor: AppColors.surfaceCard,
+                        dropdownColor: AppColors.getCard(context),
                         items: const [
                           DropdownMenuItem(
                             value: 'b2c',
@@ -1951,6 +1978,139 @@ class _WhatsAppHubScreenState extends State<WhatsAppHubScreen> {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _NewWhatsAppLeadDialog extends StatefulWidget {
+  final void Function(WhatsAppThread thread) onOpenThread;
+
+  const _NewWhatsAppLeadDialog({required this.onOpenThread});
+
+  @override
+  State<_NewWhatsAppLeadDialog> createState() => _NewWhatsAppLeadDialogState();
+}
+
+class _NewWhatsAppLeadDialogState extends State<_NewWhatsAppLeadDialog> {
+  final _nameCtrl = TextEditingController();
+  final _phoneCtrl = TextEditingController(text: '+91 ');
+  final _circuitCtrl = TextEditingController(text: 'Varanasi & Ayodhya');
+  final _msgCtrl = TextEditingController(
+    text: 'Namaste! 🙏 Sharing your requested TripCosmos Varanasi spiritual tour details.',
+  );
+
+  @override
+  void dispose() {
+    _nameCtrl.dispose();
+    _phoneCtrl.dispose();
+    _circuitCtrl.dispose();
+    _msgCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      backgroundColor: AppColors.getCard(context),
+      title: Text(
+        'New WhatsApp Chat & CRM Lead',
+        style: TextStyle(color: AppColors.getTextPrimary(context), fontSize: 16, fontWeight: FontWeight.w700),
+      ),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: _nameCtrl,
+              style: TextStyle(color: AppColors.getTextPrimary(context)),
+              decoration: const InputDecoration(
+                labelText: 'Customer / Agency Name',
+                hintText: 'e.g. Harshal Thakker',
+                isDense: true,
+              ),
+            ),
+            const SizedBox(height: 10),
+            TextField(
+              controller: _phoneCtrl,
+              keyboardType: TextInputType.phone,
+              style: TextStyle(color: AppColors.getTextPrimary(context)),
+              decoration: const InputDecoration(
+                labelText: 'WhatsApp Phone Number',
+                hintText: '+91 9876543210',
+                isDense: true,
+              ),
+            ),
+            const SizedBox(height: 10),
+            TextField(
+              controller: _circuitCtrl,
+              style: TextStyle(color: AppColors.getTextPrimary(context)),
+              decoration: const InputDecoration(
+                labelText: 'Tour Circuit / Requirement',
+                isDense: true,
+              ),
+            ),
+            const SizedBox(height: 10),
+            TextField(
+              controller: _msgCtrl,
+              maxLines: 3,
+              style: TextStyle(color: AppColors.getTextPrimary(context), fontSize: 13),
+              decoration: const InputDecoration(
+                labelText: 'Initial WhatsApp Message (Optional)',
+                isDense: true,
+              ),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: Text('Cancel', style: TextStyle(color: AppColors.getTextSecondary(context))),
+        ),
+        ElevatedButton.icon(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.whatsappGreen,
+            foregroundColor: Colors.white,
+          ),
+          icon: const Icon(Icons.chat_rounded, size: 16),
+          label: const Text('Open Chat & Save Lead'),
+          onPressed: () async {
+            final phone = _phoneCtrl.text.trim();
+            if (phone.length < 8) return;
+            final name = _nameCtrl.text.trim().isNotEmpty ? _nameCtrl.text.trim() : 'Pilgrim ($phone)';
+            final circuit = _circuitCtrl.text.trim().isNotEmpty ? _circuitCtrl.text.trim() : 'Varanasi';
+            final initialMsg = _msgCtrl.text.trim();
+
+            Navigator.pop(context);
+
+            final wp = context.read<WhatsAppProvider>();
+            final leadProv = context.read<LeadProvider>();
+
+            await leadProv.createNewLead(
+              name: name,
+              phone: phone,
+              destination: circuit,
+              source: 'whatsapp',
+              note: initialMsg,
+            );
+
+            final thread = wp.getOrCreateThread(
+              customerPhone: phone,
+              customerName: name,
+              circuit: circuit,
+              initialMessage: initialMsg,
+            );
+
+            if (initialMsg.isNotEmpty) {
+              await wp.sendMessage(thread.id, initialMsg);
+            }
+
+            if (mounted) {
+              widget.onOpenThread(thread);
+            }
+          },
+        ),
+      ],
     );
   }
 }

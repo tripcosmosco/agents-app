@@ -81,7 +81,7 @@ class _LiveActivitySheetState extends State<LiveActivitySheet> {
                   child: const Icon(Icons.radar_rounded, color: AppColors.successGreen, size: 22),
                 ),
                 const SizedBox(width: 12),
-                const Expanded(
+                Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -90,12 +90,12 @@ class _LiveActivitySheetState extends State<LiveActivitySheet> {
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w800,
-                          color: AppColors.textPrimary,
+                          color: AppColors.getTextPrimary(context),
                         ),
                       ),
                       Text(
                         'Real-time telemetry from tripcosmos.co (Page, Device, IP & Leads)',
-                        style: TextStyle(fontSize: 11, color: AppColors.textMuted),
+                        style: TextStyle(fontSize: 11, color: AppColors.getTextMuted(context)),
                       ),
                     ],
                   ),
@@ -339,6 +339,7 @@ class _LiveActivitySheetState extends State<LiveActivitySheet> {
         : DateFormat('hh:mm a').format(ev.createdAt);
 
     final phone = (ev.details['phone'] ?? ev.details['visitor_phone'] ?? '').toString();
+    final visitorName = (ev.details['name'] ?? ev.details['visitor_name'] ?? '').toString().trim();
     final pageUrl = (ev.details['page_url'] ?? '').toString();
     final pageTitle = (ev.details['page_title'] ?? '').toString();
     final device = (ev.details['device'] ?? '').toString();
@@ -398,11 +399,37 @@ class _LiveActivitySheetState extends State<LiveActivitySheet> {
                             ),
                           ),
                         ],
+                        if (isVisitor && visitorName.isNotEmpty) ...[
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            margin: const EdgeInsets.only(right: 6),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF38BDF8).withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(color: const Color(0xFF38BDF8), width: 0.8),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.person, size: 10, color: Color(0xFF38BDF8)),
+                                const SizedBox(width: 3),
+                                Text(
+                                  visitorName,
+                                  style: const TextStyle(
+                                    color: Color(0xFF38BDF8),
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                         Expanded(
                           child: Text(
                             isVisitor && pageTitle.isNotEmpty ? pageTitle : ev.title,
-                            style: const TextStyle(
-                              color: AppColors.textPrimary,
+                            style: TextStyle(
+                              color: AppColors.getTextPrimary(context),
                               fontSize: 13,
                               fontWeight: FontWeight.w700,
                             ),
@@ -413,8 +440,8 @@ class _LiveActivitySheetState extends State<LiveActivitySheet> {
                         const SizedBox(width: 6),
                         Text(
                           timeStr,
-                          style: const TextStyle(
-                            color: AppColors.textMuted,
+                          style: TextStyle(
+                            color: AppColors.getTextMuted(context),
                             fontSize: 10.5,
                             fontWeight: FontWeight.w600,
                           ),

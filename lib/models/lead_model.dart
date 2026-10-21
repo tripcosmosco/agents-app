@@ -108,14 +108,13 @@ class LeadModel {
   }
 
   double get dealValue {
-    if (budget.isEmpty) return (pax > 0 ? pax : 2) * 12000.0;
+    if (budget.isEmpty) return 0.0;
     final clean = budget.replaceAll(RegExp(r'[^0-9.]'), '');
     final parsed = double.tryParse(clean);
-    if (parsed == null || parsed <= 0) {
-      return (pax > 0 ? pax : 2) * 12000.0;
-    }
-    return parsed;
+    return (parsed != null && parsed > 0) ? parsed : 0.0;
   }
+
+  double get estimatedDealValue => dealValue > 0 ? dealValue : (pax > 0 ? pax : 2) * 12000.0;
 
   Map<String, dynamic> toJson() {
     return {

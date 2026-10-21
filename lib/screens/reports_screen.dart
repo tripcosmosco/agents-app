@@ -9,6 +9,7 @@ import '../providers/event_provider.dart';
 import '../providers/lead_provider.dart';
 import '../widgets/glass_card.dart';
 import '../widgets/live_activity_sheet.dart';
+import 'finance_hub_screen.dart';
 import 'settings_screen.dart';
 
 class ReportsScreen extends StatefulWidget {
@@ -66,11 +67,11 @@ class _ReportsScreenState extends State<ReportsScreen> {
 
     // Financial summary from server
     final summary = _financialData?['summary'] as Map<String, dynamic>?;
-    final gmv = (summary?['gmv'] as num?)?.toDouble() ?? localWonVal;
-    final collected = (summary?['total_collected'] as num?)?.toDouble() ?? 0.0;
-    final pendingReceivables = (summary?['pending_receivables'] as num?)?.toDouble() ?? max(0.0, gmv - collected);
-    final pipelineVal = (summary?['pipeline_value'] as num?)?.toDouble() ?? localPipelineVal;
-    final collectionRate = (summary?['collection_rate'] as num?)?.toDouble() ?? (gmv > 0 ? (collected / gmv * 100) : 0.0);
+    final gmv = double.tryParse(summary?['gmv']?.toString() ?? '') ?? localWonVal;
+    final collected = double.tryParse(summary?['total_collected']?.toString() ?? '') ?? 0.0;
+    final pendingReceivables = double.tryParse(summary?['pending_receivables']?.toString() ?? '') ?? max(0.0, gmv - collected);
+    final pipelineVal = double.tryParse(summary?['pipeline_value']?.toString() ?? '') ?? localPipelineVal;
+    final collectionRate = double.tryParse(summary?['collection_rate']?.toString() ?? '') ?? (gmv > 0 ? (collected / gmv * 100) : 0.0);
 
     final methodSplit = _financialData?['method_split'] as Map<String, dynamic>? ?? {};
     final recentTx = (_financialData?['recent_transactions'] as List<dynamic>?) ?? [];
@@ -103,6 +104,18 @@ class _ReportsScreenState extends State<ReportsScreen> {
           ],
         ),
         actions: [
+          IconButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const FinanceHubScreen(),
+                ),
+              );
+            },
+            icon: const Icon(Icons.account_balance_rounded, color: AppColors.accentGold),
+            tooltip: 'Financial Intelligence Hub (SBI, Zoho, Google Ads)',
+          ),
           IconButton(
             onPressed: () => LiveActivitySheet.show(context),
             icon: const Icon(Icons.radar_rounded, color: AppColors.successGreen),
@@ -146,6 +159,67 @@ class _ReportsScreenState extends State<ReportsScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // 0. FINANCE HUB QUICK ACCESS BANNER (SBI, Zoho, Google Ads)
+                GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const FinanceHubScreen(),
+                      ),
+                    );
+                  },
+                  child: Container(
+                    margin: const EdgeInsets.only(bottom: 16),
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          AppColors.primary.withValues(alpha: 0.25),
+                          Colors.blueAccent.withValues(alpha: 0.15),
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: AppColors.primary.withValues(alpha: 0.2),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.account_balance_rounded, color: AppColors.primary, size: 22),
+                        ),
+                        const SizedBox(width: 12),
+                        const Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Text(
+                                    'Financial Intelligence Hub',
+                                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                                  ),
+                                  SizedBox(width: 6),
+                                  Icon(Icons.arrow_forward_ios_rounded, size: 12, color: Colors.grey),
+                                ],
+                              ),
+                              SizedBox(height: 2),
+                              Text(
+                                'SBI Statement Importer • Zoho Books • Google Ads Attribution',
+                                style: TextStyle(fontSize: 11, color: Colors.grey),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
                 // 1. FINANCIAL REVENUE & CASHFLOW AUDIT (Featured Card)
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -241,7 +315,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                     Expanded(
                       child: _buildMethodBadge(
                         label: 'Cashfree PG',
-                        amount: '₹${NumberFormat('#,##,###').format((methodSplit['cashfree'] as num?)?.toDouble() ?? 0.0)}',
+                        amount: '₹${NumberFormat('#,##,###').format(double.tryParse(methodSplit['cashfree']?.toString() ?? '0') ?? 0.0)}',
                         icon: Icons.credit_card_rounded,
                         color: const Color(0xFF8B5CF6),
                       ),
@@ -250,7 +324,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                     Expanded(
                       child: _buildMethodBadge(
                         label: 'Direct UPI',
-                        amount: '₹${NumberFormat('#,##,###').format((methodSplit['upi'] as num?)?.toDouble() ?? 0.0)}',
+                        amount: '₹${NumberFormat('#,##,###').format(double.tryParse(methodSplit['upi']?.toString() ?? '0') ?? 0.0)}',
                         icon: Icons.qr_code_scanner_rounded,
                         color: const Color(0xFF06B6D4),
                       ),
@@ -259,7 +333,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                     Expanded(
                       child: _buildMethodBadge(
                         label: 'Cash / Bank',
-                        amount: '₹${NumberFormat('#,##,###').format(((methodSplit['cash'] as num?)?.toDouble() ?? 0.0) + ((methodSplit['bank'] as num?)?.toDouble() ?? 0.0))}',
+                        amount: '₹${NumberFormat('#,##,###').format((double.tryParse(methodSplit['cash']?.toString() ?? '0') ?? 0.0) + (double.tryParse(methodSplit['bank']?.toString() ?? '0') ?? 0.0))}',
                         icon: Icons.payments_rounded,
                         color: const Color(0xFF10B981),
                       ),
@@ -283,8 +357,8 @@ class _ReportsScreenState extends State<ReportsScreen> {
                   GlassCard(
                     child: Column(
                       children: recentTx.take(5).map((tx) {
-                        final txMap = tx as Map<String, dynamic>;
-                        final amt = (txMap['amount'] as num?)?.toDouble() ?? 0.0;
+                        final txMap = tx is Map ? Map<String, dynamic>.from(tx) : <String, dynamic>{};
+                        final amt = double.tryParse(txMap['amount']?.toString() ?? '0') ?? 0.0;
                         final status = (txMap['status'] as String?) ?? 'created';
                         final method = (txMap['method'] as String?) ?? 'upi';
                         final isPaid = status == 'paid';
@@ -308,7 +382,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                                   children: [
                                     Text(
                                       txMap['customer_name'] ?? 'Traveler',
-                                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Colors.white),
+                                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.getTextPrimary(context)),
                                     ),
                                     Text(
                                       '${txMap['booking_ref'] ?? 'Ref'} • ${method.toUpperCase()}',
@@ -325,7 +399,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                                     style: TextStyle(
                                       fontSize: 13,
                                       fontWeight: FontWeight.w700,
-                                      color: isPaid ? AppColors.successGreen : Colors.white,
+                                      color: isPaid ? AppColors.successGreen : AppColors.getTextPrimary(context),
                                     ),
                                   ),
                                   Container(
@@ -474,10 +548,10 @@ class _ReportsScreenState extends State<ReportsScreen> {
                         child: Column(
                           children: serverLeaderboard.take(5).toList().asMap().entries.map((entry) {
                             final idx = entry.key;
-                            final agent = entry.value as Map<String, dynamic>;
+                            final agent = entry.value is Map ? Map<String, dynamic>.from(entry.value as Map) : <String, dynamic>{};
                             final name = (agent['agent_name'] as String?) ?? 'Agent';
-                            final wonCount = (agent['deals_won'] as num?)?.toInt() ?? 0;
-                            final rev = (agent['revenue'] as num?)?.toDouble() ?? 0.0;
+                            final wonCount = int.tryParse(agent['deals_won']?.toString() ?? '0') ?? 0;
+                            final rev = double.tryParse(agent['revenue']?.toString() ?? '0') ?? 0.0;
                             return Padding(
                               padding: const EdgeInsets.symmetric(vertical: 6),
                               child: _buildLeaderboardRow(
@@ -610,7 +684,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
           const SizedBox(height: 6),
           Text(
             amount,
-            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: Colors.white),
+            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: AppColors.getTextPrimary(context)),
           ),
         ],
       ),
@@ -663,10 +737,10 @@ class _ReportsScreenState extends State<ReportsScreen> {
             children: [
               Text(
                 stage,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
+                  color: AppColors.getTextPrimary(context),
                 ),
               ),
               Text(
@@ -724,10 +798,10 @@ class _ReportsScreenState extends State<ReportsScreen> {
             children: [
               Text(
                 name,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
+                  color: AppColors.getTextPrimary(context),
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,

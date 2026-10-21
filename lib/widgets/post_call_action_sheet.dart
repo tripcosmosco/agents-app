@@ -153,14 +153,21 @@ Har Har Mahadev! 🙏
 
   @override
   Widget build(BuildContext context) {
+    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
+
     return Container(
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.of(context).size.height * 0.88,
+      ),
       decoration: const BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         border: Border(top: BorderSide(color: AppColors.accentGold, width: 2)),
       ),
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.fromLTRB(20, 16, 20, 24 + bottomPadding + bottomInset),
       child: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -209,10 +216,10 @@ Har Har Mahadev! 🙏
                       ),
                       Text(
                         '${widget.callLog.customerName} (${widget.callLog.formattedDuration})',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w700,
-                          color: AppColors.textPrimary,
+                          color: AppColors.getTextPrimary(context),
                         ),
                       ),
                     ],
@@ -319,8 +326,8 @@ I am your dedicated tour coordinator from our Varanasi desk (+91 93361 16210). L
                           children: [
                             Text(
                               item['title']!,
-                              style: const TextStyle(
-                                color: AppColors.textPrimary,
+                              style: TextStyle(
+                                color: AppColors.getTextPrimary(context),
                                 fontSize: 13,
                                 fontWeight: FontWeight.w600,
                               ),
@@ -353,10 +360,10 @@ I am your dedicated tour coordinator from our Varanasi desk (+91 93361 16210). L
               backgroundColor: AppColors.accentGold.withValues(alpha: 0.12),
               borderColor: AppColors.accentGold.withValues(alpha: 0.3),
               onTap: _sendAdvancePaymentLink,
-              child: const Row(
+              child: Row(
                 children: [
-                  Icon(Icons.payment, color: AppColors.accentGold, size: 18),
-                  SizedBox(width: 12),
+                  const Icon(Icons.payment, color: AppColors.accentGold, size: 18),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -372,7 +379,7 @@ I am your dedicated tour coordinator from our Varanasi desk (+91 93361 16210). L
                         Text(
                           'Blocks dates & AC cab with instant confirmation receipt',
                           style: TextStyle(
-                            color: AppColors.textSecondary,
+                            color: AppColors.getTextSecondary(context),
                             fontSize: 11,
                           ),
                         ),
@@ -581,9 +588,9 @@ I am your dedicated tour coordinator from our Varanasi desk (+91 93361 16210). L
         }
       },
       selectedColor: AppColors.accentGold,
-      backgroundColor: AppColors.surfaceElevated,
+      backgroundColor: AppColors.getElevated(context),
       labelStyle: TextStyle(
-        color: isSelected ? AppColors.primaryDark : AppColors.textSecondary,
+        color: isSelected ? AppColors.primaryDark : AppColors.getTextSecondary(context),
         fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
         fontSize: 12,
       ),

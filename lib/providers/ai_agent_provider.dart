@@ -70,6 +70,13 @@ class AiAgentProvider extends ChangeNotifier {
         final decoded = json.decode(savedPersonasJson);
         if (decoded is List) {
           final loaded = decoded.map((e) => AiAgentPersona.fromJson(Map<String, dynamic>.from(e))).toList();
+          final defaults = AiAgentPersona.defaultTravelPersonas();
+          final existingIds = loaded.map((e) => e.id).toSet();
+          for (final d in defaults) {
+            if (!existingIds.contains(d.id)) {
+              loaded.add(d);
+            }
+          }
           if (loaded.isNotEmpty) {
             _personas = loaded;
           }
@@ -82,13 +89,15 @@ class AiAgentProvider extends ChangeNotifier {
     notifyListeners();
 
     final serverSettings = await apiService.syncAiSettings();
-    if (serverSettings != null && serverSettings['ok'] == true) {
-      if (serverSettings['outbound_enabled'] is bool) {
-        _isOutboundAgentActive = serverSettings['outbound_enabled'] as bool;
+    if (serverSettings != null && (serverSettings['ok'] == true || serverSettings['success'] == true)) {
+      final outbound = serverSettings['outbound_enabled'] ?? serverSettings['outbound_ai_active'];
+      if (outbound is bool) {
+        _isOutboundAgentActive = outbound;
         await StorageService.setAiOutboundActive(_isOutboundAgentActive);
       }
-      if (serverSettings['receptionist_enabled'] is bool) {
-        _isReceptionistActive = serverSettings['receptionist_enabled'] as bool;
+      final receptionist = serverSettings['receptionist_enabled'] ?? serverSettings['receptionist_ai_active'];
+      if (receptionist is bool) {
+        _isReceptionistActive = receptionist;
         await StorageService.setAiReceptionistActive(_isReceptionistActive);
       }
       notifyListeners();
@@ -219,7 +228,11 @@ class AiAgentProvider extends ChangeNotifier {
 
     final promptContext = 'System Role: ${persona.systemPrompt}\nActive Skills: ${persona.skills.where((s) => s.isEnabled).map((s) => s.name).join(', ')}\nUser Question: ${question.trim()}';
 
-    final reply = await apiService.queryVoiceRag(transcript: promptContext);
+    final agentSlug = persona.id.replaceAll('agent_', '').replaceAll('_', '-');
+    final reply = await apiService.queryVoiceRag(
+      transcript: promptContext,
+      agentSlug: agentSlug,
+    );
 
     final aiMsg = ChatMessage(
       text: reply,

@@ -154,12 +154,12 @@ class _CabFareDialogState extends State<CabFareDialog> {
   Map<String, dynamic> _computeFare() {
     final v = _fleet[_vehicleKey]!;
     final vName = v['name'] as String;
-    final rate = v['rate'] as double;
-    final minDaily = v['min_km'] as int;
-    final da = v['da'] as double;
+    final rate = double.tryParse(v['rate']?.toString() ?? '0') ?? 0.0;
+    final minDaily = int.tryParse(v['min_km']?.toString() ?? '0') ?? 0;
+    final da = double.tryParse(v['da']?.toString() ?? '0') ?? 0.0;
 
     if (_destination == 'Airport Transfer') {
-      final fare = (v['airport'] as double).toInt();
+      final fare = (double.tryParse(v['airport']?.toString() ?? '0') ?? 0.0).toInt();
       return {
         'total': fare,
         'title': 'Airport Transfer (Varanasi)',
@@ -172,7 +172,7 @@ class _CabFareDialogState extends State<CabFareDialog> {
     }
 
     if (_destination == 'Local Darshan (8h/80km)') {
-      final fare = ((v['local'] as double) * _days).toInt();
+      final fare = ((double.tryParse(v['local']?.toString() ?? '0') ?? 0.0) * _days).toInt();
       return {
         'total': fare,
         'title': 'Varanasi Local Darshan ($_days Day${_days > 1 ? 's' : ''})',
@@ -237,10 +237,10 @@ _To confirm this cab, reply *YES* or pay ₹1,000 booking token advance._
     final curFmt = NumberFormat.currency(locale: 'en_IN', symbol: '₹', decimalDigits: 0);
 
     return Dialog(
-      backgroundColor: const Color(0xFF0F172A),
+      backgroundColor: AppColors.getCard(context),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(18),
-        side: const BorderSide(color: Colors.white12),
+        side: BorderSide(color: AppColors.getBorder(context)),
       ),
       insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
       child: ConstrainedBox(
@@ -263,7 +263,7 @@ _To confirm this cab, reply *YES* or pay ₹1,000 booking token advance._
                     child: const Icon(Icons.local_taxi_rounded, color: Color(0xFFF59E0B), size: 24),
                   ),
                   const SizedBox(width: 12),
-                  const Expanded(
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -272,19 +272,19 @@ _To confirm this cab, reply *YES* or pay ₹1,000 booking token advance._
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w800,
-                            color: Colors.white,
+                            color: AppColors.getTextPrimary(context),
                           ),
                         ),
-                        SizedBox(height: 2),
+                        const SizedBox(height: 2),
                         Text(
                           'Instant verified tariffs for UP & Bihar circuits',
-                          style: TextStyle(fontSize: 11, color: Colors.white54),
+                          style: TextStyle(fontSize: 11, color: AppColors.getTextSecondary(context)),
                         ),
                       ],
                     ),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.close, color: Colors.white54, size: 20),
+                    icon: Icon(Icons.close, color: AppColors.getTextMuted(context), size: 20),
                     onPressed: () => Navigator.pop(context),
                   ),
                 ],
@@ -298,21 +298,21 @@ _To confirm this cab, reply *YES* or pay ₹1,000 booking token advance._
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('ORIGIN', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Colors.white54)),
+                        Text('ORIGIN', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: AppColors.getTextMuted(context))),
                         const SizedBox(height: 6),
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 10),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF1E293B),
+                            color: AppColors.getElevated(context),
                             borderRadius: BorderRadius.circular(10),
-                            border: Border.all(color: Colors.white12),
+                            border: Border.all(color: AppColors.getBorder(context)),
                           ),
                           child: DropdownButtonHideUnderline(
                             child: DropdownButton<String>(
                               value: _origin,
                               isExpanded: true,
-                              dropdownColor: const Color(0xFF1E293B),
-                              style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600),
+                              dropdownColor: AppColors.getElevated(context),
+                              style: TextStyle(color: AppColors.getTextPrimary(context), fontSize: 13, fontWeight: FontWeight.w600),
                               items: _origins.map((o) => DropdownMenuItem(value: o, child: Text(o))).toList(),
                               onChanged: (val) {
                                 if (val != null) setState(() => _origin = val);
@@ -324,30 +324,30 @@ _To confirm this cab, reply *YES* or pay ₹1,000 booking token advance._
                     ),
                   ),
                   const SizedBox(width: 10),
-                  const Padding(
-                    padding: EdgeInsets.only(top: 18),
-                    child: Icon(Icons.arrow_forward, color: Colors.white38, size: 18),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 18),
+                    child: Icon(Icons.arrow_forward, color: AppColors.getTextMuted(context), size: 18),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('DESTINATION', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Colors.white54)),
+                        Text('DESTINATION', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: AppColors.getTextMuted(context))),
                         const SizedBox(height: 6),
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 10),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF1E293B),
+                            color: AppColors.getElevated(context),
                             borderRadius: BorderRadius.circular(10),
-                            border: Border.all(color: Colors.white12),
+                            border: Border.all(color: AppColors.getBorder(context)),
                           ),
                           child: DropdownButtonHideUnderline(
                             child: DropdownButton<String>(
                               value: _destination,
                               isExpanded: true,
-                              dropdownColor: const Color(0xFF1E293B),
-                              style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600),
+                              dropdownColor: AppColors.getElevated(context),
+                              style: TextStyle(color: AppColors.getTextPrimary(context), fontSize: 13, fontWeight: FontWeight.w600),
                               items: _destinations.map((d) => DropdownMenuItem(value: d, child: Text(d, overflow: TextOverflow.ellipsis))).toList(),
                               onChanged: (val) {
                                 if (val != null) setState(() => _destination = val);
@@ -363,25 +363,25 @@ _To confirm this cab, reply *YES* or pay ₹1,000 booking token advance._
               const SizedBox(height: 14),
 
               // Fleet Vehicle Selection
-              const Text('FLEET VEHICLE', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Colors.white54)),
+              Text('FLEET VEHICLE', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: AppColors.getTextMuted(context))),
               const SizedBox(height: 6),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1E293B),
+                  color: AppColors.getElevated(context),
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: Colors.white12),
+                  border: Border.all(color: AppColors.getBorder(context)),
                 ),
                 child: DropdownButtonHideUnderline(
                   child: DropdownButton<String>(
                     value: _vehicleKey,
                     isExpanded: true,
-                    dropdownColor: const Color(0xFF1E293B),
-                    style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600),
+                    dropdownColor: AppColors.getElevated(context),
+                    style: TextStyle(color: AppColors.getTextPrimary(context), fontSize: 13, fontWeight: FontWeight.w600),
                     items: _fleet.entries.map((e) {
                       final name = e.value['name'] as String;
                       final cap = e.value['capacity'] as String;
-                      final rate = (e.value['rate'] as double).toInt();
+                      final rate = (double.tryParse(e.value['rate']?.toString() ?? '0') ?? 0.0).toInt();
                       return DropdownMenuItem(
                         value: e.key,
                         child: Text(
@@ -406,29 +406,29 @@ _To confirm this cab, reply *YES* or pay ₹1,000 booking token advance._
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('TRIP DURATION', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Colors.white54)),
+                        Text('TRIP DURATION', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: AppColors.getTextMuted(context))),
                         const SizedBox(height: 6),
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF1E293B),
+                            color: AppColors.getElevated(context),
                             borderRadius: BorderRadius.circular(10),
-                            border: Border.all(color: Colors.white12),
+                            border: Border.all(color: AppColors.getBorder(context)),
                           ),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               IconButton(
-                                icon: const Icon(Icons.remove, color: Colors.white70, size: 18),
+                                icon: Icon(Icons.remove, color: AppColors.getTextSecondary(context), size: 18),
                                 padding: EdgeInsets.zero,
                                 constraints: const BoxConstraints(),
                                 onPressed: () {
                                   if (_days > 1) setState(() => _days--);
                                 },
                               ),
-                              Text('$_days Day${_days > 1 ? 's' : ''}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 13)),
+                              Text('$_days Day${_days > 1 ? 's' : ''}', style: TextStyle(color: AppColors.getTextPrimary(context), fontWeight: FontWeight.w700, fontSize: 13)),
                               IconButton(
-                                icon: const Icon(Icons.add, color: Colors.white70, size: 18),
+                                icon: Icon(Icons.add, color: AppColors.getTextSecondary(context), size: 18),
                                 padding: EdgeInsets.zero,
                                 constraints: const BoxConstraints(),
                                 onPressed: () => setState(() => _days++),
@@ -444,7 +444,7 @@ _To confirm this cab, reply *YES* or pay ₹1,000 booking token advance._
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('TRIP TYPE', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Colors.white54)),
+                        Text('TRIP TYPE', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: AppColors.getTextMuted(context))),
                         const SizedBox(height: 6),
                         InkWell(
                           onTap: () {
@@ -456,9 +456,9 @@ _To confirm this cab, reply *YES* or pay ₹1,000 booking token advance._
                           child: Container(
                             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
                             decoration: BoxDecoration(
-                              color: const Color(0xFF1E293B),
+                              color: AppColors.getElevated(context),
                               borderRadius: BorderRadius.circular(10),
-                              border: Border.all(color: Colors.white12),
+                              border: Border.all(color: AppColors.getBorder(context)),
                             ),
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
@@ -471,7 +471,7 @@ _To confirm this cab, reply *YES* or pay ₹1,000 booking token advance._
                                 const SizedBox(width: 6),
                                 Text(
                                   _isRoundTrip ? 'Round Trip' : 'One Way',
-                                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 12.5),
+                                  style: TextStyle(color: AppColors.getTextPrimary(context), fontWeight: FontWeight.w700, fontSize: 12.5),
                                 ),
                               ],
                             ),
@@ -488,8 +488,10 @@ _To confirm this cab, reply *YES* or pay ₹1,000 booking token advance._
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF1E293B), Color(0xFF0F172A)],
+                  gradient: LinearGradient(
+                    colors: Theme.of(context).brightness == Brightness.light
+                        ? [const Color(0xFFFEF3C7), const Color(0xFFFFFBEB)]
+                        : [const Color(0xFF1E293B), const Color(0xFF0F172A)],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
@@ -527,24 +529,24 @@ _To confirm this cab, reply *YES* or pay ₹1,000 booking token advance._
                     const SizedBox(height: 8),
                     Text(
                       curFmt.format(fare['total']),
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 28,
                         fontWeight: FontWeight.w900,
-                        color: Colors.white,
+                        color: AppColors.getTextPrimary(context),
                       ),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       fare['details'] as String,
-                      style: const TextStyle(fontSize: 12, color: Colors.white70),
+                      style: TextStyle(fontSize: 12, color: AppColors.getTextSecondary(context)),
                     ),
-                    const Divider(color: Colors.white12, height: 20),
+                    Divider(color: AppColors.getBorder(context), height: 20),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text('Distance: ${fare['distance']}', style: const TextStyle(fontSize: 11, color: Colors.white60)),
-                        Text('DA: ${fare['da']}', style: const TextStyle(fontSize: 11, color: Colors.white60)),
-                        Text('Tolls: ${fare['tolls']}', style: const TextStyle(fontSize: 11, color: Colors.white60)),
+                        Text('Distance: ${fare['distance']}', style: TextStyle(fontSize: 11, color: AppColors.getTextSecondary(context))),
+                        Text('DA: ${fare['da']}', style: TextStyle(fontSize: 11, color: AppColors.getTextSecondary(context))),
+                        Text('Tolls: ${fare['tolls']}', style: TextStyle(fontSize: 11, color: AppColors.getTextSecondary(context))),
                       ],
                     ),
                   ],
@@ -561,17 +563,17 @@ _To confirm this cab, reply *YES* or pay ₹1,000 booking token advance._
                         final text = _formatWhatsAppQuote(fare);
                         Clipboard.setData(ClipboardData(text: text));
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Cab quotation copied to clipboard!'),
-                            backgroundColor: Color(0xFF1E293B),
+                          SnackBar(
+                            content: const Text('Cab quotation copied to clipboard!'),
+                            backgroundColor: AppColors.getCard(context),
                             behavior: SnackBarBehavior.floating,
                           ),
                         );
                       },
-                      icon: const Icon(Icons.copy, size: 16, color: Colors.white),
-                      label: const Text('Copy Quote', style: TextStyle(color: Colors.white, fontSize: 13)),
+                      icon: Icon(Icons.copy, size: 16, color: AppColors.getTextPrimary(context)),
+                      label: Text('Copy Quote', style: TextStyle(color: AppColors.getTextPrimary(context), fontSize: 13)),
                       style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: Colors.white24),
+                        side: BorderSide(color: AppColors.getBorder(context)),
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                       ),
@@ -580,34 +582,38 @@ _To confirm this cab, reply *YES* or pay ₹1,000 booking token advance._
                   const SizedBox(width: 10),
                   Expanded(
                     child: ElevatedButton.icon(
-                      onPressed: () {
+                      onPressed: () async {
                         final text = _formatWhatsAppQuote(fare);
                         if (widget.lead != null) {
                           final wpProvider = Provider.of<WhatsAppProvider>(context, listen: false);
-                          // Match thread or send to lead phone
-                          final targetThread = wpProvider.threads.firstWhere(
-                            (t) => t.customerPhone.replaceAll(RegExp(r'[^0-9]'), '').endsWith(widget.lead!.phone.replaceAll(RegExp(r'[^0-9]'), '').substring(maxInt(0, widget.lead!.phone.replaceAll(RegExp(r'[^0-9]'), '').length - 10))),
-                            orElse: () => wpProvider.threads.isNotEmpty ? wpProvider.threads.first : wpProvider.threads[0],
+                          final thread = wpProvider.getOrCreateThread(
+                            customerPhone: widget.lead!.phone,
+                            customerName: widget.lead!.name,
+                            circuit: widget.lead!.destination.isNotEmpty ? widget.lead!.destination : 'Cab Booking',
                           );
-                          wpProvider.sendMessage(targetThread.id, text);
-                          Navigator.pop(context);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('Cab quote sent to ${widget.lead!.name} via WhatsApp!'),
-                              backgroundColor: AppColors.successGreen,
-                              behavior: SnackBarBehavior.floating,
-                            ),
-                          );
+                          await wpProvider.sendMessage(thread.id, text);
+                          if (context.mounted) {
+                            Navigator.pop(context);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Cab quote sent to ${widget.lead!.name} via WhatsApp!'),
+                                backgroundColor: AppColors.successGreen,
+                                behavior: SnackBarBehavior.floating,
+                              ),
+                            );
+                          }
                         } else {
-                          Clipboard.setData(ClipboardData(text: text));
-                          Navigator.pop(context);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Quote copied! Select a lead to send directly.'),
-                              backgroundColor: Color(0xFF1E293B),
-                              behavior: SnackBarBehavior.floating,
-                            ),
-                          );
+                          await Clipboard.setData(ClipboardData(text: text));
+                          if (context.mounted) {
+                            Navigator.pop(context);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: const Text('Quote copied! Select a lead to send directly.'),
+                                backgroundColor: AppColors.getCard(context),
+                                behavior: SnackBarBehavior.floating,
+                              ),
+                            );
+                          }
                         }
                       },
                       icon: const Icon(Icons.send_rounded, size: 16, color: Colors.white),

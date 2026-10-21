@@ -71,27 +71,31 @@ class _LeadDetailScreenState extends State<LeadDetailScreen> with SingleTickerPr
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF1E293B),
-        title: const Text('Add Activity Note', style: TextStyle(color: Colors.white, fontSize: 16)),
+        backgroundColor: AppColors.getCard(context),
+        title: Text('Add Activity Note', style: TextStyle(color: AppColors.getTextPrimary(context), fontSize: 16, fontWeight: FontWeight.w700)),
         content: TextField(
           controller: _noteController,
           maxLines: 3,
-          style: const TextStyle(color: Colors.white, fontSize: 14),
+          style: TextStyle(color: AppColors.getTextPrimary(context), fontSize: 14),
           decoration: InputDecoration(
             hintText: 'Enter call summary, requirements, or next steps...',
-            hintStyle: const TextStyle(color: Colors.white38),
+            hintStyle: TextStyle(color: AppColors.getTextMuted(context)),
             filled: true,
-            fillColor: const Color(0xFF0F172A),
+            fillColor: AppColors.getSurface(context),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(color: Colors.white12),
+              borderSide: BorderSide(color: AppColors.getBorder(context)),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: BorderSide(color: AppColors.getBorder(context)),
             ),
           ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel', style: TextStyle(color: Colors.white54)),
+            child: Text('Cancel', style: TextStyle(color: AppColors.getTextSecondary(context))),
           ),
           ElevatedButton(
             onPressed: () {
@@ -114,7 +118,7 @@ class _LeadDetailScreenState extends State<LeadDetailScreen> with SingleTickerPr
   void _showReassignOwnerSheet(BuildContext context, LeadModel lead) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: const Color(0xFF1E293B),
+      backgroundColor: AppColors.getCard(context),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -126,18 +130,18 @@ class _LeadDetailScreenState extends State<LeadDetailScreen> with SingleTickerPr
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'Assign Lead Owner',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
-                    color: Colors.white,
+                    color: AppColors.getTextPrimary(context),
                   ),
                 ),
                 const SizedBox(height: 6),
-                const Text(
+                Text(
                   'Assign this lead to a telecaller or manager in your team:',
-                  style: TextStyle(fontSize: 12, color: Colors.white60),
+                  style: TextStyle(fontSize: 12, color: AppColors.getTextSecondary(context)),
                 ),
                 const SizedBox(height: 16),
                 ...AppConstants.teamMembers.map((member) {
@@ -146,23 +150,23 @@ class _LeadDetailScreenState extends State<LeadDetailScreen> with SingleTickerPr
                     contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                     leading: CircleAvatar(
                       radius: 18,
-                      backgroundColor: isCurrent ? AppColors.accentBlue : const Color(0xFF334155),
+                      backgroundColor: isCurrent ? AppColors.accentBlue : AppColors.getElevated(context),
                       child: Text(
                         member['initials']!,
-                        style: const TextStyle(fontWeight: FontWeight.w700, color: Colors.white, fontSize: 13),
+                        style: TextStyle(fontWeight: FontWeight.w700, color: isCurrent ? Colors.white : AppColors.getTextPrimary(context), fontSize: 13),
                       ),
                     ),
                     title: Text(
                       member['name']!,
                       style: TextStyle(
                         fontWeight: isCurrent ? FontWeight.w700 : FontWeight.w500,
-                        color: Colors.white,
+                        color: AppColors.getTextPrimary(context),
                         fontSize: 14,
                       ),
                     ),
                     subtitle: Text(
                       member['role']!,
-                      style: const TextStyle(color: Colors.white54, fontSize: 11),
+                      style: TextStyle(color: AppColors.getTextSecondary(context), fontSize: 11),
                     ),
                     trailing: isCurrent
                         ? const Icon(Icons.check_circle, color: AppColors.successGreen, size: 20)
@@ -195,7 +199,7 @@ class _LeadDetailScreenState extends State<LeadDetailScreen> with SingleTickerPr
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: const Color(0xFF1E293B),
+      backgroundColor: AppColors.getCard(context),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -208,9 +212,9 @@ class _LeadDetailScreenState extends State<LeadDetailScreen> with SingleTickerPr
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'Change Lead Pipeline Stage',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.getTextPrimary(context)),
                   ),
                   const SizedBox(height: 12),
                   Expanded(
@@ -219,7 +223,8 @@ class _LeadDetailScreenState extends State<LeadDetailScreen> with SingleTickerPr
                         .where((s) => s['id'] != 'all')
                         .map((stage) {
                       final isCurrent = lead.stage.toLowerCase() == stage['id'].toLowerCase();
-                      final color = Color(stage['color'] as int);
+                      final colorVal = stage['color'] is int ? stage['color'] as int : int.tryParse(stage['color']?.toString() ?? '') ?? 0xFF3B82F6;
+                      final color = Color(colorVal);
                       return ListTile(
                         leading: Container(
                           width: 12,
@@ -233,10 +238,10 @@ class _LeadDetailScreenState extends State<LeadDetailScreen> with SingleTickerPr
                           stage['label'],
                           style: TextStyle(
                             fontWeight: isCurrent ? FontWeight.w700 : FontWeight.w500,
-                            color: isCurrent ? color : Colors.white,
+                            color: isCurrent ? color : AppColors.getTextPrimary(context),
                           ),
                         ),
-                        trailing: isCurrent ? const Icon(Icons.check, color: Colors.white, size: 20) : null,
+                        trailing: isCurrent ? Icon(Icons.check, color: AppColors.getTextPrimary(context), size: 20) : null,
                         onTap: () {
                           Provider.of<LeadProvider>(context, listen: false).updateLeadStage(
                             lead.id,
@@ -272,7 +277,7 @@ class _LeadDetailScreenState extends State<LeadDetailScreen> with SingleTickerPr
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: const Color(0xFF1E293B),
+      backgroundColor: AppColors.getCard(context),
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setSheetState) => Padding(
@@ -280,7 +285,7 @@ class _LeadDetailScreenState extends State<LeadDetailScreen> with SingleTickerPr
             left: 20,
             right: 20,
             top: 20,
-            bottom: MediaQuery.of(ctx).viewInsets.bottom + 20,
+            bottom: MediaQuery.of(ctx).viewInsets.bottom + MediaQuery.of(ctx).padding.bottom + 20,
           ),
           child: SingleChildScrollView(
             child: Column(
@@ -290,25 +295,25 @@ class _LeadDetailScreenState extends State<LeadDetailScreen> with SingleTickerPr
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Row(
+                    Row(
                       children: [
-                        Icon(Icons.local_taxi_rounded, color: Color(0xFF38BDF8), size: 20),
-                        SizedBox(width: 8),
+                        const Icon(Icons.local_taxi_rounded, color: Color(0xFF38BDF8), size: 20),
+                        const SizedBox(width: 8),
                         Text(
                           'Dispatch Chauffeur & Vehicle',
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white),
+                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.getTextPrimary(context)),
                         ),
                       ],
                     ),
                     IconButton(
-                      icon: const Icon(Icons.close, color: Colors.white54, size: 20),
+                      icon: Icon(Icons.close, color: AppColors.getTextSecondary(context), size: 20),
                       onPressed: () => Navigator.pop(ctx),
                     ),
                   ],
                 ),
-                const Text(
+                Text(
                   'Auto-formats and sends WhatsApp trip sheet to Traveler & Driver simultaneously.',
-                  style: TextStyle(fontSize: 11, color: Colors.white60),
+                  style: TextStyle(fontSize: 11, color: AppColors.getTextSecondary(context)),
                 ),
                 const SizedBox(height: 14),
 
@@ -317,15 +322,16 @@ class _LeadDetailScreenState extends State<LeadDetailScreen> with SingleTickerPr
                     Expanded(
                       child: TextField(
                         controller: driverNameCtrl,
-                        style: const TextStyle(color: Colors.white, fontSize: 13),
+                        style: TextStyle(color: AppColors.getTextPrimary(context), fontSize: 13),
                         decoration: InputDecoration(
                           labelText: 'Chauffeur Name *',
-                          labelStyle: const TextStyle(color: Colors.white60, fontSize: 12),
+                          labelStyle: TextStyle(color: AppColors.getTextSecondary(context), fontSize: 12),
                           hintText: 'e.g. Ramesh Kumar',
-                          hintStyle: const TextStyle(color: Colors.white30, fontSize: 12),
+                          hintStyle: TextStyle(color: AppColors.getTextMuted(context), fontSize: 12),
                           filled: true,
-                          fillColor: const Color(0xFF0F172A),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+                          fillColor: AppColors.getSurface(context),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: AppColors.getBorder(context))),
+                          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: AppColors.getBorder(context))),
                         ),
                       ),
                     ),
@@ -334,15 +340,16 @@ class _LeadDetailScreenState extends State<LeadDetailScreen> with SingleTickerPr
                       child: TextField(
                         controller: driverPhoneCtrl,
                         keyboardType: TextInputType.phone,
-                        style: const TextStyle(color: Colors.white, fontSize: 13),
+                        style: TextStyle(color: AppColors.getTextPrimary(context), fontSize: 13),
                         decoration: InputDecoration(
                           labelText: 'Driver Mobile *',
-                          labelStyle: const TextStyle(color: Colors.white60, fontSize: 12),
+                          labelStyle: TextStyle(color: AppColors.getTextSecondary(context), fontSize: 12),
                           hintText: 'e.g. 9876543210',
-                          hintStyle: const TextStyle(color: Colors.white30, fontSize: 12),
+                          hintStyle: TextStyle(color: AppColors.getTextMuted(context), fontSize: 12),
                           filled: true,
-                          fillColor: const Color(0xFF0F172A),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+                          fillColor: AppColors.getSurface(context),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: AppColors.getBorder(context))),
+                          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: AppColors.getBorder(context))),
                         ),
                       ),
                     ),
@@ -355,14 +362,15 @@ class _LeadDetailScreenState extends State<LeadDetailScreen> with SingleTickerPr
                     Expanded(
                       child: DropdownButtonFormField<String>(
                         initialValue: selectedModel,
-                        dropdownColor: const Color(0xFF1E293B),
-                        style: const TextStyle(color: Colors.white, fontSize: 13),
+                        dropdownColor: AppColors.getCard(context),
+                        style: TextStyle(color: AppColors.getTextPrimary(context), fontSize: 13),
                         decoration: InputDecoration(
                           labelText: 'Vehicle Model',
-                          labelStyle: const TextStyle(color: Colors.white60, fontSize: 12),
+                          labelStyle: TextStyle(color: AppColors.getTextSecondary(context), fontSize: 12),
                           filled: true,
-                          fillColor: const Color(0xFF0F172A),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+                          fillColor: AppColors.getSurface(context),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: AppColors.getBorder(context))),
+                          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: AppColors.getBorder(context))),
                         ),
                         items: ['Innova Crysta', 'Swift Dzire AC', 'Ertiga Hybrid', 'Tempo Traveller 12S', 'Toyota Fortuner'].map((v) => DropdownMenuItem(value: v, child: Text(v))).toList(),
                         onChanged: (val) {
@@ -375,15 +383,16 @@ class _LeadDetailScreenState extends State<LeadDetailScreen> with SingleTickerPr
                       child: TextField(
                         controller: vehicleNumCtrl,
                         textCapitalization: TextCapitalization.characters,
-                        style: const TextStyle(color: Colors.white, fontSize: 13),
+                        style: TextStyle(color: AppColors.getTextPrimary(context), fontSize: 13),
                         decoration: InputDecoration(
                           labelText: 'Vehicle Plate *',
-                          labelStyle: const TextStyle(color: Colors.white60, fontSize: 12),
+                          labelStyle: TextStyle(color: AppColors.getTextSecondary(context), fontSize: 12),
                           hintText: 'UP 65 AB 1234',
-                          hintStyle: const TextStyle(color: Colors.white30, fontSize: 12),
+                          hintStyle: TextStyle(color: AppColors.getTextMuted(context), fontSize: 12),
                           filled: true,
-                          fillColor: const Color(0xFF0F172A),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+                          fillColor: AppColors.getSurface(context),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: AppColors.getBorder(context))),
+                          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: AppColors.getBorder(context))),
                         ),
                       ),
                     ),
@@ -396,13 +405,14 @@ class _LeadDetailScreenState extends State<LeadDetailScreen> with SingleTickerPr
                     Expanded(
                       child: TextField(
                         controller: reportingTimeCtrl,
-                        style: const TextStyle(color: Colors.white, fontSize: 13),
+                        style: TextStyle(color: AppColors.getTextPrimary(context), fontSize: 13),
                         decoration: InputDecoration(
                           labelText: 'Reporting Time',
-                          labelStyle: const TextStyle(color: Colors.white60, fontSize: 12),
+                          labelStyle: TextStyle(color: AppColors.getTextSecondary(context), fontSize: 12),
                           filled: true,
-                          fillColor: const Color(0xFF0F172A),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+                          fillColor: AppColors.getSurface(context),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: AppColors.getBorder(context))),
+                          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: AppColors.getBorder(context))),
                         ),
                       ),
                     ),
@@ -411,13 +421,14 @@ class _LeadDetailScreenState extends State<LeadDetailScreen> with SingleTickerPr
                       child: TextField(
                         controller: balanceCtrl,
                         keyboardType: TextInputType.number,
-                        style: const TextStyle(color: Colors.white, fontSize: 13),
+                        style: TextStyle(color: AppColors.getTextPrimary(context), fontSize: 13),
                         decoration: InputDecoration(
                           labelText: 'Duty Balance (₹)',
-                          labelStyle: const TextStyle(color: Colors.white60, fontSize: 12),
+                          labelStyle: TextStyle(color: AppColors.getTextSecondary(context), fontSize: 12),
                           filled: true,
-                          fillColor: const Color(0xFF0F172A),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+                          fillColor: AppColors.getSurface(context),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: AppColors.getBorder(context))),
+                          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: AppColors.getBorder(context))),
                         ),
                       ),
                     ),
@@ -427,13 +438,14 @@ class _LeadDetailScreenState extends State<LeadDetailScreen> with SingleTickerPr
 
                 TextField(
                   controller: pickupLocCtrl,
-                  style: const TextStyle(color: Colors.white, fontSize: 13),
+                  style: TextStyle(color: AppColors.getTextPrimary(context), fontSize: 13),
                   decoration: InputDecoration(
                     labelText: 'Pickup Location / Hotel',
-                    labelStyle: const TextStyle(color: Colors.white60, fontSize: 12),
+                    labelStyle: TextStyle(color: AppColors.getTextSecondary(context), fontSize: 12),
                     filled: true,
-                    fillColor: const Color(0xFF0F172A),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+                    fillColor: AppColors.getSurface(context),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: AppColors.getBorder(context))),
+                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: AppColors.getBorder(context))),
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -444,7 +456,7 @@ class _LeadDetailScreenState extends State<LeadDetailScreen> with SingleTickerPr
                       child: CheckboxListTile(
                         value: notifyTraveler,
                         onChanged: (v) => setSheetState(() => notifyTraveler = v ?? true),
-                        title: const Text('Send WhatsApp to Traveler', style: TextStyle(color: Colors.white70, fontSize: 11)),
+                        title: Text('Send WhatsApp to Traveler', style: TextStyle(color: AppColors.getTextSecondary(context), fontSize: 11)),
                         contentPadding: EdgeInsets.zero,
                         controlAffinity: ListTileControlAffinity.leading,
                       ),
@@ -453,7 +465,7 @@ class _LeadDetailScreenState extends State<LeadDetailScreen> with SingleTickerPr
                       child: CheckboxListTile(
                         value: notifyDriver,
                         onChanged: (v) => setSheetState(() => notifyDriver = v ?? true),
-                        title: const Text('Send WhatsApp to Driver', style: TextStyle(color: Colors.white70, fontSize: 11)),
+                        title: Text('Send WhatsApp to Driver', style: TextStyle(color: AppColors.getTextSecondary(context), fontSize: 11)),
                         contentPadding: EdgeInsets.zero,
                         controlAffinity: ListTileControlAffinity.leading,
                       ),
@@ -528,7 +540,14 @@ class _LeadDetailScreenState extends State<LeadDetailScreen> with SingleTickerPr
           ),
         ),
       ),
-    );
+    ).whenComplete(() {
+      driverNameCtrl.dispose();
+      driverPhoneCtrl.dispose();
+      vehicleNumCtrl.dispose();
+      pickupLocCtrl.dispose();
+      reportingTimeCtrl.dispose();
+      balanceCtrl.dispose();
+    });
   }
 
   void _showPaymentLinkSheet(BuildContext context, LeadModel lead) {
@@ -540,7 +559,7 @@ class _LeadDetailScreenState extends State<LeadDetailScreen> with SingleTickerPr
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: const Color(0xFF1E293B),
+      backgroundColor: AppColors.getCard(context),
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setSheetState) => Padding(
@@ -548,7 +567,7 @@ class _LeadDetailScreenState extends State<LeadDetailScreen> with SingleTickerPr
             left: 20,
             right: 20,
             top: 20,
-            bottom: MediaQuery.of(ctx).viewInsets.bottom + 20,
+            bottom: MediaQuery.of(ctx).viewInsets.bottom + MediaQuery.of(ctx).padding.bottom + 20,
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -557,25 +576,25 @@ class _LeadDetailScreenState extends State<LeadDetailScreen> with SingleTickerPr
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Row(
+                  Row(
                     children: [
-                      Icon(Icons.payment_rounded, color: AppColors.accentGold, size: 20),
-                      SizedBox(width: 8),
+                      const Icon(Icons.payment_rounded, color: AppColors.accentGold, size: 20),
+                      const SizedBox(width: 8),
                       Text(
                         '1-Tap Advance UPI & Payment Link',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white),
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.getTextPrimary(context)),
                       ),
                     ],
                   ),
                   IconButton(
-                    icon: const Icon(Icons.close, color: Colors.white54, size: 20),
+                    icon: Icon(Icons.close, color: AppColors.getTextSecondary(context), size: 20),
                     onPressed: () => Navigator.pop(ctx),
                   ),
                 ],
               ),
-              const Text(
+              Text(
                 'Generates Cashfree payment gateway link & instant UPI deep link, dispatched via WhatsApp.',
-                style: TextStyle(fontSize: 11, color: Colors.white60),
+                style: TextStyle(fontSize: 11, color: AppColors.getTextSecondary(context)),
               ),
               const SizedBox(height: 14),
 
@@ -584,9 +603,9 @@ class _LeadDetailScreenState extends State<LeadDetailScreen> with SingleTickerPr
                 spacing: 8,
                 children: ['1000', '2500', '5000', '10000'].map((amt) {
                   return ActionChip(
-                    backgroundColor: amountCtrl.text == amt ? AppColors.accentGold.withValues(alpha: 0.25) : const Color(0xFF0F172A),
-                    side: BorderSide(color: amountCtrl.text == amt ? AppColors.accentGold : Colors.white12),
-                    label: Text('₹$amt', style: TextStyle(color: amountCtrl.text == amt ? AppColors.accentGold : Colors.white70, fontSize: 12, fontWeight: FontWeight.w700)),
+                    backgroundColor: amountCtrl.text == amt ? AppColors.accentGold.withValues(alpha: 0.25) : AppColors.getElevated(context),
+                    side: BorderSide(color: amountCtrl.text == amt ? AppColors.accentGold : AppColors.getBorder(context)),
+                    label: Text('₹$amt', style: TextStyle(color: amountCtrl.text == amt ? AppColors.accentGold : AppColors.getTextPrimary(context), fontSize: 12, fontWeight: FontWeight.w700)),
                     onPressed: () {
                       setSheetState(() => amountCtrl.text = amt);
                     },
@@ -598,26 +617,28 @@ class _LeadDetailScreenState extends State<LeadDetailScreen> with SingleTickerPr
               TextField(
                 controller: amountCtrl,
                 keyboardType: TextInputType.number,
-                style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700),
+                style: TextStyle(color: AppColors.getTextPrimary(context), fontSize: 16, fontWeight: FontWeight.w700),
                 decoration: InputDecoration(
                   labelText: 'Advance Amount (₹)',
-                  labelStyle: const TextStyle(color: Colors.white60, fontSize: 12),
+                  labelStyle: TextStyle(color: AppColors.getTextSecondary(context), fontSize: 12),
                   filled: true,
-                  fillColor: const Color(0xFF0F172A),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+                  fillColor: AppColors.getSurface(context),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: AppColors.getBorder(context))),
+                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: AppColors.getBorder(context))),
                 ),
               ),
               const SizedBox(height: 10),
 
               TextField(
                 controller: purposeCtrl,
-                style: const TextStyle(color: Colors.white, fontSize: 13),
+                style: TextStyle(color: AppColors.getTextPrimary(context), fontSize: 13),
                 decoration: InputDecoration(
                   labelText: 'Payment Purpose',
-                  labelStyle: const TextStyle(color: Colors.white60, fontSize: 12),
+                  labelStyle: TextStyle(color: AppColors.getTextSecondary(context), fontSize: 12),
                   filled: true,
-                  fillColor: const Color(0xFF0F172A),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+                  fillColor: AppColors.getSurface(context),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: AppColors.getBorder(context))),
+                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: AppColors.getBorder(context))),
                 ),
               ),
               const SizedBox(height: 10),
@@ -625,7 +646,7 @@ class _LeadDetailScreenState extends State<LeadDetailScreen> with SingleTickerPr
               CheckboxListTile(
                 value: sendWhatsApp,
                 onChanged: (v) => setSheetState(() => sendWhatsApp = v ?? true),
-                title: Text('Instantly dispatch via WhatsApp to ${lead.phone}', style: const TextStyle(color: Colors.white70, fontSize: 12)),
+                title: Text('Instantly dispatch via WhatsApp to ${lead.phone}', style: TextStyle(color: AppColors.getTextSecondary(context), fontSize: 12)),
                 contentPadding: EdgeInsets.zero,
                 controlAffinity: ListTileControlAffinity.leading,
               ),
@@ -691,7 +712,10 @@ class _LeadDetailScreenState extends State<LeadDetailScreen> with SingleTickerPr
           ),
         ),
       ),
-    );
+    ).whenComplete(() {
+      amountCtrl.dispose();
+      purposeCtrl.dispose();
+    });
   }
 
   void _showVoiceNoteSheet(BuildContext context, LeadModel lead) {
@@ -703,7 +727,7 @@ class _LeadDetailScreenState extends State<LeadDetailScreen> with SingleTickerPr
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: const Color(0xFF1E293B),
+      backgroundColor: AppColors.getCard(context),
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setSheetState) => Padding(
@@ -711,7 +735,7 @@ class _LeadDetailScreenState extends State<LeadDetailScreen> with SingleTickerPr
             left: 20,
             right: 20,
             top: 20,
-            bottom: MediaQuery.of(ctx).viewInsets.bottom + 20,
+            bottom: MediaQuery.of(ctx).viewInsets.bottom + MediaQuery.of(ctx).padding.bottom + 20,
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -720,38 +744,39 @@ class _LeadDetailScreenState extends State<LeadDetailScreen> with SingleTickerPr
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Row(
+                  Row(
                     children: [
-                      Icon(Icons.mic_rounded, color: Colors.purpleAccent, size: 20),
-                      SizedBox(width: 8),
+                      const Icon(Icons.mic_rounded, color: Colors.purpleAccent, size: 20),
+                      const SizedBox(width: 8),
                       Text(
                         'Voice Note & Field AI Ingestion',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white),
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.getTextPrimary(context)),
                       ),
                     ],
                   ),
                   IconButton(
-                    icon: const Icon(Icons.close, color: Colors.white54, size: 20),
+                    icon: Icon(Icons.close, color: AppColors.getTextSecondary(context), size: 20),
                     onPressed: () => Navigator.pop(ctx),
                   ),
                 ],
               ),
-              const Text(
+              Text(
                 'Record or dictate call brief in Hindi/English. Automatically updates pipeline stage and deal value.',
-                style: TextStyle(fontSize: 11, color: Colors.white60),
+                style: TextStyle(fontSize: 11, color: AppColors.getTextSecondary(context)),
               ),
               const SizedBox(height: 14),
 
               TextField(
                 controller: noteCtrl,
                 maxLines: 4,
-                style: const TextStyle(color: Colors.white, fontSize: 13),
+                style: TextStyle(color: AppColors.getTextPrimary(context), fontSize: 13),
                 decoration: InputDecoration(
                   hintText: 'e.g. Guest finalized 3D2N VIP Kashi package for 4 adults. Deal amount ₹35,000. Advance ₹5,000 promised by evening.',
-                  hintStyle: const TextStyle(color: Colors.white30, fontSize: 12),
+                  hintStyle: TextStyle(color: AppColors.getTextMuted(context), fontSize: 12),
                   filled: true,
-                  fillColor: const Color(0xFF0F172A),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+                  fillColor: AppColors.getSurface(context),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: AppColors.getBorder(context))),
+                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: AppColors.getBorder(context))),
                 ),
               ),
               const SizedBox(height: 10),
@@ -762,13 +787,14 @@ class _LeadDetailScreenState extends State<LeadDetailScreen> with SingleTickerPr
                     child: TextField(
                       controller: dealValueCtrl,
                       keyboardType: TextInputType.number,
-                      style: const TextStyle(color: Colors.white, fontSize: 13),
+                      style: TextStyle(color: AppColors.getTextPrimary(context), fontSize: 13),
                       decoration: InputDecoration(
                         labelText: 'Deal Value (₹)',
-                        labelStyle: const TextStyle(color: Colors.white60, fontSize: 12),
+                        labelStyle: TextStyle(color: AppColors.getTextSecondary(context), fontSize: 12),
                         filled: true,
-                        fillColor: const Color(0xFF0F172A),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+                        fillColor: AppColors.getSurface(context),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: AppColors.getBorder(context))),
+                        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: AppColors.getBorder(context))),
                       ),
                     ),
                   ),
@@ -776,14 +802,15 @@ class _LeadDetailScreenState extends State<LeadDetailScreen> with SingleTickerPr
                   Expanded(
                     child: DropdownButtonFormField<String>(
                       initialValue: selectedStage,
-                      dropdownColor: const Color(0xFF1E293B),
-                      style: const TextStyle(color: Colors.white, fontSize: 12),
+                      dropdownColor: AppColors.getCard(context),
+                      style: TextStyle(color: AppColors.getTextPrimary(context), fontSize: 12),
                       decoration: InputDecoration(
                         labelText: 'Pipeline Stage',
-                        labelStyle: const TextStyle(color: Colors.white60, fontSize: 12),
+                        labelStyle: TextStyle(color: AppColors.getTextSecondary(context), fontSize: 12),
                         filled: true,
-                        fillColor: const Color(0xFF0F172A),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+                        fillColor: AppColors.getSurface(context),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: AppColors.getBorder(context))),
+                        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: AppColors.getBorder(context))),
                       ),
                       items: AppConstants.travelPipelineStages
                           .where((s) => s['id'] != 'all')
@@ -855,7 +882,10 @@ class _LeadDetailScreenState extends State<LeadDetailScreen> with SingleTickerPr
           ),
         ),
       ),
-    );
+    ).whenComplete(() {
+      noteCtrl.dispose();
+      dealValueCtrl.dispose();
+    });
   }
 
   void _sendQuickMessage(LeadModel lead) async {
@@ -917,7 +947,8 @@ class _LeadDetailScreenState extends State<LeadDetailScreen> with SingleTickerPr
       (s) => s['id'] == lead.stage,
       orElse: () => {'label': lead.stage.toUpperCase(), 'color': 0xFF3B82F6},
     );
-    final stageColor = Color(stageConfig['color'] as int);
+    final stageColorVal = stageConfig['color'] is int ? stageConfig['color'] as int : int.tryParse(stageConfig['color']?.toString() ?? '') ?? 0xFF3B82F6;
+    final stageColor = Color(stageColorVal);
 
     // Find live WhatsApp thread for this lead
     final cleanLeadPhone = lead.phone.replaceAll(RegExp(r'[^0-9]'), '');
@@ -928,21 +959,21 @@ class _LeadDetailScreenState extends State<LeadDetailScreen> with SingleTickerPr
     }).firstOrNull;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0F172A),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0F172A),
+        backgroundColor: Theme.of(context).appBarTheme.backgroundColor ?? AppColors.getSurface(context),
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          icon: Icon(Icons.arrow_back, color: AppColors.getTextPrimary(context)),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
           lead.name,
-          style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: Colors.white),
+          style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: AppColors.getTextPrimary(context)),
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.share_outlined, color: Colors.white70),
+            icon: Icon(Icons.share_outlined, color: AppColors.getTextSecondary(context)),
             onPressed: () {
               final shareText = 'TripCosmos Lead: ${lead.name}\nPhone: ${lead.phone}\nCircuit: ${lead.destination}\nPax: ${lead.pax}\nOwner: ${lead.stickyAgent}';
               Clipboard.setData(ClipboardData(text: shareText));
@@ -952,8 +983,8 @@ class _LeadDetailScreenState extends State<LeadDetailScreen> with SingleTickerPr
             },
           ),
           PopupMenuButton<String>(
-            icon: const Icon(Icons.more_vert, color: Colors.white),
-            color: const Color(0xFF1E293B),
+            icon: Icon(Icons.more_vert, color: AppColors.getTextPrimary(context)),
+            color: AppColors.getCard(context),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             onSelected: (val) {
               switch (val) {
@@ -975,53 +1006,53 @@ class _LeadDetailScreenState extends State<LeadDetailScreen> with SingleTickerPr
               }
             },
             itemBuilder: (ctx) => [
-              const PopupMenuItem(
+              PopupMenuItem(
                 value: 'stage',
                 child: Row(
                   children: [
-                    Icon(Icons.swap_horiz_rounded, color: AppColors.accentBlue, size: 18),
-                    SizedBox(width: 10),
-                    Text('Update Stage', style: TextStyle(color: Colors.white, fontSize: 13)),
+                    const Icon(Icons.swap_horiz_rounded, color: AppColors.accentBlue, size: 18),
+                    const SizedBox(width: 10),
+                    Text('Update Stage', style: TextStyle(color: AppColors.getTextPrimary(context), fontSize: 13)),
                   ],
                 ),
               ),
-              const PopupMenuItem(
+              PopupMenuItem(
                 value: 'reassign',
                 child: Row(
                   children: [
-                    Icon(Icons.person_add_alt_1_rounded, color: Color(0xFF8B5CF6), size: 18),
-                    SizedBox(width: 10),
-                    Text('Assign Owner', style: TextStyle(color: Colors.white, fontSize: 13)),
+                    const Icon(Icons.person_add_alt_1_rounded, color: Color(0xFF8B5CF6), size: 18),
+                    const SizedBox(width: 10),
+                    Text('Assign Owner', style: TextStyle(color: AppColors.getTextPrimary(context), fontSize: 13)),
                   ],
                 ),
               ),
-              const PopupMenuItem(
+              PopupMenuItem(
                 value: 'dispatch',
                 child: Row(
                   children: [
-                    Icon(Icons.local_taxi_rounded, color: AppColors.accentGold, size: 18),
-                    SizedBox(width: 10),
-                    Text('Dispatch Driver (Trip Sheet)', style: TextStyle(color: Colors.white, fontSize: 13)),
+                    const Icon(Icons.local_taxi_rounded, color: AppColors.accentGold, size: 18),
+                    const SizedBox(width: 10),
+                    Text('Dispatch Driver (Trip Sheet)', style: TextStyle(color: AppColors.getTextPrimary(context), fontSize: 13)),
                   ],
                 ),
               ),
-              const PopupMenuItem(
+              PopupMenuItem(
                 value: 'payment',
                 child: Row(
                   children: [
-                    Icon(Icons.payment_rounded, color: AppColors.successGreen, size: 18),
-                    SizedBox(width: 10),
-                    Text('Generate UPI Payment Link', style: TextStyle(color: Colors.white, fontSize: 13)),
+                    const Icon(Icons.payment_rounded, color: AppColors.successGreen, size: 18),
+                    const SizedBox(width: 10),
+                    Text('Generate UPI Payment Link', style: TextStyle(color: AppColors.getTextPrimary(context), fontSize: 13)),
                   ],
                 ),
               ),
-              const PopupMenuItem(
+              PopupMenuItem(
                 value: 'voice_note',
                 child: Row(
                   children: [
-                    Icon(Icons.mic_rounded, color: Colors.cyanAccent, size: 18),
-                    SizedBox(width: 10),
-                    Text('Record AI Voice Note', style: TextStyle(color: Colors.white, fontSize: 13)),
+                    const Icon(Icons.mic_rounded, color: Colors.cyanAccent, size: 18),
+                    const SizedBox(width: 10),
+                    Text('Record AI Voice Note', style: TextStyle(color: AppColors.getTextPrimary(context), fontSize: 13)),
                   ],
                 ),
               ),
@@ -1039,10 +1070,10 @@ class _LeadDetailScreenState extends State<LeadDetailScreen> with SingleTickerPr
 
               // 2. 4-Tab Navigation Bar (Superfone Benchmark: Timeline, Profile, Notes, Deals)
               Container(
-                decoration: const BoxDecoration(
-                  color: Color(0xFF1E293B),
+                decoration: BoxDecoration(
+                  color: AppColors.getCard(context),
                   border: Border(
-                    bottom: BorderSide(color: Colors.white12),
+                    bottom: BorderSide(color: AppColors.getBorder(context)),
                   ),
                 ),
                 child: TabBar(
@@ -1050,7 +1081,7 @@ class _LeadDetailScreenState extends State<LeadDetailScreen> with SingleTickerPr
                   indicatorColor: AppColors.accentBlue,
                   indicatorWeight: 3,
                   labelColor: AppColors.accentBlue,
-                  unselectedLabelColor: Colors.white60,
+                  unselectedLabelColor: AppColors.getTextMuted(context),
                   labelStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
                   tabs: const [
                     Tab(icon: Icon(Icons.timeline_rounded, size: 18), text: 'Timeline'),
@@ -1096,9 +1127,9 @@ class _LeadDetailScreenState extends State<LeadDetailScreen> with SingleTickerPr
   ) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: const BoxDecoration(
-        color: Color(0xFF0F172A),
-        border: Border(bottom: BorderSide(color: Colors.white10)),
+      decoration: BoxDecoration(
+        color: AppColors.getSurface(context),
+        border: Border(bottom: BorderSide(color: AppColors.getBorder(context))),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1123,7 +1154,7 @@ class _LeadDetailScreenState extends State<LeadDetailScreen> with SingleTickerPr
                         Flexible(
                           child: Text(
                             lead.name,
-                            style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: Colors.white),
+                            style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: AppColors.getTextPrimary(context)),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -1149,7 +1180,7 @@ class _LeadDetailScreenState extends State<LeadDetailScreen> with SingleTickerPr
                     const SizedBox(height: 2),
                     Text(
                       '${lead.companyOrCity.toUpperCase()} • ${lead.phone}',
-                      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.white54),
+                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.getTextSecondary(context)),
                     ),
                   ],
                 ),
@@ -1161,9 +1192,9 @@ class _LeadDetailScreenState extends State<LeadDetailScreen> with SingleTickerPr
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF1E293B),
+                    color: AppColors.getElevated(context),
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.white12),
+                    border: Border.all(color: AppColors.getBorder(context)),
                   ),
                   child: Row(
                     children: [
@@ -1178,7 +1209,7 @@ class _LeadDetailScreenState extends State<LeadDetailScreen> with SingleTickerPr
                       const SizedBox(width: 5),
                       Text(
                         lead.stickyAgent.isNotEmpty ? lead.stickyAgent : 'Unassigned',
-                        style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Colors.white),
+                        style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.getTextPrimary(context)),
                       ),
                     ],
                   ),
@@ -1527,13 +1558,13 @@ class _LeadDetailScreenState extends State<LeadDetailScreen> with SingleTickerPr
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: isWhatsApp && isCustomer
-            ? const Color(0xFF1E293B)
+            ? AppColors.getCard(context)
             : isWhatsApp
-                ? const Color(0xFF0F2922)
-                : const Color(0xFF1E293B),
+                ? (Theme.of(context).brightness == Brightness.light ? const Color(0xFFF0FDF4) : const Color(0xFF0F2922))
+                : AppColors.getCard(context),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: isWhatsApp && !isCustomer ? const Color(0xFF10B981).withValues(alpha: 0.3) : Colors.white10,
+          color: isWhatsApp && !isCustomer ? const Color(0xFF10B981).withValues(alpha: 0.3) : AppColors.getBorder(context),
         ),
       ),
       child: Column(
@@ -1545,20 +1576,20 @@ class _LeadDetailScreenState extends State<LeadDetailScreen> with SingleTickerPr
               const SizedBox(width: 8),
               Text(
                 title,
-                style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w800, letterSpacing: 0.5, color: Colors.white70),
+                style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w800, letterSpacing: 0.5, color: AppColors.getTextSecondary(context)),
               ),
               const Spacer(),
-              Text(timestamp, style: const TextStyle(fontSize: 10.5, color: Colors.white38)),
+              Text(timestamp, style: TextStyle(fontSize: 10.5, color: AppColors.getTextMuted(context))),
             ],
           ),
           const SizedBox(height: 8),
-          Text(content, style: const TextStyle(fontSize: 13, height: 1.4, color: Color(0xFFE2E8F0))),
+          Text(content, style: TextStyle(fontSize: 13, height: 1.4, color: AppColors.getTextPrimary(context))),
           if (hasRecording) ...[
             const SizedBox(height: 10),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
               decoration: BoxDecoration(
-                color: const Color(0xFF0F172A),
+                color: AppColors.getElevated(context),
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(color: AppColors.accentGold.withValues(alpha: 0.3)),
               ),
@@ -1566,10 +1597,10 @@ class _LeadDetailScreenState extends State<LeadDetailScreen> with SingleTickerPr
                 children: [
                   const Icon(Icons.mic_rounded, color: AppColors.accentGold, size: 16),
                   const SizedBox(width: 8),
-                  const Expanded(
+                  Expanded(
                     child: Text(
                       'Call Audio Recording Logged (Server Vault)',
-                      style: TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.w600),
+                      style: TextStyle(color: AppColors.getTextSecondary(context), fontSize: 11, fontWeight: FontWeight.w600),
                     ),
                   ),
                   Container(
@@ -1609,7 +1640,7 @@ class _LeadDetailScreenState extends State<LeadDetailScreen> with SingleTickerPr
           children: [
             _buildProfileRow('Circuit Destination', lead.destination),
             _buildProfileRow('Travelers (Pax)', '${lead.pax} Guests'),
-            _buildProfileRow('Estimated Budget', lead.budget.isNotEmpty ? lead.budget : '₹${lead.dealValue.toInt()}'),
+            _buildProfileRow('Estimated Budget', lead.budget.isNotEmpty ? lead.budget : (lead.dealValue > 0 ? '₹${lead.dealValue.toInt()}' : 'Pending Quote')),
             _buildProfileRow('Inquiry Source', lead.source.toUpperCase()),
           ],
         ),
@@ -1631,16 +1662,16 @@ class _LeadDetailScreenState extends State<LeadDetailScreen> with SingleTickerPr
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF1E293B),
+        color: AppColors.getCard(context),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.white10),
+        border: Border.all(color: AppColors.getBorder(context)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             title,
-            style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w800, letterSpacing: 0.8, color: Colors.white54),
+            style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w800, letterSpacing: 0.8, color: AppColors.getTextSecondary(context)),
           ),
           const SizedBox(height: 12),
           ...children,
@@ -1655,7 +1686,7 @@ class _LeadDetailScreenState extends State<LeadDetailScreen> with SingleTickerPr
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: const TextStyle(fontSize: 12, color: Colors.white60)),
+          Text(label, style: TextStyle(fontSize: 12, color: AppColors.getTextSecondary(context))),
           isBadge
               ? Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
@@ -1670,7 +1701,7 @@ class _LeadDetailScreenState extends State<LeadDetailScreen> with SingleTickerPr
                   style: TextStyle(
                     fontSize: 12.5,
                     fontWeight: FontWeight.w700,
-                    color: isPhone ? AppColors.accentBlue : Colors.white,
+                    color: isPhone ? AppColors.accentBlue : AppColors.getTextPrimary(context),
                   ),
                 ),
         ],
@@ -1687,7 +1718,7 @@ class _LeadDetailScreenState extends State<LeadDetailScreen> with SingleTickerPr
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('INTERNAL ACTIVITY NOTES', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Colors.white54)),
+              Text('INTERNAL ACTIVITY NOTES', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppColors.getTextSecondary(context))),
               ElevatedButton.icon(
                 onPressed: () => _showAddNoteDialog(context, lead),
                 icon: const Icon(Icons.add, size: 16),
@@ -1699,8 +1730,8 @@ class _LeadDetailScreenState extends State<LeadDetailScreen> with SingleTickerPr
         ),
         Expanded(
           child: lead.notes.isEmpty
-              ? const Center(
-                  child: Text('No notes yet. Tap Add Note to log call summaries.', style: TextStyle(color: Colors.white38, fontSize: 13)),
+              ? Center(
+                  child: Text('No notes yet. Tap Add Note to log call summaries.', style: TextStyle(color: AppColors.getTextMuted(context), fontSize: 13)),
                 )
               : ListView.builder(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -1711,9 +1742,9 @@ class _LeadDetailScreenState extends State<LeadDetailScreen> with SingleTickerPr
                       margin: const EdgeInsets.only(bottom: 10),
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF1E293B),
+                        color: AppColors.getCard(context),
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.white10),
+                        border: Border.all(color: AppColors.getBorder(context)),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1722,13 +1753,13 @@ class _LeadDetailScreenState extends State<LeadDetailScreen> with SingleTickerPr
                             children: [
                               const Icon(Icons.sticky_note_2_rounded, size: 16, color: AppColors.accentGold),
                               const SizedBox(width: 8),
-                              Text('Note #${idx + 1}', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Colors.white70)),
+                              Text('Note #${idx + 1}', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.getTextSecondary(context))),
                               const Spacer(),
-                              Text('By ${lead.stickyAgent}', style: const TextStyle(fontSize: 10.5, color: Colors.white38)),
+                              Text('By ${lead.stickyAgent}', style: TextStyle(fontSize: 10.5, color: AppColors.getTextMuted(context))),
                             ],
                           ),
                           const SizedBox(height: 8),
-                          Text(note, style: const TextStyle(fontSize: 13, color: Colors.white)),
+                          Text(note, style: TextStyle(fontSize: 13, color: AppColors.getTextPrimary(context))),
                         ],
                       ),
                     );
@@ -1792,8 +1823,8 @@ class _LeadDetailScreenState extends State<LeadDetailScreen> with SingleTickerPr
 
         // Action 1: Tour Package Generator
         Card(
-          color: const Color(0xFF1E293B),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14), side: const BorderSide(color: Colors.white10)),
+          color: AppColors.getCard(context),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14), side: BorderSide(color: AppColors.getBorder(context))),
           child: ListTile(
             contentPadding: const EdgeInsets.all(14),
             leading: Container(
@@ -1801,9 +1832,9 @@ class _LeadDetailScreenState extends State<LeadDetailScreen> with SingleTickerPr
               decoration: BoxDecoration(color: const Color(0xFFD97706).withValues(alpha: 0.2), borderRadius: BorderRadius.circular(10)),
               child: const Icon(Icons.bolt, color: Color(0xFFD97706), size: 24),
             ),
-            title: const Text('Generate Tour Package Quote ⚡', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Colors.white)),
-            subtitle: const Text('Create full customized itinerary quote with hotels, boats & VIP darshan', style: TextStyle(fontSize: 11.5, color: Colors.white54)),
-            trailing: const Icon(Icons.arrow_forward_ios, size: 14, color: Colors.white38),
+            title: Text('Generate Tour Package Quote ⚡', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.getTextPrimary(context))),
+            subtitle: Text('Create full customized itinerary quote with hotels, boats & VIP darshan', style: TextStyle(fontSize: 11.5, color: AppColors.getTextSecondary(context))),
+            trailing: Icon(Icons.arrow_forward_ios, size: 14, color: AppColors.getTextMuted(context)),
             onTap: () => TravelQuoteDialog.show(context, lead),
           ),
         ),
@@ -1811,8 +1842,8 @@ class _LeadDetailScreenState extends State<LeadDetailScreen> with SingleTickerPr
 
         // Action 2: Outstation Cab Fare Calculator
         Card(
-          color: const Color(0xFF1E293B),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14), side: const BorderSide(color: Colors.white10)),
+          color: AppColors.getCard(context),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14), side: BorderSide(color: AppColors.getBorder(context))),
           child: ListTile(
             contentPadding: const EdgeInsets.all(14),
             leading: Container(
@@ -1820,9 +1851,9 @@ class _LeadDetailScreenState extends State<LeadDetailScreen> with SingleTickerPr
               decoration: BoxDecoration(color: const Color(0xFF0284C7).withValues(alpha: 0.2), borderRadius: BorderRadius.circular(10)),
               child: const Icon(Icons.local_taxi_rounded, color: Color(0xFF0284C7), size: 24),
             ),
-            title: const Text('Calculate Outstation Cab Fare 🚕', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Colors.white)),
-            subtitle: const Text('Verified km tariffs for Sedan, Innova Crysta, and Tempo Travellers', style: TextStyle(fontSize: 11.5, color: Colors.white54)),
-            trailing: const Icon(Icons.arrow_forward_ios, size: 14, color: Colors.white38),
+            title: Text('Calculate Outstation Cab Fare 🚕', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.getTextPrimary(context))),
+            subtitle: Text('Verified km tariffs for Sedan, Innova Crysta, and Tempo Travellers', style: TextStyle(fontSize: 11.5, color: AppColors.getTextSecondary(context))),
+            trailing: Icon(Icons.arrow_forward_ios, size: 14, color: AppColors.getTextMuted(context)),
             onTap: () => CabFareDialog.show(context, lead: lead),
           ),
         ),
@@ -1830,8 +1861,8 @@ class _LeadDetailScreenState extends State<LeadDetailScreen> with SingleTickerPr
 
         // Action 3: 1-Tap Advance UPI & Payment Link
         Card(
-          color: const Color(0xFF1E293B),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14), side: const BorderSide(color: Colors.white10)),
+          color: AppColors.getCard(context),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14), side: BorderSide(color: AppColors.getBorder(context))),
           child: ListTile(
             contentPadding: const EdgeInsets.all(14),
             leading: Container(
@@ -1839,9 +1870,9 @@ class _LeadDetailScreenState extends State<LeadDetailScreen> with SingleTickerPr
               decoration: BoxDecoration(color: const Color(0xFF10B981).withValues(alpha: 0.2), borderRadius: BorderRadius.circular(10)),
               child: const Icon(Icons.payment_rounded, color: Color(0xFF10B981), size: 24),
             ),
-            title: const Text('1-Tap Advance UPI & Payment Link 💳', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Colors.white)),
-            subtitle: const Text('Instant Cashfree payment gateway link with auto WhatsApp dispatch', style: TextStyle(fontSize: 11.5, color: Colors.white54)),
-            trailing: const Icon(Icons.arrow_forward_ios, size: 14, color: Colors.white38),
+            title: Text('1-Tap Advance UPI & Payment Link 💳', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.getTextPrimary(context))),
+            subtitle: Text('Instant Cashfree payment gateway link with auto WhatsApp dispatch', style: TextStyle(fontSize: 11.5, color: AppColors.getTextSecondary(context))),
+            trailing: Icon(Icons.arrow_forward_ios, size: 14, color: AppColors.getTextMuted(context)),
             onTap: () => _showPaymentLinkSheet(context, lead),
           ),
         ),

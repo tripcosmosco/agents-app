@@ -5,12 +5,15 @@ import 'package:provider/provider.dart';
 import 'core/constants/app_constants.dart';
 import 'core/theme/app_theme.dart';
 import 'providers/ai_agent_provider.dart';
+import 'providers/auth_provider.dart';
 import 'providers/call_provider.dart';
 import 'providers/event_provider.dart';
 import 'providers/lead_provider.dart';
 import 'providers/theme_provider.dart';
 import 'providers/whatsapp_provider.dart';
+import 'screens/login_screen.dart';
 import 'screens/main_navigation_screen.dart';
+import 'services/notification_service.dart';
 import 'widgets/app_security_lock_gate.dart';
 import 'services/api_service.dart';
 
@@ -29,6 +32,7 @@ void main() async {
 
   final apiService = ApiService();
   await apiService.initPreferences();
+  await NotificationService().init();
 
   runApp(XAgentsApp(apiService: apiService));
 }
@@ -48,6 +52,9 @@ class XAgentsApp extends StatelessWidget {
           create: (_) => ThemeProvider(),
         ),
         ChangeNotifierProvider(
+          create: (_) => AuthProvider(apiService: service),
+        ),
+        ChangeNotifierProvider(
           create: (_) => CallProvider(apiService: service),
         ),
         ChangeNotifierProvider(
@@ -63,17 +70,21 @@ class XAgentsApp extends StatelessWidget {
           create: (_) => WhatsAppProvider(apiService: service),
         ),
       ],
-      child: Consumer<ThemeProvider>(
-        builder: (context, themeProvider, _) {
+      child: Consumer2<ThemeProvider, AuthProvider>(
+        builder: (context, themeProvider, authProvider, _) {
           return MaterialApp(
             title: AppConstants.appFullName,
             debugShowCheckedModeBanner: false,
             theme: AppTheme.lightTheme,
             darkTheme: AppTheme.darkTheme,
             themeMode: themeProvider.themeMode,
-            home: AppSecurityLockGate(
-              child: MainNavigationScreen(apiService: service),
-            ),
+            home: authProvider.isAuthenticated
+                ? AppSecurityLockGate(
+                    child: MainNavigationScreen(apiService: service),
+                  )
+                : LoginScreen(
+                    onLoginSuccess: () {},
+                  ),
           );
         },
       ),

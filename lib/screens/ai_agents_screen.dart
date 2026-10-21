@@ -34,7 +34,7 @@ class _AiAgentsScreenState extends State<AiAgentsScreen> {
   void _showTrainingCatalogDialog(BuildContext context) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: const Color(0xFF0F172A),
+      backgroundColor: AppColors.getCard(context),
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
@@ -52,7 +52,7 @@ class _AiAgentsScreenState extends State<AiAgentsScreen> {
               child: Container(
                 width: 40,
                 height: 4,
-                decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(2)),
+                decoration: BoxDecoration(color: AppColors.getBorder(context), borderRadius: BorderRadius.circular(2)),
               ),
             ),
             const SizedBox(height: 16),
@@ -67,19 +67,19 @@ class _AiAgentsScreenState extends State<AiAgentsScreen> {
                   child: const Icon(Icons.school_rounded, color: AppColors.accentGold, size: 24),
                 ),
                 const SizedBox(width: 12),
-                const Expanded(
+                Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         'AI Agent Knowledge Base',
-                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
+                        style: TextStyle(color: AppColors.getTextPrimary(context), fontWeight: FontWeight.bold, fontSize: 15),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
                       Text(
                         'Tour Packages, Pricing Rules & Fleet Tariffs',
-                        style: TextStyle(color: Colors.white54, fontSize: 11.5),
+                        style: TextStyle(color: AppColors.getTextSecondary(context), fontSize: 11.5),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -95,26 +95,31 @@ class _AiAgentsScreenState extends State<AiAgentsScreen> {
             ),
             const SizedBox(height: 8),
             _buildPackageItem(
+              context,
               'Varanasi (Kashi) 3D/2N Complete Pilgrimage',
               '₹14,500 Retail • ₹12,200 B2B DMC Net',
               'Includes: Kashi Vishwanath Sugam Pass (no lines), Subah-e-Banaras sunrise boat, Dashashwamedh evening Aarti Bajra seat, Sarnath, Kaal Bhairav, AC Sedan & Deluxe Ghat hotel.',
             ),
             _buildPackageItem(
+              context,
               'Ayodhya Ram Janmabhoomi 2D/1N Sacred Tour',
               '₹9,800 Retail • ₹8,100 B2B DMC Net',
               'Includes: Ram Mandir VIP pass, Hanumangarhi, Kanak Bhavan, Saryu Maha Aarti, Surya Kund Light show, AC cab transfer & 3-Star hotel stay.',
             ),
             _buildPackageItem(
+              context,
               'Kashi - Ayodhya - Prayagraj 4D/3N Golden Circuit',
               '₹22,500 Retail • ₹18,900 B2B DMC Net',
               'Includes: All 3 holy cities, dedicated Toyota Innova Crysta, Sugam Darshan passes, Sangam holy dip boat, Deluxe hotels with breakfast.',
             ),
             _buildPackageItem(
+              context,
               'Prayagraj Triveni Sangam 1-Day Excursion',
               '₹4,800 Retail • ₹3,900 B2B DMC Net',
               'Includes: Private AC cab from Varanasi (round-trip), Triveni Sangam boat, Bade Hanuman Ji temple, Alopi Devi, all toll & parking.',
             ),
             _buildPackageItem(
+              context,
               'Bodhgaya & Gaya 2D/1N Enlightenment Tour',
               '₹13,200 Retail • ₹11,000 B2B DMC Net',
               'Includes: Mahabodhi Temple UNESCO site, 80ft Buddha statue, Vishnupad temple Pind Daan assistance, AC cab & hotel stay.',
@@ -125,10 +130,10 @@ class _AiAgentsScreenState extends State<AiAgentsScreen> {
               style: TextStyle(color: AppColors.accentGold, fontWeight: FontWeight.bold, fontSize: 11, letterSpacing: 0.6),
             ),
             const SizedBox(height: 8),
-            _buildTariffRow('Swift Dzire / Etios AC (1-4 Pax)', '₹12 / km', 'Airport: ₹1,100 • City 8h: ₹1,800'),
-            _buildTariffRow('Maruti Ertiga / XL6 (4-6 Pax)', '₹15 / km', 'Airport: ₹1,500 • City 8h: ₹2,400'),
-            _buildTariffRow('Toyota Innova Crysta (4-7 Pax)', '₹19 / km', 'Airport: ₹2,000 • City 8h: ₹3,000'),
-            _buildTariffRow('Force Tempo Traveller (12-26 Pax)', '₹25-28 / km', 'Airport: ₹3,000 • City 8h: ₹4,500'),
+            _buildTariffRow(context, 'Swift Dzire / Etios AC (1-4 Pax)', '₹12 / km', 'Airport: ₹1,100 • City 8h: ₹1,800'),
+            _buildTariffRow(context, 'Maruti Ertiga / XL6 (4-6 Pax)', '₹15 / km', 'Airport: ₹1,500 • City 8h: ₹2,400'),
+            _buildTariffRow(context, 'Toyota Innova Crysta (4-7 Pax)', '₹19 / km', 'Airport: ₹2,000 • City 8h: ₹3,000'),
+            _buildTariffRow(context, 'Force Tempo Traveller (12-26 Pax)', '₹25-28 / km', 'Airport: ₹3,000 • City 8h: ₹4,500'),
             const SizedBox(height: 16),
             const Text(
               '🛡️ MARGINS & ESCALATION GUARDRAILS',
@@ -138,20 +143,20 @@ class _AiAgentsScreenState extends State<AiAgentsScreen> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.05),
+                color: AppColors.getElevated(context),
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: Colors.white12),
+                border: Border.all(color: AppColors.getBorder(context)),
               ),
-              child: const Column(
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('• B2C Target Margin: 18% - 22% built into quotes', style: TextStyle(color: Colors.white70, fontSize: 12)),
-                  SizedBox(height: 4),
-                  Text('• B2B Wholesale Net Margin: Protected 10% agency discount', style: TextStyle(color: Colors.white70, fontSize: 12)),
-                  SizedBox(height: 4),
-                  Text('• Max Autonomous Discount: 10% (requires human escalation above 10%)', style: TextStyle(color: Colors.white70, fontSize: 12)),
-                  SizedBox(height: 4),
-                  Text('• Human Escalation: Instantly triggers notification when customer asks for manager', style: TextStyle(color: AppColors.accentGold, fontSize: 12)),
+                  Text('• B2C Target Margin: 18% - 22% built into quotes', style: TextStyle(color: AppColors.getTextPrimary(context), fontSize: 12)),
+                  const SizedBox(height: 4),
+                  Text('• B2B Wholesale Net Margin: Protected 10% agency discount', style: TextStyle(color: AppColors.getTextPrimary(context), fontSize: 12)),
+                  const SizedBox(height: 4),
+                  Text('• Max Autonomous Discount: 10% (requires human escalation above 10%)', style: TextStyle(color: AppColors.getTextPrimary(context), fontSize: 12)),
+                  const SizedBox(height: 4),
+                  const Text('• Human Escalation: Instantly triggers notification when customer asks for manager', style: TextStyle(color: AppColors.accentGold, fontSize: 12)),
                 ],
               ),
             ),
@@ -161,39 +166,39 @@ class _AiAgentsScreenState extends State<AiAgentsScreen> {
     );
   }
 
-  static Widget _buildPackageItem(String title, String pricing, String details) {
+  static Widget _buildPackageItem(BuildContext context, String title, String pricing, String details) {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFF1E293B),
+        color: AppColors.getElevated(context),
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Colors.white12),
+        border: Border.all(color: AppColors.getBorder(context)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Expanded(child: Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13))),
+              Expanded(child: Text(title, style: TextStyle(color: AppColors.getTextPrimary(context), fontWeight: FontWeight.bold, fontSize: 13))),
               Text(pricing, style: const TextStyle(color: AppColors.accentGold, fontWeight: FontWeight.w700, fontSize: 11)),
             ],
           ),
           const SizedBox(height: 4),
-          Text(details, style: const TextStyle(color: Colors.white60, fontSize: 11, height: 1.3)),
+          Text(details, style: TextStyle(color: AppColors.getTextSecondary(context), fontSize: 11, height: 1.3)),
         ],
       ),
     );
   }
 
-  static Widget _buildTariffRow(String vehicle, String perKm, String extras) {
+  static Widget _buildTariffRow(BuildContext context, String vehicle, String perKm, String extras) {
     return Container(
       margin: const EdgeInsets.only(bottom: 6),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: const Color(0xFF1E293B),
+        color: AppColors.getElevated(context),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.white10),
+        border: Border.all(color: AppColors.getBorder(context)),
       ),
       child: Row(
         children: [
@@ -201,8 +206,8 @@ class _AiAgentsScreenState extends State<AiAgentsScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(vehicle, style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600)),
-                Text(extras, style: const TextStyle(color: Colors.white38, fontSize: 10)),
+                Text(vehicle, style: TextStyle(color: AppColors.getTextPrimary(context), fontSize: 12, fontWeight: FontWeight.w600)),
+                Text(extras, style: TextStyle(color: AppColors.getTextSecondary(context), fontSize: 10)),
               ],
             ),
           ),
@@ -229,7 +234,7 @@ class _AiAgentsScreenState extends State<AiAgentsScreen> {
 
     showModalBottomSheet(
       context: context,
-      backgroundColor: const Color(0xFF1E293B),
+      backgroundColor: AppColors.getCard(context),
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
@@ -240,7 +245,7 @@ class _AiAgentsScreenState extends State<AiAgentsScreen> {
             left: 20,
             right: 20,
             top: 20,
-            bottom: MediaQuery.of(ctx).viewInsets.bottom + 20,
+            bottom: MediaQuery.of(ctx).viewInsets.bottom + MediaQuery.of(ctx).padding.bottom + 20,
           ),
           child: SingleChildScrollView(
             child: Column(
@@ -263,11 +268,11 @@ class _AiAgentsScreenState extends State<AiAgentsScreen> {
                       children: [
                         Text(
                           existing == null ? 'Create AI Sales Persona' : 'Edit Persona: ${existing.name}',
-                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                          style: TextStyle(color: AppColors.getTextPrimary(context), fontWeight: FontWeight.bold, fontSize: 16),
                         ),
-                        const Text(
+                        Text(
                           'Configure autonomous travel skills, tone & voice',
-                          style: TextStyle(color: Colors.white54, fontSize: 11),
+                          style: TextStyle(color: AppColors.getTextSecondary(context), fontSize: 11),
                         ),
                       ],
                     ),
@@ -276,7 +281,7 @@ class _AiAgentsScreenState extends State<AiAgentsScreen> {
                 const SizedBox(height: 16),
                 TextField(
                   controller: nameCtrl,
-                  style: const TextStyle(color: Colors.white),
+                  style: TextStyle(color: AppColors.getTextPrimary(context)),
                   decoration: const InputDecoration(
                     labelText: 'Agent Name',
                     hintText: 'e.g. Aarav Sharma',
@@ -286,7 +291,7 @@ class _AiAgentsScreenState extends State<AiAgentsScreen> {
                 const SizedBox(height: 12),
                 TextField(
                   controller: titleCtrl,
-                  style: const TextStyle(color: Colors.white),
+                  style: TextStyle(color: AppColors.getTextPrimary(context)),
                   decoration: const InputDecoration(
                     labelText: 'Designation / Department',
                     hintText: 'e.g. Kashi Pilgrimage & VIP Desk Specialist',
@@ -296,7 +301,7 @@ class _AiAgentsScreenState extends State<AiAgentsScreen> {
                 const SizedBox(height: 12),
                 TextField(
                   controller: circuitsCtrl,
-                  style: const TextStyle(color: Colors.white),
+                  style: TextStyle(color: AppColors.getTextPrimary(context)),
                   decoration: const InputDecoration(
                     labelText: 'Specialist Tour Circuits (comma separated)',
                     hintText: 'Varanasi, Ayodhya, Prayagraj, Bodh Gaya',
@@ -306,7 +311,7 @@ class _AiAgentsScreenState extends State<AiAgentsScreen> {
                 const SizedBox(height: 12),
                 TextField(
                   controller: toneCtrl,
-                  style: const TextStyle(color: Colors.white),
+                  style: TextStyle(color: AppColors.getTextPrimary(context)),
                   decoration: const InputDecoration(
                     labelText: 'Tone & Persona Style',
                     hintText: 'Devotional & Respectful / Fast B2B Commercial',
@@ -317,7 +322,7 @@ class _AiAgentsScreenState extends State<AiAgentsScreen> {
                 TextField(
                   controller: promptCtrl,
                   maxLines: 3,
-                  style: const TextStyle(color: Colors.white, fontSize: 13),
+                  style: TextStyle(color: AppColors.getTextPrimary(context), fontSize: 13),
                   decoration: const InputDecoration(
                     labelText: 'Agent System Instructions (Prompt)',
                     hintText: 'Define knowledge, greeting style, discount limits, and rules...',
@@ -333,8 +338,8 @@ class _AiAgentsScreenState extends State<AiAgentsScreen> {
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,
                   dense: true,
-                  title: const Text('Official WhatsApp Auto-Chat', style: TextStyle(color: Colors.white, fontSize: 13)),
-                  subtitle: const Text('Answers inbound WhatsApp leads autonomously', style: TextStyle(color: Colors.white38, fontSize: 11)),
+                  title: Text('Official WhatsApp Auto-Chat', style: TextStyle(color: AppColors.getTextPrimary(context), fontSize: 13)),
+                  subtitle: Text('Answers inbound WhatsApp leads autonomously', style: TextStyle(color: AppColors.getTextSecondary(context), fontSize: 11)),
                   value: canWa,
                   activeTrackColor: AppColors.whatsappGreen,
                   onChanged: (val) => setSheetState(() => canWa = val),
@@ -342,8 +347,8 @@ class _AiAgentsScreenState extends State<AiAgentsScreen> {
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,
                   dense: true,
-                  title: const Text('Autonomous Voice Calling', style: TextStyle(color: Colors.white, fontSize: 13)),
-                  subtitle: const Text('Makes outbound follow-up calls via GSM/LiveKit bridge', style: TextStyle(color: Colors.white38, fontSize: 11)),
+                  title: Text('Autonomous Voice Calling', style: TextStyle(color: AppColors.getTextPrimary(context), fontSize: 13)),
+                  subtitle: Text('Makes outbound follow-up calls via GSM/LiveKit bridge', style: TextStyle(color: AppColors.getTextSecondary(context), fontSize: 11)),
                   value: canVoice,
                   activeTrackColor: AppColors.accentBlue,
                   onChanged: (val) => setSheetState(() => canVoice = val),
@@ -351,8 +356,8 @@ class _AiAgentsScreenState extends State<AiAgentsScreen> {
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,
                   dense: true,
-                  title: const Text('24/7 Inbound Telephony Receptionist', style: TextStyle(color: Colors.white, fontSize: 13)),
-                  subtitle: const Text('Picks up traveler calls and answers inquiries', style: TextStyle(color: Colors.white38, fontSize: 11)),
+                  title: Text('24/7 Inbound Telephony Receptionist', style: TextStyle(color: AppColors.getTextPrimary(context), fontSize: 13)),
+                  subtitle: Text('Picks up traveler calls and answers inquiries', style: TextStyle(color: AppColors.getTextSecondary(context), fontSize: 11)),
                   value: canInbound,
                   activeTrackColor: AppColors.accentGold,
                   onChanged: (val) => setSheetState(() => canInbound = val),
@@ -438,7 +443,14 @@ class _AiAgentsScreenState extends State<AiAgentsScreen> {
           ),
         ),
       ),
-    );
+    ).whenComplete(() {
+      nameCtrl.dispose();
+      titleCtrl.dispose();
+      circuitsCtrl.dispose();
+      toneCtrl.dispose();
+      voiceCtrl.dispose();
+      promptCtrl.dispose();
+    });
   }
 
   @override
@@ -446,7 +458,13 @@ class _AiAgentsScreenState extends State<AiAgentsScreen> {
     final aiProvider = Provider.of<AiAgentProvider>(context);
     final selectedPersona = aiProvider.selectedPersona;
     final humanAgent = context.watch<LeadProvider>().currentAgent;
-    final pairedAiName = 'Aditi AI';
+    final pairedAiName = humanAgent.toLowerCase().contains('aditi')
+        ? 'Aditi AI'
+        : humanAgent.toLowerCase().contains('nishkarsh')
+            ? 'Nishkarsh AI'
+            : humanAgent.isNotEmpty
+                ? '${humanAgent.split(' ').first} AI'
+                : 'Nishkarsh AI';
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -653,6 +671,77 @@ class _AiAgentsScreenState extends State<AiAgentsScreen> {
                 ),
               ),
 
+              // Global AI Autonomy Master Switches
+              Container(
+                margin: const EdgeInsets.only(bottom: 20),
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: AppColors.getCard(context),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: AppColors.accentGold.withValues(alpha: 0.3), width: 1.0),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Row(
+                      children: [
+                        Icon(Icons.tune_rounded, color: AppColors.accentGold, size: 16),
+                        SizedBox(width: 6),
+                        Text(
+                          'GLOBAL AI AUTONOMY MASTER SWITCHES',
+                          style: TextStyle(
+                            color: AppColors.accentGold,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0.6,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    LayoutBuilder(
+                      builder: (context, constraints) {
+                        final isWide = constraints.maxWidth > 580;
+                        final item1 = _buildAutonomySwitchItem(
+                          context: context,
+                          title: '24/7 AI Receptionist & Chatbot',
+                          subtitle: 'Instant answers on Web, WhatsApp & Inbound calls',
+                          value: aiProvider.isReceptionistActive,
+                          activeColor: AppColors.successGreen,
+                          onChanged: (val) => aiProvider.toggleReceptionist(val),
+                        );
+                        final item2 = _buildAutonomySwitchItem(
+                          context: context,
+                          title: 'Autonomous Outbound Power Dialer',
+                          subtitle: 'Automatic welcome voice call when new lead lands',
+                          value: aiProvider.isOutboundAgentActive,
+                          activeColor: AppColors.accentGold,
+                          onChanged: (val) => aiProvider.toggleOutboundAgent(val),
+                        );
+
+                        if (isWide) {
+                          return Row(
+                            children: [
+                              Expanded(child: item1),
+                              const SizedBox(width: 12),
+                              Expanded(child: item2),
+                            ],
+                          );
+                        } else {
+                          return Column(
+                            children: [
+                              item1,
+                              const SizedBox(height: 10),
+                              item2,
+                            ],
+                          );
+                        }
+                      },
+                    ),
+                  ],
+                ),
+              ),
+
               // 1. Team Persona Carousel
               Row(
                 children: [
@@ -688,22 +777,22 @@ class _AiAgentsScreenState extends State<AiAgentsScreen> {
                           width: 130,
                           margin: const EdgeInsets.only(right: 12),
                           decoration: BoxDecoration(
-                            border: Border.all(color: Colors.white24, style: BorderStyle.solid),
+                            border: Border.all(color: AppColors.getBorder(context), style: BorderStyle.solid),
                             borderRadius: BorderRadius.circular(16),
-                            color: Colors.white.withValues(alpha: 0.03),
+                            color: AppColors.getCard(context),
                           ),
-                          child: const Column(
+                          child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(Icons.add_circle_outline_rounded, color: AppColors.accentGold, size: 30),
-                              SizedBox(height: 8),
+                              const Icon(Icons.add_circle_outline_rounded, color: AppColors.accentGold, size: 30),
+                              const SizedBox(height: 8),
                               Text(
                                 'Add AI Agent',
-                                style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold),
+                                style: TextStyle(color: AppColors.getTextPrimary(context), fontSize: 12, fontWeight: FontWeight.bold),
                               ),
                               Text(
                                 'Custom Skills',
-                                style: TextStyle(color: Colors.white38, fontSize: 10),
+                                style: TextStyle(color: AppColors.getTextSecondary(context), fontSize: 10),
                               ),
                             ],
                           ),
@@ -713,6 +802,7 @@ class _AiAgentsScreenState extends State<AiAgentsScreen> {
 
                     final p = aiProvider.personas[index];
                     final isSelected = p.id == aiProvider.selectedPersonaId;
+                    final isLight = Theme.of(context).brightness == Brightness.light;
 
                     return InkWell(
                       onTap: () => aiProvider.selectPersona(p.id),
@@ -723,11 +813,11 @@ class _AiAgentsScreenState extends State<AiAgentsScreen> {
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
                           color: isSelected
-                              ? AppColors.surfaceCard
-                              : const Color(0xFF1E293B).withValues(alpha: 0.5),
+                              ? (isLight ? const Color(0xFFFEF3C7) : AppColors.surfaceCard)
+                              : AppColors.getCard(context),
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(
-                            color: isSelected ? AppColors.accentGold : Colors.white12,
+                            color: isSelected ? AppColors.accentGold : AppColors.getBorder(context),
                             width: isSelected ? 1.8 : 1.0,
                           ),
                           boxShadow: isSelected
@@ -747,11 +837,11 @@ class _AiAgentsScreenState extends State<AiAgentsScreen> {
                               children: [
                                 CircleAvatar(
                                   radius: 18,
-                                  backgroundColor: isSelected ? AppColors.accentGold : Colors.white24,
+                                  backgroundColor: isSelected ? AppColors.accentGold : AppColors.getElevated(context),
                                   child: Text(
                                     p.name.substring(0, 1),
                                     style: TextStyle(
-                                      color: isSelected ? Colors.black : Colors.white,
+                                      color: isSelected ? Colors.black : AppColors.getTextPrimary(context),
                                       fontWeight: FontWeight.bold,
                                       fontSize: 14,
                                     ),
@@ -764,8 +854,8 @@ class _AiAgentsScreenState extends State<AiAgentsScreen> {
                                     children: [
                                       Text(
                                         p.name,
-                                        style: const TextStyle(
-                                          color: Colors.white,
+                                        style: TextStyle(
+                                          color: AppColors.getTextPrimary(context),
                                           fontWeight: FontWeight.w700,
                                           fontSize: 13,
                                         ),
@@ -787,7 +877,7 @@ class _AiAgentsScreenState extends State<AiAgentsScreen> {
                             const Spacer(),
                             Text(
                               p.title,
-                              style: const TextStyle(color: Colors.white70, fontSize: 10.5),
+                              style: TextStyle(color: AppColors.getTextSecondary(context), fontSize: 10.5),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -808,12 +898,12 @@ class _AiAgentsScreenState extends State<AiAgentsScreen> {
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                   decoration: BoxDecoration(
-                                    color: Colors.white.withValues(alpha: 0.08),
+                                    color: AppColors.getElevated(context),
                                     borderRadius: BorderRadius.circular(6),
                                   ),
                                   child: Text(
                                     '${p.skills.where((s) => s.isEnabled).length} Skills',
-                                    style: const TextStyle(color: Colors.white70, fontSize: 9.5, fontWeight: FontWeight.bold),
+                                    style: TextStyle(color: AppColors.getTextSecondary(context), fontSize: 9.5, fontWeight: FontWeight.bold),
                                   ),
                                 ),
                               ],
@@ -854,7 +944,7 @@ class _AiAgentsScreenState extends State<AiAgentsScreen> {
                                 children: [
                                   Text(
                                     selectedPersona.name,
-                                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                                    style: TextStyle(color: AppColors.getTextPrimary(context), fontWeight: FontWeight.bold, fontSize: 16),
                                   ),
                                   const SizedBox(width: 8),
                                   Container(
@@ -877,31 +967,31 @@ class _AiAgentsScreenState extends State<AiAgentsScreen> {
                               const SizedBox(height: 4),
                               Text(
                                 'Tone: ${selectedPersona.tone} • Voice: ${selectedPersona.voiceName}',
-                                style: const TextStyle(color: Colors.white54, fontSize: 11),
+                                style: TextStyle(color: AppColors.getTextSecondary(context), fontSize: 11),
                               ),
                             ],
                           ),
                         ),
                         IconButton(
                           tooltip: 'Edit Persona Settings',
-                          icon: const Icon(Icons.edit_note_rounded, color: Colors.white70),
+                          icon: Icon(Icons.edit_note_rounded, color: AppColors.getTextSecondary(context)),
                           onPressed: () => _openCreateOrEditPersonaSheet(context, aiProvider, selectedPersona),
                         ),
                       ],
                     ),
 
                     const SizedBox(height: 14),
-                    const Divider(color: Colors.white12, height: 1),
+                    Divider(color: AppColors.getBorder(context), height: 1),
                     const SizedBox(height: 14),
 
                     // Metrics Row
                     Row(
                       children: [
-                        _buildMetricPill('Conversations', '${selectedPersona.conversationsCount}', Icons.chat_rounded),
+                        _buildMetricPill(context, 'Conversations', '${selectedPersona.conversationsCount}', Icons.chat_rounded),
                         const SizedBox(width: 10),
-                        _buildMetricPill('Deals Closed', '${selectedPersona.dealsClosed}', Icons.verified_rounded),
+                        _buildMetricPill(context, 'Deals Closed', '${selectedPersona.dealsClosed}', Icons.verified_rounded),
                         const SizedBox(width: 10),
-                        _buildMetricPill('Win Rate', '${selectedPersona.conversionRate.toStringAsFixed(1)}%', Icons.trending_up_rounded),
+                        _buildMetricPill(context, 'Win Rate', '${selectedPersona.conversionRate.toStringAsFixed(1)}%', Icons.trending_up_rounded),
                       ],
                     ),
 
@@ -938,17 +1028,17 @@ class _AiAgentsScreenState extends State<AiAgentsScreen> {
                         return Container(
                           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF0F172A).withValues(alpha: 0.8),
+                            color: AppColors.getElevated(context),
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
-                              color: skill.isEnabled ? AppColors.accentGold.withValues(alpha: 0.3) : Colors.white10,
+                              color: skill.isEnabled ? AppColors.accentGold.withValues(alpha: 0.3) : AppColors.getBorder(context),
                             ),
                           ),
                           child: Row(
                             children: [
                               Icon(
                                 _getSkillIcon(skill.category),
-                                color: skill.isEnabled ? AppColors.accentGold : Colors.white38,
+                                color: skill.isEnabled ? AppColors.accentGold : AppColors.getTextMuted(context),
                                 size: 20,
                               ),
                               const SizedBox(width: 10),
@@ -959,14 +1049,14 @@ class _AiAgentsScreenState extends State<AiAgentsScreen> {
                                     Text(
                                       skill.name,
                                       style: TextStyle(
-                                        color: skill.isEnabled ? Colors.white : Colors.white54,
+                                        color: skill.isEnabled ? AppColors.getTextPrimary(context) : AppColors.getTextMuted(context),
                                         fontWeight: FontWeight.bold,
                                         fontSize: 13,
                                       ),
                                     ),
                                     Text(
                                       skill.description,
-                                      style: const TextStyle(color: Colors.white38, fontSize: 11),
+                                      style: TextStyle(color: AppColors.getTextSecondary(context), fontSize: 11),
                                     ),
                                   ],
                                 ),
@@ -1022,7 +1112,7 @@ class _AiAgentsScreenState extends State<AiAgentsScreen> {
                         itemCount: aiProvider.playgroundMessages.length,
                         itemBuilder: (context, index) {
                           final msg = aiProvider.playgroundMessages[index];
-                          return _buildChatBubble(msg);
+                          return _buildChatBubble(context, msg);
                         },
                       ),
                     ),
@@ -1058,17 +1148,21 @@ class _AiAgentsScreenState extends State<AiAgentsScreen> {
                         Expanded(
                           child: TextField(
                             controller: _chatController,
-                            style: const TextStyle(color: Colors.white, fontSize: 13),
+                            style: TextStyle(color: AppColors.getTextPrimary(context), fontSize: 13),
                             decoration: InputDecoration(
                               hintText: 'Ask ${selectedPersona.name} (e.g. 3-day Kashi package for 4 adults)...',
-                              hintStyle: const TextStyle(color: Colors.white38, fontSize: 12),
+                              hintStyle: TextStyle(color: AppColors.getTextMuted(context), fontSize: 12),
                               isDense: true,
                               filled: true,
-                              fillColor: const Color(0xFF0F172A),
+                              fillColor: AppColors.getSurface(context),
                               contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(20),
-                                borderSide: BorderSide.none,
+                                borderSide: BorderSide(color: AppColors.getBorder(context)),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(20),
+                                borderSide: BorderSide(color: AppColors.getBorder(context)),
                               ),
                             ),
                             onSubmitted: (_) => _sendQuestion(aiProvider),
@@ -1091,14 +1185,14 @@ class _AiAgentsScreenState extends State<AiAgentsScreen> {
     );
   }
 
-  Widget _buildMetricPill(String label, String value, IconData icon) {
+  Widget _buildMetricPill(BuildContext context, String label, String value, IconData icon) {
     return Expanded(
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
         decoration: BoxDecoration(
-          color: const Color(0xFF0F172A),
+          color: AppColors.getElevated(context),
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: Colors.white10),
+          border: Border.all(color: AppColors.getBorder(context)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1107,13 +1201,13 @@ class _AiAgentsScreenState extends State<AiAgentsScreen> {
               children: [
                 Icon(icon, size: 12, color: AppColors.accentGold),
                 const SizedBox(width: 4),
-                Text(label, style: const TextStyle(color: Colors.white38, fontSize: 10)),
+                Text(label, style: TextStyle(color: AppColors.getTextSecondary(context), fontSize: 10)),
               ],
             ),
             const SizedBox(height: 4),
             Text(
               value,
-              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+              style: TextStyle(color: AppColors.getTextPrimary(context), fontWeight: FontWeight.bold, fontSize: 14),
             ),
           ],
         ),
@@ -1137,26 +1231,27 @@ class _AiAgentsScreenState extends State<AiAgentsScreen> {
     }
   }
 
-  Widget _buildChatBubble(ChatMessage msg) {
+  Widget _buildChatBubble(BuildContext context, ChatMessage msg) {
+    final isUser = msg.isUser;
     return Align(
-      alignment: msg.isUser ? Alignment.centerRight : Alignment.centerLeft,
+      alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
         margin: const EdgeInsets.symmetric(vertical: 4),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         constraints: const BoxConstraints(maxWidth: 380),
         decoration: BoxDecoration(
-          color: msg.isUser
-              ? AppColors.accentBlue.withValues(alpha: 0.8)
-              : const Color(0xFF1E293B),
+          color: isUser
+              ? AppColors.accentBlue.withValues(alpha: 0.85)
+              : AppColors.getElevated(context),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: msg.isUser ? Colors.transparent : Colors.white12,
+            color: isUser ? Colors.transparent : AppColors.getBorder(context),
           ),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (!msg.isUser && msg.provider != null)
+            if (!isUser && msg.provider != null)
               Padding(
                 padding: const EdgeInsets.only(bottom: 2),
                 child: Text(
@@ -1166,10 +1261,57 @@ class _AiAgentsScreenState extends State<AiAgentsScreen> {
               ),
             Text(
               msg.text,
-              style: const TextStyle(color: Colors.white, fontSize: 12.5),
+              style: TextStyle(
+                color: isUser ? Colors.white : AppColors.getTextPrimary(context),
+                fontSize: 12.5,
+              ),
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildAutonomySwitchItem({
+    required BuildContext context,
+    required String title,
+    required String subtitle,
+    required bool value,
+    required Color activeColor,
+    required ValueChanged<bool> onChanged,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: AppColors.getElevated(context),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.getBorder(context)),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(color: AppColors.getTextPrimary(context), fontSize: 13, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  subtitle,
+                  style: TextStyle(color: AppColors.getTextSecondary(context), fontSize: 11),
+                ),
+              ],
+            ),
+          ),
+          Switch(
+            value: value,
+            activeThumbColor: activeColor,
+            onChanged: onChanged,
+          ),
+        ],
       ),
     );
   }

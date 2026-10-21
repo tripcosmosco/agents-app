@@ -128,9 +128,9 @@ class _LeadsScreenState extends State<LeadsScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text(
+            child: Text(
               'Cancel',
-              style: TextStyle(color: AppColors.textMuted),
+              style: TextStyle(color: AppColors.getTextMuted(context)),
             ),
           ),
           ElevatedButton(
@@ -153,13 +153,20 @@ class _LeadsScreenState extends State<LeadsScreen> {
           ),
         ],
       ),
-    );
+    ).whenComplete(() {
+      nameController.dispose();
+      phoneController.dispose();
+      emailController.dispose();
+      destController.dispose();
+      budgetController.dispose();
+      noteController.dispose();
+    });
   }
 
   void _showReassignOwnerSheet(BuildContext context, LeadModel lead) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: const Color(0xFF1E293B),
+      backgroundColor: AppColors.getCard(context),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -171,18 +178,18 @@ class _LeadsScreenState extends State<LeadsScreen> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'Assign Lead Owner',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
-                    color: Colors.white,
+                    color: AppColors.getTextPrimary(context),
                   ),
                 ),
                 const SizedBox(height: 6),
-                const Text(
+                Text(
                   'Assign this lead to an AI Specialist or Team Rep:',
-                  style: TextStyle(fontSize: 12, color: Colors.white60),
+                  style: TextStyle(fontSize: 12, color: AppColors.getTextSecondary(context)),
                 ),
                 const SizedBox(height: 16),
                 ...AppConstants.teamMembers.map((member) {
@@ -191,7 +198,7 @@ class _LeadsScreenState extends State<LeadsScreen> {
                     contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                     leading: CircleAvatar(
                       radius: 18,
-                      backgroundColor: isCurrent ? AppColors.accentBlue : const Color(0xFF334155),
+                      backgroundColor: isCurrent ? AppColors.accentBlue : AppColors.getElevated(context),
                       child: Text(
                         member['initials']!,
                         style: const TextStyle(fontWeight: FontWeight.w700, color: Colors.white, fontSize: 13),
@@ -201,13 +208,13 @@ class _LeadsScreenState extends State<LeadsScreen> {
                       member['name']!,
                       style: TextStyle(
                         fontWeight: isCurrent ? FontWeight.w700 : FontWeight.w500,
-                        color: Colors.white,
+                        color: AppColors.getTextPrimary(context),
                         fontSize: 14,
                       ),
                     ),
                     subtitle: Text(
                       member['role']!,
-                      style: const TextStyle(color: Colors.white54, fontSize: 11),
+                      style: TextStyle(color: AppColors.getTextMuted(context), fontSize: 11),
                     ),
                     trailing: isCurrent
                         ? const Icon(Icons.check_circle, color: AppColors.successGreen, size: 20)
@@ -221,7 +228,7 @@ class _LeadsScreenState extends State<LeadsScreen> {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: Text('✓ Lead #${lead.id} assigned to ${member['name']}'),
-                          backgroundColor: const Color(0xFF1E293B),
+                          backgroundColor: AppColors.getCard(context),
                           behavior: SnackBarBehavior.floating,
                         ),
                       );
@@ -277,14 +284,14 @@ class _LeadsScreenState extends State<LeadsScreen> {
                 ),
                 label: Text(
                   '$visitorCount Live',
-                  style: const TextStyle(
-                    color: AppColors.textPrimary,
+                  style: TextStyle(
+                    color: AppColors.getTextPrimary(context),
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
                 style: TextButton.styleFrom(
-                  backgroundColor: AppColors.surfaceCard,
+                  backgroundColor: AppColors.getCard(context),
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -321,378 +328,114 @@ class _LeadsScreenState extends State<LeadsScreen> {
         ],
       ),
       body: SafeArea(
-        child: Column(
-          children: [
-            // B2C vs B2B DMC Hub Top Switcher
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 10, 16, 4),
-              child: Container(
-                padding: const EdgeInsets.all(4),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF0F172A),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.white12),
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: InkWell(
-                        onTap: () => setState(() => _isB2bMode = false),
-                        borderRadius: BorderRadius.circular(8),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(vertical: 9),
-                          decoration: BoxDecoration(
-                            color: !_isB2bMode
-                                ? AppColors.accentGold
-                                : Colors.transparent,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.person_pin_circle_rounded,
-                                size: 15,
-                                color: !_isB2bMode
-                                    ? AppColors.primaryDark
-                                    : AppColors.textMuted,
-                              ),
-                              const SizedBox(width: 6),
-                              Text(
-                                'Direct Travelers (B2C)',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w800,
-                                  color: !_isB2bMode
-                                      ? AppColors.primaryDark
-                                      : AppColors.textMuted,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                    Expanded(
-                      child: InkWell(
-                        onTap: () => setState(() => _isB2bMode = true),
-                        borderRadius: BorderRadius.circular(8),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(vertical: 9),
-                          decoration: BoxDecoration(
-                            color: _isB2bMode
-                                ? const Color(0xFF8B5CF6)
-                                : Colors.transparent,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.business_rounded,
-                                size: 15,
-                                color: _isB2bMode
-                                    ? Colors.white
-                                    : AppColors.textMuted,
-                              ),
-                              const SizedBox(width: 6),
-                              Text(
-                                'B2B Partners (DMC)',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w800,
-                                  color: _isB2bMode
-                                      ? Colors.white
-                                      : AppColors.textMuted,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-
-            if (_isB2bMode)
-              const Expanded(child: B2bPartnersView())
-            else ...[
-              // Team Assignment & Roster Filter Bar (Superfone Benchmark)
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 6, 16, 4),
-              child: Container(
-                padding: const EdgeInsets.all(4),
-                decoration: BoxDecoration(
-                  color: AppColors.surfaceCard,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.white12),
-                ),
-                child: Row(
-                  children: [
-                    _buildSegmentButton(
-                      context: context,
-                      title: 'All',
-                      count: leadProvider.leads.length,
-                      isSelected: leadProvider.ownerFilter == 'all',
-                      onTap: () => leadProvider.setOwnerFilter('all'),
-                    ),
-                    _buildSegmentButton(
-                      context: context,
-                      title: 'Mine',
-                      count: leadProvider.myLeadsCount,
-                      isSelected: leadProvider.ownerFilter == 'my_leads',
-                      onTap: () => leadProvider.setOwnerFilter('my_leads'),
-                    ),
-                    _buildSegmentButton(
-                      context: context,
-                      title: 'Due',
-                      count: leadProvider.followUpsDueCount,
-                      isSelected: leadProvider.ownerFilter == 'follow_ups',
-                      onTap: () => leadProvider.setOwnerFilter('follow_ups'),
-                    ),
-                    _buildSegmentButton(
-                      context: context,
-                      title: 'Open',
-                      count: leadProvider.unassignedLeadsCount,
-                      isSelected: leadProvider.ownerFilter == 'unassigned',
-                      onTap: () => leadProvider.setOwnerFilter('unassigned'),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-
-            // Search Bar
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 6, 16, 8),
-              child: TextField(
-                onChanged: (val) => leadProvider.setSearchQuery(val),
-                decoration: InputDecoration(
-                  hintText: 'Search leads by name, phone or circuit...',
-                  prefixIcon: const Icon(
-                    Icons.search,
-                    color: AppColors.textMuted,
-                    size: 20,
-                  ),
-                  suffixIcon: leadProvider.searchQuery.isNotEmpty
-                      ? IconButton(
-                          onPressed: () => leadProvider.setSearchQuery(''),
-                          icon: const Icon(Icons.clear, size: 18),
-                        )
-                      : null,
-                ),
-              ),
-            ),
-
-            // Power Dialer Auto-Queue Banner & Controller
-            Consumer<CallProvider>(
-              builder: (context, cp, _) {
-                if (cp.isPowerDialerActive) {
-                  final current = cp.currentPowerDialerLead;
-                  return Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFF3B1E08), Color(0xFF1E293B)],
-                        ),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: AppColors.accentGold, width: 1.5),
-                      ),
-                      child: Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(6),
-                            decoration: const BoxDecoration(
-                              color: AppColors.accentGold,
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(Icons.flash_on_rounded, size: 14, color: AppColors.primaryDark),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Power Dialer: ${cp.powerDialerIndex + 1}/${cp.powerDialerTotal}',
-                                  style: const TextStyle(
-                                    color: AppColors.accentGold,
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w800,
-                                    letterSpacing: 0.5,
-                                  ),
-                                ),
-                                Text(
-                                  current?['name']?.toString() ?? 'Calling...',
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ],
-                            ),
-                          ),
-                          TextButton(
-                            onPressed: () => cp.skipPowerDialerLead(),
-                            child: const Text('Skip', style: TextStyle(color: Colors.white70, fontSize: 12)),
-                          ),
-                          ElevatedButton(
-                            onPressed: () => cp.stopPowerDialer(),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.errorRed,
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                              minimumSize: Size.zero,
-                            ),
-                            child: const Text('Stop', style: TextStyle(color: Colors.white, fontSize: 11)),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                }
-
-                return Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(12),
-                    onTap: () {
-                      final leadsToDial = leadProvider.filteredLeads.map((l) => {
-                        'phone': l.phone,
-                        'name': l.name,
-                        'destination': l.destination,
-                      }).toList();
-
-                      if (leadsToDial.isEmpty) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('No leads available in current view to dial.')),
-                        );
-                        return;
-                      }
-                      cp.startPowerDialer(leadsToDial);
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF1E293B),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: AppColors.accentGold.withValues(alpha: 0.4)),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.flash_on_rounded, color: AppColors.accentGold, size: 16),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              '⚡ Power Dialer (${leadProvider.filteredLeads.length} leads in queue)',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ),
-                          const Text(
-                            'Start Auto-Call',
-                            style: TextStyle(
-                              color: AppColors.accentGold,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                          const SizedBox(width: 4),
-                          const Icon(Icons.play_arrow_rounded, color: AppColors.accentGold, size: 16),
-                        ],
-                      ),
+        child: _isB2bMode
+            ? Column(
+                children: [
+                  _buildModeSwitcher(),
+                  const Expanded(child: B2bPartnersView()),
+                ],
+              )
+            : CustomScrollView(
+                slivers: [
+                  SliverToBoxAdapter(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildModeSwitcher(),
+                        _buildSegmentBar(context, leadProvider),
+                        _buildSearchBar(leadProvider),
+                        _buildPowerDialerBanner(context, leadProvider),
+                      ],
                     ),
                   ),
-                );
-              },
-            ),
-
-            // Stage Filter Chips
-            SizedBox(
-              height: 38,
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                itemCount: AppConstants.pipelineStages.length,
-                itemBuilder: (context, index) {
-                  final stage = AppConstants.pipelineStages[index];
-                  final isSelected = leadProvider.selectedStage == stage;
-                  return Padding(
-                    padding: const EdgeInsets.only(right: 8.0),
-                    child: ChoiceChip(
-                      label: Text(_formatStage(stage)),
-                      selected: isSelected,
-                      onSelected: (_) => leadProvider.setStageFilter(stage),
-                      selectedColor: AppColors.accentGold,
-                      backgroundColor: AppColors.surfaceCard,
-                      visualDensity: VisualDensity.compact,
-                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
-                      labelStyle: TextStyle(
-                        color: isSelected
-                            ? AppColors.primaryDark
-                            : AppColors.textSecondary,
-                        fontWeight: isSelected
-                            ? FontWeight.w700
-                            : FontWeight.w500,
-                        fontSize: 11.5,
+                  SliverPersistentHeader(
+                    pinned: true,
+                    delegate: _StageFilterHeaderDelegate(
+                      child: Container(
+                        color: Theme.of(context).scaffoldBackgroundColor,
+                        padding: const EdgeInsets.symmetric(vertical: 4),
+                        child: SizedBox(
+                          height: 38,
+                          child: ListView.builder(
+                            scrollDirection: Axis.horizontal,
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            itemCount: AppConstants.pipelineStages.length,
+                            itemBuilder: (context, index) {
+                              final stage = AppConstants.pipelineStages[index];
+                              final isSelected = leadProvider.selectedStage == stage;
+                              return Padding(
+                                padding: const EdgeInsets.only(right: 8.0),
+                                child: ChoiceChip(
+                                  label: Text(_formatStage(stage)),
+                                  selected: isSelected,
+                                  onSelected: (_) => leadProvider.setStageFilter(stage),
+                                  selectedColor: AppColors.accentGold,
+                                  backgroundColor: AppColors.getCard(context),
+                                  visualDensity: VisualDensity.compact,
+                                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+                                  labelStyle: TextStyle(
+                                    color: isSelected
+                                        ? AppColors.primaryDark
+                                        : AppColors.getTextSecondary(context),
+                                    fontWeight: isSelected
+                                        ? FontWeight.w700
+                                        : FontWeight.w500,
+                                    fontSize: 11.5,
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
                       ),
+                      height: 46.0,
                     ),
-                  );
-                },
-              ),
-            ),
-            const SizedBox(height: 12),
-
-            // Leads List
-            Expanded(
-              child: leadProvider.filteredLeads.isEmpty
-                  ? Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.person_search,
-                            size: 54,
-                            color: AppColors.textMuted.withValues(alpha: 0.4),
-                          ),
-                          const SizedBox(height: 12),
-                          const Text(
-                            'No leads match your active filters',
-                            style: TextStyle(
-                              color: AppColors.textMuted,
-                              fontSize: 14,
+                  ),
+                  if (leadProvider.filteredLeads.isEmpty)
+                    SliverFillRemaining(
+                      hasScrollBody: false,
+                      child: Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.person_search,
+                              size: 54,
+                              color: AppColors.textMuted.withValues(alpha: 0.4),
                             ),
-                          ),
-                        ],
+                            const SizedBox(height: 12),
+                            const Text(
+                              'No leads match your active filters',
+                              style: TextStyle(
+                                color: AppColors.textMuted,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     )
-                  : ListView.builder(
+                  else
+                    SliverPadding(
                       padding: const EdgeInsets.only(
                         left: 16,
                         right: 16,
-                        top: 10,
+                        top: 8,
                         bottom: 96,
                       ),
-                      itemCount: leadProvider.filteredLeads.length,
-                      itemBuilder: (context, index) {
-                        final lead = leadProvider.filteredLeads[index];
-                        return _buildLeadCard(context, lead, callProvider);
-                      },
+                      sliver: SliverList(
+                        delegate: SliverChildBuilderDelegate(
+                          (context, index) {
+                            final lead = leadProvider.filteredLeads[index];
+                            return _buildLeadCard(context, lead, callProvider);
+                          },
+                          childCount: leadProvider.filteredLeads.length,
+                        ),
+                      ),
                     ),
-            ),
-            ],
-          ],
-        ),
+                ],
+              ),
       ),
       floatingActionButton: _isB2bMode
           ? null
@@ -767,10 +510,10 @@ class _LeadsScreenState extends State<LeadsScreen> {
                 Expanded(
                   child: Text(
                     lead.name,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
-                      color: AppColors.textPrimary,
+                      color: AppColors.getTextPrimary(context),
                     ),
                   ),
                 ),
@@ -810,18 +553,18 @@ class _LeadsScreenState extends State<LeadsScreen> {
                 Expanded(
                   child: Text(
                     lead.destination.trim().isEmpty ? 'General Pilgrimage Inquiry' : lead.destination,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.textSecondary,
+                      color: AppColors.getTextSecondary(context),
                     ),
                   ),
                 ),
                 Text(
                   lead.phone,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
-                    color: AppColors.textMuted,
+                    color: AppColors.getTextMuted(context),
                     fontFamily: 'monospace',
                   ),
                 ),
@@ -838,13 +581,13 @@ class _LeadsScreenState extends State<LeadsScreen> {
                     vertical: 2,
                   ),
                   decoration: BoxDecoration(
-                    color: AppColors.surfaceElevated,
+                    color: AppColors.getElevated(context),
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Text(
                     'SRC: ${lead.source.toUpperCase()}',
-                    style: const TextStyle(
-                      color: AppColors.textMuted,
+                    style: TextStyle(
+                      color: AppColors.getTextMuted(context),
                       fontSize: 10,
                       fontWeight: FontWeight.w600,
                     ),
@@ -856,13 +599,13 @@ class _LeadsScreenState extends State<LeadsScreen> {
                   borderRadius: BorderRadius.circular(12),
                   child: Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
+                       horizontal: 8,
                       vertical: 3,
                     ),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF1E293B),
+                      color: AppColors.getElevated(context),
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: lead.stickyAgent.isEmpty ? Colors.amber.withValues(alpha: 0.5) : Colors.white12),
+                      border: Border.all(color: lead.stickyAgent.isEmpty ? Colors.amber.withValues(alpha: 0.5) : AppColors.getBorder(context)),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -883,13 +626,13 @@ class _LeadsScreenState extends State<LeadsScreen> {
                         Text(
                           lead.stickyAgent.isNotEmpty ? lead.stickyAgent : 'Unassigned',
                           style: TextStyle(
-                            color: lead.stickyAgent.isNotEmpty ? Colors.white : Colors.amber,
+                            color: lead.stickyAgent.isNotEmpty ? AppColors.getTextPrimary(context) : Colors.amber,
                             fontSize: 10,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
                         const SizedBox(width: 3),
-                        const Icon(Icons.arrow_drop_down, color: Colors.white38, size: 14),
+                        Icon(Icons.arrow_drop_down, color: AppColors.getTextMuted(context), size: 14),
                       ],
                     ),
                   ),
@@ -903,7 +646,7 @@ class _LeadsScreenState extends State<LeadsScreen> {
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
                     color: (lead.budget.isEmpty || lead.budget == '₹0' || lead.budget == '0')
-                        ? AppColors.textMuted
+                        ? AppColors.getTextMuted(context)
                         : AppColors.successGreen,
                   ),
                 ),
@@ -914,9 +657,9 @@ class _LeadsScreenState extends State<LeadsScreen> {
               const SizedBox(height: 8),
               Text(
                 lead.notes.first,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 11,
-                  color: AppColors.textMuted,
+                  color: AppColors.getTextMuted(context),
                   fontStyle: FontStyle.italic,
                 ),
                 maxLines: 1,
@@ -931,52 +674,49 @@ class _LeadsScreenState extends State<LeadsScreen> {
             Row(
               children: [
                 Expanded(
-                  child: Tooltip(
-                    message: 'Tap for Team Chat • Long-press for direct WhatsApp App',
-                    child: OutlinedButton.icon(
-                      onPressed: () {
-                        final wp = context.read<WhatsAppProvider>();
-                        final thread = wp.getOrCreateThread(
-                          customerPhone: lead.phone,
-                          customerName: lead.name,
-                          circuit: lead.destination,
-                          initialMessage: '',
-                        );
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => Scaffold(
-                              backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-                              body: SafeArea(
-                                child: WhatsAppTeamChatView(
-                                  thread: thread,
-                                  onBack: () => Navigator.pop(context),
-                                ),
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      final wp = context.read<WhatsAppProvider>();
+                      final thread = wp.getOrCreateThread(
+                        customerPhone: lead.phone,
+                        customerName: lead.name,
+                        circuit: lead.destination,
+                        initialMessage: '',
+                      );
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => Scaffold(
+                            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+                            body: SafeArea(
+                              child: WhatsAppTeamChatView(
+                                thread: thread,
+                                onBack: () => Navigator.pop(context),
                               ),
                             ),
                           ),
-                        );
-                      },
-                      onLongPress: () {
-                        TelephonyService.openWhatsApp(
-                          phoneNumber: lead.phone,
-                          message: 'Hello ${lead.name}, this is regarding your ${lead.destination} tour with TripCosmos...',
-                        );
-                      },
-                      icon: const Icon(
-                        Icons.chat_bubble_outline_rounded,
-                        size: 14,
-                        color: AppColors.whatsappGreen,
+                        ),
+                      );
+                    },
+                    onLongPress: () {
+                      TelephonyService.openWhatsApp(
+                        phoneNumber: lead.phone,
+                        message: 'Hello ${lead.name}, this is regarding your ${lead.destination} tour with TripCosmos...',
+                      );
+                    },
+                    icon: const Icon(
+                      Icons.chat_bubble_outline_rounded,
+                      size: 14,
+                      color: AppColors.whatsappGreen,
+                    ),
+                    label: const Text('WhatsApp', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+                    style: OutlinedButton.styleFrom(
+                      side: BorderSide(color: AppColors.whatsappGreen.withValues(alpha: 0.5)),
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 9,
                       ),
-                      label: const Text('WhatsApp', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
-                      style: OutlinedButton.styleFrom(
-                        side: BorderSide(color: AppColors.whatsappGreen.withValues(alpha: 0.5)),
-                        padding: const EdgeInsets.symmetric(
-                          vertical: 9,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
                       ),
                     ),
                   ),
@@ -1085,5 +825,316 @@ class _LeadsScreenState extends State<LeadsScreen> {
         ),
       ),
     );
+  }
+
+  Widget _buildModeSwitcher() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+      child: Container(
+        padding: const EdgeInsets.all(4),
+        decoration: BoxDecoration(
+          color: AppColors.getElevated(context),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.getBorder(context)),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: InkWell(
+                onTap: () => setState(() => _isB2bMode = false),
+                borderRadius: BorderRadius.circular(8),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 9),
+                  decoration: BoxDecoration(
+                    color: !_isB2bMode ? AppColors.accentGold : Colors.transparent,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.person_pin_circle_rounded,
+                        size: 15,
+                        color: !_isB2bMode ? AppColors.primaryDark : AppColors.getTextMuted(context),
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        'Direct Travelers (B2C)',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w800,
+                          color: !_isB2bMode ? AppColors.primaryDark : AppColors.getTextMuted(context),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            Expanded(
+              child: InkWell(
+                onTap: () => setState(() => _isB2bMode = true),
+                borderRadius: BorderRadius.circular(8),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 9),
+                  decoration: BoxDecoration(
+                    color: _isB2bMode ? const Color(0xFF8B5CF6) : Colors.transparent,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.business_rounded,
+                        size: 15,
+                        color: _isB2bMode ? Colors.white : AppColors.getTextMuted(context),
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        'B2B Partners (DMC)',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w800,
+                          color: _isB2bMode ? Colors.white : AppColors.getTextMuted(context),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSegmentBar(BuildContext context, LeadProvider leadProvider) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
+      child: Container(
+        padding: const EdgeInsets.all(4),
+        decoration: BoxDecoration(
+          color: AppColors.getCard(context),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.getBorder(context)),
+        ),
+        child: Row(
+          children: [
+            _buildSegmentButton(
+              context: context,
+              title: 'All',
+              count: leadProvider.leads.length,
+              isSelected: leadProvider.ownerFilter == 'all',
+              onTap: () => leadProvider.setOwnerFilter('all'),
+            ),
+            _buildSegmentButton(
+              context: context,
+              title: 'Mine',
+              count: leadProvider.myLeadsCount,
+              isSelected: leadProvider.ownerFilter == 'my_leads',
+              onTap: () => leadProvider.setOwnerFilter('my_leads'),
+            ),
+            _buildSegmentButton(
+              context: context,
+              title: 'Due',
+              count: leadProvider.followUpsDueCount,
+              isSelected: leadProvider.ownerFilter == 'follow_ups',
+              onTap: () => leadProvider.setOwnerFilter('follow_ups'),
+            ),
+            _buildSegmentButton(
+              context: context,
+              title: 'Open',
+              count: leadProvider.unassignedLeadsCount,
+              isSelected: leadProvider.ownerFilter == 'unassigned',
+              onTap: () => leadProvider.setOwnerFilter('unassigned'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSearchBar(LeadProvider leadProvider) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 6),
+      child: TextField(
+        onChanged: (val) => leadProvider.setSearchQuery(val),
+        decoration: InputDecoration(
+          hintText: 'Search leads by name, phone or circuit...',
+          prefixIcon: const Icon(
+            Icons.search,
+            color: AppColors.textMuted,
+            size: 20,
+          ),
+          suffixIcon: leadProvider.searchQuery.isNotEmpty
+              ? IconButton(
+                  onPressed: () => leadProvider.setSearchQuery(''),
+                  icon: const Icon(Icons.clear, size: 18),
+                )
+              : null,
+          isDense: true,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPowerDialerBanner(BuildContext context, LeadProvider leadProvider) {
+    return Consumer<CallProvider>(
+      builder: (context, cp, _) {
+        if (cp.isPowerDialerActive) {
+          final current = cp.currentPowerDialerLead;
+          return Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 6),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF3B1E08), Color(0xFF1E293B)],
+                ),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppColors.accentGold, width: 1.5),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: const BoxDecoration(
+                      color: AppColors.accentGold,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.flash_on_rounded, size: 14, color: AppColors.primaryDark),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Power Dialer: ${cp.powerDialerIndex + 1}/${cp.powerDialerTotal}',
+                          style: const TextStyle(
+                            color: AppColors.accentGold,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                        Text(
+                          current?['name']?.toString() ?? 'Calling...',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () => cp.skipPowerDialerLead(),
+                    child: const Text('Skip', style: TextStyle(color: Colors.white70, fontSize: 12)),
+                  ),
+                  ElevatedButton(
+                    onPressed: () => cp.stopPowerDialer(),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.errorRed,
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      minimumSize: Size.zero,
+                    ),
+                    child: const Text('Stop', style: TextStyle(color: Colors.white, fontSize: 11)),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 6),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(12),
+            onTap: () {
+              final leadsToDial = leadProvider.filteredLeads.map((l) => {
+                'phone': l.phone,
+                'name': l.name,
+                'destination': l.destination,
+              }).toList();
+
+              if (leadsToDial.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('No leads available in current view to dial.')),
+                );
+                return;
+              }
+              cp.startPowerDialer(leadsToDial);
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              decoration: BoxDecoration(
+                color: const Color(0xFF1E293B),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppColors.accentGold.withValues(alpha: 0.4)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.flash_on_rounded, color: AppColors.accentGold, size: 16),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      '⚡ Power Dialer (${leadProvider.filteredLeads.length} leads in queue)',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                  const Text(
+                    'Start Auto-Call',
+                    style: TextStyle(
+                      color: AppColors.accentGold,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  const Icon(Icons.play_arrow_rounded, color: AppColors.accentGold, size: 16),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _StageFilterHeaderDelegate extends SliverPersistentHeaderDelegate {
+  final Widget child;
+  final double height;
+
+  _StageFilterHeaderDelegate({required this.child, this.height = 48.0});
+
+  @override
+  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+    return Container(
+      color: Theme.of(context).scaffoldBackgroundColor,
+      alignment: Alignment.centerLeft,
+      child: child,
+    );
+  }
+
+  @override
+  double get maxExtent => height;
+
+  @override
+  double get minExtent => height;
+
+  @override
+  bool shouldRebuild(covariant _StageFilterHeaderDelegate oldDelegate) {
+    return oldDelegate.child != child || oldDelegate.height != height;
   }
 }

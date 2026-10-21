@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../core/constants/app_constants.dart';
 import '../core/theme/app_colors.dart';
+import '../providers/auth_provider.dart';
 import '../providers/call_provider.dart';
 import '../providers/event_provider.dart';
 import '../providers/lead_provider.dart';
@@ -14,6 +15,7 @@ import '../providers/whatsapp_provider.dart';
 import '../services/api_service.dart';
 import '../services/telephony_service.dart';
 import '../widgets/glass_card.dart';
+import 'finance_hub_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   final ApiService apiService;
@@ -58,16 +60,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Future<void> _toggleSecurityLock(bool val) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('tc_security_lock_enabled', val);
+    if (!mounted) return;
     setState(() {
       _securityLockEnabled = val;
     });
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(val ? '✓ In-app privacy lock activated!' : 'Privacy lock disabled.'),
-        ),
-      );
-    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(val ? '✓ In-app privacy lock activated!' : 'Privacy lock disabled.'),
+      ),
+    );
   }
 
   void _showChangePinDialog() {
@@ -75,13 +76,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF1E293B),
-        title: const Text('Change Security PIN', style: TextStyle(color: Colors.white, fontSize: 16)),
+        backgroundColor: AppColors.getCard(context),
+        title: Text('Change Security PIN', style: TextStyle(color: AppColors.getTextPrimary(context), fontSize: 16)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Enter a 4-digit PIN to secure your leads & app:', style: TextStyle(color: Colors.white70, fontSize: 12)),
+            Text('Enter a 4-digit PIN to secure your leads & app:', style: TextStyle(color: AppColors.getTextSecondary(context), fontSize: 12)),
             const SizedBox(height: 12),
             TextField(
               controller: pinController,
@@ -121,7 +122,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
         ],
       ),
-    );
+    ).whenComplete(() => pinController.dispose());
   }
 
   void _showEvolutionQrModal(BuildContext context) {
@@ -359,27 +360,27 @@ class _SettingsScreenState extends State<SettingsScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF1E293B),
-        title: const Row(
+        backgroundColor: AppColors.getCard(context),
+        title: Row(
           children: [
-            Icon(Icons.flash_on_rounded, color: AppColors.accentGold, size: 20),
-            SizedBox(width: 8),
-            Text('1-Tap Agent Auto-Pair', style: TextStyle(color: Colors.white, fontSize: 16)),
+            const Icon(Icons.flash_on_rounded, color: AppColors.accentGold, size: 20),
+            const SizedBox(width: 8),
+            Text('1-Tap Agent Auto-Pair', style: TextStyle(color: AppColors.getTextPrimary(context), fontSize: 16)),
           ],
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Paste the WhatsApp invite link, magic login URL, or pairing key received on your phone:',
-              style: TextStyle(color: Colors.white70, fontSize: 12),
+              style: TextStyle(color: AppColors.getTextSecondary(context), fontSize: 12),
             ),
             const SizedBox(height: 12),
             TextField(
               controller: pasteCtrl,
               maxLines: 3,
-              style: const TextStyle(color: Colors.white, fontSize: 12),
+              style: TextStyle(color: AppColors.getTextPrimary(context), fontSize: 12),
               decoration: const InputDecoration(
                 hintText: 'e.g. https://tripcosmos.co/?tc_action=agent_login... or tca_...',
                 border: OutlineInputBorder(),
@@ -390,7 +391,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel', style: TextStyle(color: Colors.white54)),
+            child: Text('Cancel', style: TextStyle(color: AppColors.getTextMuted(context))),
           ),
           ElevatedButton(
             onPressed: () {
@@ -407,7 +408,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
         ],
       ),
-    );
+    ).whenComplete(() => pasteCtrl.dispose());
   }
 
   void _handleAutoPairText(String raw) {
@@ -589,6 +590,173 @@ class _SettingsScreenState extends State<SettingsScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // User Profile & Role Identity Card
+              Consumer<AuthProvider>(
+                builder: (context, authProvider, _) {
+                  final user = authProvider.user;
+                  if (user == null) return const SizedBox.shrink();
+
+                  Color roleBadgeColor = Colors.green;
+                  if (user.isAdmin) roleBadgeColor = AppColors.accentGold;
+                  if (user.isFinance) roleBadgeColor = Colors.blue;
+                  if (user.isManager) roleBadgeColor = Colors.purpleAccent;
+
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 14),
+                    child: GlassCard(
+                      padding: const EdgeInsets.all(16),
+                      child: Row(
+                        children: [
+                          CircleAvatar(
+                            radius: 24,
+                            backgroundColor: roleBadgeColor.withValues(alpha: 0.2),
+                            backgroundImage: user.avatarUrl.isNotEmpty ? NetworkImage(user.avatarUrl) : null,
+                            child: user.avatarUrl.isEmpty
+                                ? Text(
+                                    user.name.isNotEmpty ? user.name[0].toUpperCase() : 'A',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 18,
+                                      color: roleBadgeColor,
+                                    ),
+                                  )
+                                : null,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  user.name,
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 15,
+                                    color: AppColors.getTextPrimary(context),
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  user.email,
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: AppColors.getTextSecondary(context),
+                                  ),
+                                ),
+                                const SizedBox(height: 6),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: roleBadgeColor.withValues(alpha: 0.15),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Text(
+                                    user.roleLabel,
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                      color: roleBadgeColor,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.logout_rounded, color: Colors.redAccent),
+                            tooltip: 'Sign Out',
+                            onPressed: () async {
+                              final confirm = await showDialog<bool>(
+                                context: context,
+                                builder: (ctx) => AlertDialog(
+                                  title: const Text('Sign Out'),
+                                  content: const Text('Are you sure you want to sign out from X-Agents?'),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () => Navigator.pop(ctx, false),
+                                      child: const Text('Cancel'),
+                                    ),
+                                    ElevatedButton(
+                                      style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
+                                      onPressed: () => Navigator.pop(ctx, true),
+                                      child: const Text('Sign Out'),
+                                    ),
+                                  ],
+                                ),
+                              );
+                              if (confirm == true && context.mounted) {
+                                await authProvider.logout();
+                                if (context.mounted) {
+                                  Navigator.pop(context);
+                                }
+                              }
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+
+              // Financial Intelligence Hub (SBI, Zoho, Google Ads)
+              GlassCard(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: AppColors.primary.withValues(alpha: 0.15),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.account_balance_rounded, color: AppColors.primary, size: 20),
+                        ),
+                        const SizedBox(width: 10),
+                        const Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Financial Intelligence Hub',
+                                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+                              ),
+                              Text(
+                                'SBI Banking • Zoho Books • Google Ads Attribution',
+                                style: TextStyle(fontSize: 11, color: Colors.grey),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: Colors.white,
+                        minimumSize: const Size.fromHeight(40),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                      icon: const Icon(Icons.dashboard_customize_rounded, size: 18),
+                      label: const Text('Open Finance & Google Ads Cockpit'),
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const FinanceHubScreen(),
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 14),
+
               // Theme Appearance Selector Card
               Consumer<ThemeProvider>(
                 builder: (context, themeProvider, _) {
@@ -1091,10 +1259,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // Base URL Input
-                    const Text(
+                    Text(
                       'API Base URL',
                       style: TextStyle(
-                        color: AppColors.textPrimary,
+                        color: AppColors.getTextPrimary(context),
                         fontSize: 12.5,
                         fontWeight: FontWeight.w600,
                       ),
@@ -1102,7 +1270,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     const SizedBox(height: 6),
                     TextField(
                       controller: _urlController,
-                      style: const TextStyle(fontSize: 13),
+                      style: TextStyle(color: AppColors.getTextPrimary(context), fontSize: 13),
                       decoration: InputDecoration(
                         hintText: 'https://your-domain.com/wp-json/tc-agents/v1',
                         prefixIcon: const Icon(Icons.link_rounded, size: 18, color: AppColors.accentGold),
@@ -1119,10 +1287,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     const SizedBox(height: 16),
 
                     // Mobile Token Input
-                    const Text(
+                    Text(
                       'Mobile Companion Secret Token (X-Mobile-Token)',
                       style: TextStyle(
-                        color: AppColors.textPrimary,
+                        color: AppColors.getTextPrimary(context),
                         fontSize: 12.5,
                         fontWeight: FontWeight.w600,
                       ),
@@ -1142,19 +1310,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               icon: const Icon(Icons.content_paste_rounded, size: 18, color: AppColors.accentGold),
                               tooltip: 'Paste from clipboard',
                               onPressed: () async {
+                                final messenger = ScaffoldMessenger.of(context);
                                 final data = await Clipboard.getData('text/plain');
+                                if (!mounted) return;
                                 if (data?.text != null && data!.text!.isNotEmpty) {
                                   setState(() {
                                     _tokenController.text = data.text!.trim();
                                   });
-                                  if (context.mounted) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text('✓ Token pasted from clipboard'),
-                                        duration: Duration(seconds: 2),
-                                      ),
-                                    );
-                                  }
+                                  messenger.showSnackBar(
+                                    const SnackBar(
+                                      content: Text('✓ Token pasted from clipboard'),
+                                      duration: Duration(seconds: 2),
+                                    ),
+                                  );
                                 }
                               },
                             ),
@@ -1398,9 +1566,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppColors.surfaceCard,
+        color: AppColors.getCard(context),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.borderSubtle),
+        border: Border.all(color: AppColors.getBorder(context)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1420,8 +1588,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(
-                    color: AppColors.textPrimary,
+                  style: TextStyle(
+                    color: AppColors.getTextPrimary(context),
                     fontSize: 12.5,
                     fontWeight: FontWeight.w600,
                   ),

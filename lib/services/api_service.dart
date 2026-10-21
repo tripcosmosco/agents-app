@@ -15,8 +15,9 @@ class ApiService {
   String? _apiToken;
 
   ApiService({String? baseUrl, String? apiToken})
-      : _baseUrl = baseUrl ?? AppConstants.defaultApiBaseUrl,
-        _apiToken = apiToken ?? AppConstants.defaultMobileToken;
+      : _baseUrl = baseUrl ?? AppConstants.defaultApiBaseUrl {
+    _apiToken = apiToken;
+  }
 
   String get baseUrl {
     String url = _baseUrl.trim();
@@ -57,8 +58,10 @@ class ApiService {
       if (savedUrl != null && savedUrl.isNotEmpty) {
         _baseUrl = savedUrl;
       }
-      if (savedToken != null && savedToken.isNotEmpty) {
-        _apiToken = savedToken;
+      if (savedToken != null && savedToken.trim().isNotEmpty) {
+        _apiToken = savedToken.trim();
+      } else {
+        _apiToken = null;
       }
     } catch (e) {
       debugPrint('Error loading API preferences: $e');
@@ -80,12 +83,31 @@ class ApiService {
     }
   }
 
+  /// Update active mobile API token
+  Future<bool> setApiToken(String token) async {
+    try {
+      final clean = token.trim();
+      final prefs = await SharedPreferences.getInstance();
+      if (clean.isEmpty) {
+        _apiToken = null;
+        await prefs.remove('tc_mobile_api_token');
+      } else {
+        _apiToken = clean;
+        await prefs.setString('tc_mobile_api_token', clean);
+      }
+      return true;
+    } catch (e) {
+      debugPrint('Error setting API token: $e');
+      return false;
+    }
+  }
+
   /// Disconnect workspace by removing API token
   Future<bool> clearConfig() async {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove('tc_mobile_api_token');
-      _apiToken = '';
+      _apiToken = null;
       return true;
     } catch (e) {
       debugPrint('Error clearing API config: $e');
@@ -209,12 +231,16 @@ class ApiService {
   Future<String> queryVoiceRag({
     required String transcript,
     String sessionId = '',
+    String agentSlug = 'nishkarsh-ai',
   }) async {
     try {
       final uri = Uri.parse('$baseUrl/voice/query-rag');
       final body = json.encode({
         'transcript': transcript,
+        'message': transcript,
         'session_id': sessionId,
+        'agent_slug': agentSlug,
+        'agent': agentSlug,
       });
 
       final response = await http
@@ -320,8 +346,8 @@ class ApiService {
   /// 8. Fetch Real-time Activity Events Feed (Visitor landings, Leads, Calls)
   Future<List<EventModel>> fetchEvents({int? sinceId, int limit = 20}) async {
     final res = await fetchEventsWithStats(sinceId: sinceId, limit: limit);
-    if (res != null && res['events'] is List<EventModel>) {
-      return res['events'] as List<EventModel>;
+    if (res != null && res['events'] is List) {
+      return (res['events'] as List).whereType<EventModel>().toList();
     }
     return [];
   }
@@ -579,8 +605,14 @@ class ApiService {
         }
       } else {
         final body = json.encode({
-          if (outboundEnabled case final bool val) 'outbound_enabled': val,
-          if (receptionistEnabled case final bool val) 'receptionist_enabled': val,
+          if (outboundEnabled case final bool val) ...{
+            'outbound_enabled': val,
+            'outbound_ai_active': val,
+          },
+          if (receptionistEnabled case final bool val) ...{
+            'receptionist_enabled': val,
+            'receptionist_ai_active': val,
+          },
         });
         final response = await http.post(uri, headers: _headers, body: body).timeout(const Duration(seconds: 8));
         if (response.statusCode == 200) {
@@ -1051,6 +1083,184 @@ class ApiService {
       }
     } catch (e) {
       debugPrint('Error generating payment link: $e');
+    }
+    return null;
+  }
+
+  /// 29. Google Ads & Chatbot Conversion Telemetry
+  Future<Map<String, dynamic>?> fetchGoogleAdsConversions() async {
+    try {
+      final uri = Uri.parse('$baseUrl/mobile/google-ads/conversions');
+      final response = await http.get(uri, headers: _headers).timeout(const Duration(seconds: 12));
+      if (response.statusCode == 200) {
+        return _safeJsonDecode(response.body);
+      }
+    } catch (e) {
+      debugPrint('Error fetching Google Ads conversions: $e');
+    }
+    return null;
+  }
+
+  /// 30. Bank Statement Transactions & Cashflow Feed
+  Future<Map<String, dynamic>?> fetchBankTransactions({
+    String type = 'all',
+    String status = 'all',
+    int limit = 100,
+  }) async {
+    try {
+      final uri = Uri.parse('$baseUrl/mobile/bank-statement/transactions?type=$type&status=$status&limit=$limit');
+      final response = await http.get(uri, headers: _headers).timeout(const Duration(seconds: 12));
+      if (response.statusCode == 200) {
+        return _safeJsonDecode(response.body);
+      }
+    } catch (e) {
+      debugPrint('Error fetching bank transactions: $e');
+    }
+    return null;
+  }
+
+  /// 31. Bank Statement CSV Importer (SBI Format)
+  Future<Map<String, dynamic>?> uploadBankStatement({
+    required String csvData,
+    String bankName = 'State Bank of India (SBI)',
+    String accountNo = '',
+  }) async {
+    try {
+      final uri = Uri.parse('$baseUrl/mobile/bank-statement/upload');
+      final body = json.encode({
+        'csv_data': csvData,
+        'bank_name': bankName,
+        'account_no': accountNo,
+      });
+      final response = await http.post(uri, headers: _headers, body: body).timeout(const Duration(seconds: 25));
+      if (response.statusCode < 500 && response.body.isNotEmpty) {
+        return _safeJsonDecode(response.body);
+      }
+    } catch (e) {
+      debugPrint('Error uploading bank statement: $e');
+    }
+    return null;
+  }
+
+  /// 32. Reconcile Bank Transaction with Booking
+  Future<Map<String, dynamic>?> reconcileBankTransaction({
+    required int transactionId,
+    int? bookingId,
+  }) async {
+    try {
+      final uri = Uri.parse('$baseUrl/mobile/bank-statement/reconcile');
+      final payload = <String, dynamic>{'transaction_id': transactionId};
+      if (bookingId != null) {
+        payload['booking_id'] = bookingId;
+      }
+      final body = json.encode(payload);
+      final response = await http.post(uri, headers: _headers, body: body).timeout(const Duration(seconds: 10));
+      if (response.statusCode < 500 && response.body.isNotEmpty) {
+        return _safeJsonDecode(response.body);
+      }
+    } catch (e) {
+      debugPrint('Error reconciling bank transaction: $e');
+    }
+    return null;
+  }
+
+  /// 33. Zoho Books / Invoice Summary & Invoices List
+  Future<Map<String, dynamic>?> fetchZohoSummary() async {
+    try {
+      final uri = Uri.parse('$baseUrl/mobile/zoho/summary');
+      final response = await http.get(uri, headers: _headers).timeout(const Duration(seconds: 15));
+      if (response.statusCode < 500 && response.body.isNotEmpty) {
+        return _safeJsonDecode(response.body);
+      }
+    } catch (e) {
+      debugPrint('Error fetching Zoho summary: $e');
+    }
+    return null;
+  }
+
+  /// 34. Sync Zoho Books Invoices
+  Future<Map<String, dynamic>?> syncZohoInvoices() async {
+    try {
+      final uri = Uri.parse('$baseUrl/mobile/zoho/sync');
+      final response = await http.post(uri, headers: _headers).timeout(const Duration(seconds: 20));
+      if (response.statusCode < 500 && response.body.isNotEmpty) {
+        return _safeJsonDecode(response.body);
+      }
+    } catch (e) {
+      debugPrint('Error syncing Zoho: $e');
+    }
+    return null;
+  }
+
+  /// 35. 1-Click Google Sign-In Authentication
+  Future<Map<String, dynamic>?> loginWithGoogle({
+    required String email,
+    String? idToken,
+    String? name,
+    String? avatarUrl,
+  }) async {
+    try {
+      final uri = Uri.parse('$baseUrl/mobile/auth/google');
+      final payload = <String, dynamic>{'email': email};
+      if (idToken != null) payload['id_token'] = idToken;
+      if (name != null) payload['name'] = name;
+      if (avatarUrl != null) payload['avatar_url'] = avatarUrl;
+      final body = json.encode(payload);
+      final response = await http
+          .post(uri, headers: {'Content-Type': 'application/json'}, body: body)
+          .timeout(const Duration(seconds: 15));
+      if (response.statusCode == 200) {
+        final data = _safeJsonDecode(response.body);
+        if (data != null && data['token'] != null) {
+          await setApiToken(data['token'].toString());
+        }
+        return data;
+      }
+    } catch (e) {
+      debugPrint('Error with Google login: $e');
+    }
+    return null;
+  }
+
+  /// 36. WordPress Credentials Login
+  Future<Map<String, dynamic>?> loginWithCredentials({
+    required String username,
+    required String password,
+  }) async {
+    try {
+      final uri = Uri.parse('$baseUrl/mobile/auth/login');
+      final body = json.encode({
+        'username': username,
+        'password': password,
+      });
+      final response = await http
+          .post(uri, headers: {'Content-Type': 'application/json'}, body: body)
+          .timeout(const Duration(seconds: 15));
+      if (response.statusCode == 200) {
+        final data = _safeJsonDecode(response.body);
+        if (data != null && data['token'] != null) {
+          await setApiToken(data['token'].toString());
+        }
+        return data;
+      } else {
+        return _safeJsonDecode(response.body);
+      }
+    } catch (e) {
+      debugPrint('Error logging in with credentials: $e');
+    }
+    return null;
+  }
+
+  /// 37. Fetch Authenticated User Profile & Role
+  Future<Map<String, dynamic>?> fetchMe() async {
+    try {
+      final uri = Uri.parse('$baseUrl/mobile/auth/me');
+      final response = await http.get(uri, headers: _headers).timeout(const Duration(seconds: 10));
+      if (response.statusCode == 200) {
+        return _safeJsonDecode(response.body);
+      }
+    } catch (e) {
+      debugPrint('Error fetching me profile: $e');
     }
     return null;
   }

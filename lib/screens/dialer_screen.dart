@@ -57,7 +57,7 @@ class _DialerScreenState extends State<DialerScreen> {
         title: Row(
           children: [
             Container(
-              padding: const EdgeInsets.all(4),
+              padding: const EdgeInsets.all(5),
               decoration: BoxDecoration(
                 color: AppColors.accentGold.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(8),
@@ -73,183 +73,47 @@ class _DialerScreenState extends State<DialerScreen> {
               ),
             ),
             const SizedBox(width: 8),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Row(
+            const Text(
+              AppConstants.appName,
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(width: 8),
+            Consumer<LeadProvider>(
+              builder: (context, lp, _) {
+                final agentName = lp.currentAgent.isNotEmpty ? lp.currentAgent : 'Santosh';
+                return Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: AppColors.successGreen.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: AppColors.successGreen.withValues(alpha: 0.5)),
+                  ),
+                  child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Flexible(
-                        child: Text(
-                          AppConstants.appName,
-                          style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                      const Icon(Icons.circle, size: 5, color: AppColors.successGreen),
+                      const SizedBox(width: 4),
+                      Text(
+                        agentName,
+                        style: const TextStyle(
+                          color: AppColors.successGreen,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
                         ),
-                      ),
-                      const SizedBox(width: 6),
-                      Consumer<LeadProvider>(
-                        builder: (context, lp, _) {
-                          final agentName = lp.currentAgent.isNotEmpty ? lp.currentAgent : 'Sales';
-                          return Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-                            decoration: BoxDecoration(
-                              color: AppColors.successGreen.withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(6),
-                              border: Border.all(color: AppColors.successGreen.withValues(alpha: 0.5)),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Icon(Icons.circle, size: 5, color: AppColors.successGreen),
-                                const SizedBox(width: 3),
-                                ConstrainedBox(
-                                  constraints: const BoxConstraints(maxWidth: 75),
-                                  child: Text(
-                                    agentName,
-                                    style: const TextStyle(
-                                      color: AppColors.successGreen,
-                                      fontSize: 9,
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          );
-                        },
                       ),
                     ],
                   ),
-                  const Text(
-                    'TripCosmos.co Office Bridge',
-                    overflow: TextOverflow.ellipsis,
-                    maxLines: 1,
-                    style: TextStyle(fontSize: 10, color: AppColors.textMuted),
-                  ),
-                ],
-              ),
+                );
+              },
             ),
           ],
         ),
         actions: [
-          // 3-Way Switchable Telephony Engine Selector Pill
-          PopupMenuButton<TelephonyMode>(
-            tooltip: 'Switch Telephony Mode',
-            onSelected: (mode) => callProvider.setTelephonyMode(mode),
-            itemBuilder: (context) => [
-              const PopupMenuItem(
-                value: TelephonyMode.livekitWebRtc,
-                child: Row(
-                  children: [
-                    Icon(Icons.wifi_calling_3, color: AppColors.successGreen, size: 18),
-                    SizedBox(width: 8),
-                    Text('Option 1: LiveKit WebRTC (₹0 Free)'),
-                  ],
-                ),
-              ),
-              const PopupMenuItem(
-                value: TelephonyMode.gsmBridge,
-                child: Row(
-                  children: [
-                    Icon(Icons.sim_card, color: Colors.blueAccent, size: 18),
-                    SizedBox(width: 8),
-                    Text('Option 2: GSM Bridge (+91 93361 16210)'),
-                  ],
-                ),
-              ),
-              const PopupMenuItem(
-                value: TelephonyMode.airtelIq,
-                child: Row(
-                  children: [
-                    Icon(Icons.phone_in_talk, color: Color(0xFFEF4444), size: 18),
-                    SizedBox(width: 8),
-                    Text('Option 4: Airtel IQ (Masked Call)'),
-                  ],
-                ),
-              ),
-              const PopupMenuItem(
-                value: TelephonyMode.sipTrunk,
-                child: Row(
-                  children: [
-                    Icon(Icons.cloud_sync, color: AppColors.accentGold, size: 18),
-                    SizedBox(width: 8),
-                    Text('Option 3: Enterprise SIP Trunk'),
-                  ],
-                ),
-              ),
-            ],
-            child: Container(
-              margin: const EdgeInsets.only(right: 4),
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: callProvider.telephonyMode == TelephonyMode.airtelIq
-                    ? const Color(0xFFEF4444).withValues(alpha: 0.18)
-                    : callProvider.telephonyMode == TelephonyMode.livekitWebRtc
-                        ? AppColors.successGreen.withValues(alpha: 0.18)
-                        : callProvider.telephonyMode == TelephonyMode.gsmBridge
-                            ? AppColors.jioBlue.withValues(alpha: 0.18)
-                            : AppColors.accentGold.withValues(alpha: 0.18),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: callProvider.telephonyMode == TelephonyMode.airtelIq
-                      ? const Color(0xFFEF4444).withValues(alpha: 0.6)
-                      : callProvider.telephonyMode == TelephonyMode.livekitWebRtc
-                          ? AppColors.successGreen.withValues(alpha: 0.6)
-                          : callProvider.telephonyMode == TelephonyMode.gsmBridge
-                              ? AppColors.jioBlue.withValues(alpha: 0.6)
-                              : AppColors.accentGold.withValues(alpha: 0.6),
-                ),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    callProvider.telephonyMode == TelephonyMode.airtelIq
-                        ? Icons.phone_in_talk
-                        : callProvider.telephonyMode == TelephonyMode.livekitWebRtc
-                            ? Icons.wifi_calling_3
-                            : callProvider.telephonyMode == TelephonyMode.gsmBridge
-                                ? Icons.sim_card
-                                : Icons.cloud_sync,
-                    color: callProvider.telephonyMode == TelephonyMode.airtelIq
-                        ? const Color(0xFFEF4444)
-                        : callProvider.telephonyMode == TelephonyMode.livekitWebRtc
-                            ? AppColors.successGreen
-                            : callProvider.telephonyMode == TelephonyMode.gsmBridge
-                                ? Colors.blueAccent
-                                : AppColors.accentGold,
-                    size: 13,
-                  ),
-                  const SizedBox(width: 3),
-                  Text(
-                    callProvider.telephonyMode == TelephonyMode.airtelIq
-                        ? 'Airtel IQ'
-                        : callProvider.telephonyMode == TelephonyMode.livekitWebRtc
-                            ? 'WebRTC (₹0)'
-                            : callProvider.telephonyMode == TelephonyMode.gsmBridge
-                                ? 'GSM Bridge'
-                                : 'SIP Trunk',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 10.5,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const Icon(Icons.arrow_drop_down, color: Colors.white70, size: 13),
-                ],
-              ),
-            ),
-          ),
           IconButton(
             tooltip: 'Live Website Visitor Radar',
-            icon: const Icon(Icons.radar_rounded, color: AppColors.successGreen, size: 20),
+            icon: const Icon(Icons.radar_rounded, color: AppColors.successGreen, size: 21),
             padding: const EdgeInsets.symmetric(horizontal: 4),
-            constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+            constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
             onPressed: () => LiveActivitySheet.show(context),
           ),
           // More Tools Menu (Cab Fare, Theme, Settings)
@@ -257,9 +121,9 @@ class _DialerScreenState extends State<DialerScreen> {
             builder: (context, themeProvider, _) {
               return PopupMenuButton<String>(
                 tooltip: 'More Tools & Options',
-                icon: const Icon(Icons.more_vert_rounded, color: AppColors.accentGold, size: 20),
+                icon: const Icon(Icons.more_vert_rounded, color: AppColors.accentGold, size: 21),
                 padding: const EdgeInsets.symmetric(horizontal: 4),
-                constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
                 onSelected: (val) {
                   if (val == 'cab') {
                     CabFareDialog.show(context);
@@ -318,6 +182,9 @@ class _DialerScreenState extends State<DialerScreen> {
       body: SafeArea(
         child: Column(
           children: [
+            // 0. Dedicated Telephony Engine Selector Bar (No collision, full clarity)
+            _buildTelephonyEngineBar(context, callProvider),
+
             // 1. Pending Website Queue Banner
             if (callProvider.pendingQueue.isNotEmpty) ...[
               _buildQueueBanner(context, callProvider),
@@ -347,6 +214,173 @@ class _DialerScreenState extends State<DialerScreen> {
         },
         icon: Icon(_showKeypad ? Icons.history : Icons.dialpad),
         label: Text(_showKeypad ? 'Recent Calls' : 'Dialpad'),
+      ),
+    );
+  }
+
+  Widget _buildTelephonyEngineBar(BuildContext context, CallProvider callProvider) {
+    Color engineColor;
+    IconData engineIcon;
+    String engineTitle;
+    String engineSubtitle;
+
+    switch (callProvider.telephonyMode) {
+      case TelephonyMode.livekitWebRtc:
+        engineColor = AppColors.successGreen;
+        engineIcon = Icons.wifi_calling_3_rounded;
+        engineTitle = 'LiveKit WebRTC (₹0 Free)';
+        engineSubtitle = 'TripCosmos VoIP PBX Bridge • Auto-Recorded';
+        break;
+      case TelephonyMode.gsmBridge:
+        engineColor = AppColors.jioBlue;
+        engineIcon = Icons.sim_card_rounded;
+        engineTitle = 'GSM SIM Bridge';
+        engineSubtitle = 'Cellular SIM (+91 93361 16210)';
+        break;
+      case TelephonyMode.airtelIq:
+        engineColor = const Color(0xFFEF4444);
+        engineIcon = Icons.phone_in_talk_rounded;
+        engineTitle = 'Airtel IQ Cloud Engine';
+        engineSubtitle = 'Enterprise Masked Caller ID';
+        break;
+      case TelephonyMode.sipTrunk:
+        engineColor = AppColors.accentGold;
+        engineIcon = Icons.cloud_sync_rounded;
+        engineTitle = 'Enterprise SIP Trunk';
+        engineSubtitle = 'Office PBX Extension Routing';
+        break;
+    }
+
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 6, 16, 4),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+      decoration: BoxDecoration(
+        color: engineColor.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: engineColor.withValues(alpha: 0.35)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: engineColor.withValues(alpha: 0.2),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(engineIcon, color: engineColor, size: 16),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  children: [
+                    Text(
+                      'ENGINE: ',
+                      style: TextStyle(
+                        fontSize: 9.5,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0.5,
+                        color: engineColor,
+                      ),
+                    ),
+                    Flexible(
+                      child: Text(
+                        engineTitle,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.getTextPrimary(context),
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+                Text(
+                  engineSubtitle,
+                  style: const TextStyle(
+                    fontSize: 10,
+                    color: AppColors.textMuted,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+          PopupMenuButton<TelephonyMode>(
+            tooltip: 'Switch Telephony Engine',
+            onSelected: (mode) => callProvider.setTelephonyMode(mode),
+            itemBuilder: (context) => [
+              const PopupMenuItem(
+                value: TelephonyMode.livekitWebRtc,
+                child: Row(
+                  children: [
+                    Icon(Icons.wifi_calling_3, color: AppColors.successGreen, size: 18),
+                    SizedBox(width: 8),
+                    Text('1. LiveKit WebRTC (₹0 Free VoIP)'),
+                  ],
+                ),
+              ),
+              const PopupMenuItem(
+                value: TelephonyMode.gsmBridge,
+                child: Row(
+                  children: [
+                    Icon(Icons.sim_card, color: Colors.blueAccent, size: 18),
+                    SizedBox(width: 8),
+                    Text('2. GSM SIM Bridge (+91 93361 16210)'),
+                  ],
+                ),
+              ),
+              const PopupMenuItem(
+                value: TelephonyMode.airtelIq,
+                child: Row(
+                  children: [
+                    Icon(Icons.phone_in_talk, color: Color(0xFFEF4444), size: 18),
+                    SizedBox(width: 8),
+                    Text('3. Airtel IQ (Masked Call)'),
+                  ],
+                ),
+              ),
+              const PopupMenuItem(
+                value: TelephonyMode.sipTrunk,
+                child: Row(
+                  children: [
+                    Icon(Icons.cloud_sync, color: AppColors.accentGold, size: 18),
+                    SizedBox(width: 8),
+                    Text('4. Enterprise SIP Trunk'),
+                  ],
+                ),
+              ),
+            ],
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: engineColor.withValues(alpha: 0.18),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: engineColor.withValues(alpha: 0.5)),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Change',
+                    style: TextStyle(
+                      color: engineColor,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  Icon(Icons.arrow_drop_down, color: engineColor, size: 16),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -400,8 +434,8 @@ class _DialerScreenState extends State<DialerScreen> {
                 ),
                 Text(
                   '$name • $reason',
-                  style: const TextStyle(
-                    color: AppColors.textPrimary,
+                  style: TextStyle(
+                    color: AppColors.getTextPrimary(context),
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
                   ),
@@ -410,8 +444,8 @@ class _DialerScreenState extends State<DialerScreen> {
                 ),
                 Text(
                   phone,
-                  style: const TextStyle(
-                    color: AppColors.textSecondary,
+                  style: TextStyle(
+                    color: AppColors.getTextSecondary(context),
                     fontSize: 11,
                   ),
                 ),
@@ -489,8 +523,8 @@ class _DialerScreenState extends State<DialerScreen> {
               const Spacer(),
               Text(
                 '$minutes:$seconds',
-                style: const TextStyle(
-                  color: AppColors.textPrimary,
+                style: TextStyle(
+                  color: AppColors.getTextPrimary(context),
                   fontSize: 15,
                   fontWeight: FontWeight.w700,
                   fontFamily: 'monospace',
@@ -501,10 +535,10 @@ class _DialerScreenState extends State<DialerScreen> {
           const SizedBox(height: 12),
           Text(
             provider.activeCallerName,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.w700,
-              color: AppColors.textPrimary,
+              color: AppColors.getTextPrimary(context),
             ),
           ),
           Text(
@@ -519,9 +553,9 @@ class _DialerScreenState extends State<DialerScreen> {
             const SizedBox(height: 6),
             Text(
               provider.activeTourInterest!,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 12,
-                color: AppColors.textSecondary,
+                color: AppColors.getTextSecondary(context),
               ),
             ),
           ],
@@ -535,7 +569,7 @@ class _DialerScreenState extends State<DialerScreen> {
                   provider.isMuted ? Icons.mic_off : Icons.mic,
                   color: provider.isMuted
                       ? AppColors.errorRed
-                      : AppColors.textPrimary,
+                      : AppColors.getTextPrimary(context),
                 ),
               ),
               IconButton(
@@ -544,7 +578,7 @@ class _DialerScreenState extends State<DialerScreen> {
                   provider.isSpeakerOn ? Icons.volume_up : Icons.volume_down,
                   color: provider.isSpeakerOn
                       ? AppColors.accentGold
-                      : AppColors.textPrimary,
+                      : AppColors.getTextPrimary(context),
                 ),
               ),
               ElevatedButton.icon(
@@ -583,8 +617,8 @@ class _DialerScreenState extends State<DialerScreen> {
                   fontSize: 26,
                   fontWeight: FontWeight.w700,
                   color: _enteredNumber.isEmpty
-                      ? AppColors.textMuted
-                      : AppColors.textPrimary,
+                      ? AppColors.getTextMuted(context)
+                      : AppColors.getTextPrimary(context),
                   letterSpacing: 1.2,
                 ),
               ),
@@ -659,19 +693,19 @@ class _DialerScreenState extends State<DialerScreen> {
       borderRadius: BorderRadius.circular(16),
       child: Container(
         decoration: BoxDecoration(
-          color: AppColors.surfaceCard,
+          color: AppColors.getCard(context),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.borderSubtle),
+          border: Border.all(color: AppColors.getBorder(context)),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
               digit,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.w700,
-                color: AppColors.textPrimary,
+                color: AppColors.getTextPrimary(context),
               ),
             ),
             if (sub.isNotEmpty)
@@ -743,6 +777,7 @@ class _DialerScreenState extends State<DialerScreen> {
           // Open Caller-ID Overlay details
           showModalBottomSheet(
             context: context,
+            isScrollControlled: true,
             backgroundColor: Colors.transparent,
             builder: (_) => PostCallActionSheet(
               callLog: log,
@@ -767,16 +802,16 @@ class _DialerScreenState extends State<DialerScreen> {
                 children: [
                   Text(
                     log.customerName,
-                    style: const TextStyle(
-                      color: AppColors.textPrimary,
+                    style: TextStyle(
+                      color: AppColors.getTextPrimary(context),
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
                   Text(
                     '${log.phone} • $timeStr',
-                    style: const TextStyle(
-                      color: AppColors.textMuted,
+                    style: TextStyle(
+                      color: AppColors.getTextMuted(context),
                       fontSize: 12,
                     ),
                   ),
@@ -800,8 +835,8 @@ class _DialerScreenState extends State<DialerScreen> {
             if (log.durationSeconds > 0)
               Text(
                 log.formattedDuration,
-                style: const TextStyle(
-                  color: AppColors.textSecondary,
+                style: TextStyle(
+                  color: AppColors.getTextSecondary(context),
                   fontSize: 12,
                   fontFamily: 'monospace',
                 ),

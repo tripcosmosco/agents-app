@@ -248,7 +248,7 @@ class _WhatsAppTeamChatViewState extends State<WhatsAppTeamChatView> {
           ],
         ),
       ),
-    );
+    ).whenComplete(() => dealController.dispose());
   }
 
   Future<void> _pickFollowUpDateTime(BuildContext context, WhatsAppProvider provider, WhatsAppThread thread) async {
@@ -318,7 +318,7 @@ class _WhatsAppTeamChatViewState extends State<WhatsAppTeamChatView> {
           ),
         ],
       ),
-    );
+    ).whenComplete(() => controller.dispose());
   }
 
   void _showCallModeSelector(BuildContext context, WhatsAppThread currentThread) {

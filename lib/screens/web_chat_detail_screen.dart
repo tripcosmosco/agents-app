@@ -80,7 +80,9 @@ class _WebChatDetailScreenState extends State<WebChatDetailScreen> {
 
     if (detail != null && detail['messages'] is List) {
       setState(() {
-        _messages = List<Map<String, dynamic>>.from(detail['messages']);
+        _messages = List<Map<String, dynamic>>.from(detail['messages'])
+            .where((m) => (m['content']?.toString() ?? '').trim().isNotEmpty)
+            .toList();
         _isAiActive = detail['is_ai_active'] ?? _isAiActive;
         _isLoading = false;
       });
@@ -94,7 +96,9 @@ class _WebChatDetailScreenState extends State<WebChatDetailScreen> {
     final detail = await widget.apiService.fetchWebChatDetail(_sessionId);
     if (!mounted || detail == null) return;
 
-    final incoming = List<Map<String, dynamic>>.from(detail['messages'] ?? []);
+    final incoming = List<Map<String, dynamic>>.from(detail['messages'] ?? [])
+        .where((m) => (m['content']?.toString() ?? '').trim().isNotEmpty)
+        .toList();
     if (incoming.length != _messages.length) {
       setState(() {
         _messages = incoming;
@@ -124,6 +128,7 @@ class _WebChatDetailScreenState extends State<WebChatDetailScreen> {
     _textController.clear();
 
     final savedName = await StorageService.getAgentName();
+    if (!mounted) return;
     final agentName = savedName.isNotEmpty ? savedName : 'Sales Agent';
 
     // Optimistically add agent message
@@ -327,10 +332,7 @@ class _WebChatDetailScreenState extends State<WebChatDetailScreen> {
                             final agentName = msg['agent_name']?.toString() ?? 'Specialist';
                             final createdAt = msg['created_at']?.toString() ?? '';
 
-                            DateTime? dt;
-                            try {
-                              dt = DateTime.parse(createdAt);
-                            } catch (_) {}
+                            final dt = DateTime.tryParse(createdAt);
                             final timeStr = dt != null ? DateFormat('hh:mm a').format(dt) : '';
 
                             return Align(
@@ -347,8 +349,8 @@ class _WebChatDetailScreenState extends State<WebChatDetailScreen> {
                                   color: isAgent
                                       ? const Color(0xFF064E3B)
                                       : (isCustomer
-                                          ? AppColors.surfaceCard
-                                          : const Color(0xFF1E293B)),
+                                          ? AppColors.getCard(context)
+                                          : AppColors.getElevated(context)),
                                   borderRadius: BorderRadius.only(
                                     topLeft: const Radius.circular(16),
                                     topRight: const Radius.circular(16),
@@ -450,7 +452,7 @@ class _WebChatDetailScreenState extends State<WebChatDetailScreen> {
                   return Padding(
                     padding: const EdgeInsets.only(right: 8),
                     child: ActionChip(
-                      backgroundColor: AppColors.surfaceCard,
+                      backgroundColor: AppColors.getCard(context),
                       side: BorderSide(
                         color: AppColors.accentGold.withValues(alpha: 0.3),
                       ),
@@ -472,16 +474,16 @@ class _WebChatDetailScreenState extends State<WebChatDetailScreen> {
             // Text Input Box
             Container(
               padding: const EdgeInsets.fromLTRB(12, 6, 12, 10),
-              decoration: const BoxDecoration(
-                color: AppColors.surfaceCard,
-                border: Border(top: BorderSide(color: Colors.white12)),
+              decoration: BoxDecoration(
+                color: AppColors.getCard(context),
+                border: Border(top: BorderSide(color: AppColors.getBorder(context))),
               ),
               child: Row(
                 children: [
                   Expanded(
                     child: TextField(
                       controller: _textController,
-                      style: const TextStyle(color: Colors.white, fontSize: 13.5),
+                      style: TextStyle(color: AppColors.getTextPrimary(context), fontSize: 13.5),
                       maxLines: 3,
                       minLines: 1,
                       decoration: InputDecoration(

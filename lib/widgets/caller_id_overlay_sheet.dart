@@ -128,10 +128,10 @@ class CallerIdOverlaySheet extends StatelessWidget {
           // Traveler Name & Phone
           Text(
             customerName,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.w700,
-              color: AppColors.textPrimary,
+              color: AppColors.getTextPrimary(context),
             ),
           ),
           const SizedBox(height: 4),
@@ -148,7 +148,7 @@ class CallerIdOverlaySheet extends StatelessWidget {
           // High-Intent Lead Profile Card
           GlassCard(
             padding: const EdgeInsets.all(14),
-            backgroundColor: AppColors.surfaceElevated,
+            backgroundColor: AppColors.getElevated(context),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -163,8 +163,8 @@ class CallerIdOverlaySheet extends StatelessWidget {
                     Expanded(
                       child: Text(
                         destination,
-                        style: const TextStyle(
-                          color: AppColors.textPrimary,
+                        style: TextStyle(
+                          color: AppColors.getTextPrimary(context),
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
                         ),
@@ -175,11 +175,11 @@ class CallerIdOverlaySheet extends StatelessWidget {
                 const SizedBox(height: 10),
                 Row(
                   children: [
-                    _buildPill(Icons.people, '$pax Travelers'),
+                    _buildPill(context, Icons.people, '$pax Travelers'),
                     const SizedBox(width: 8),
-                    _buildPill(Icons.currency_rupee, budget),
+                    _buildPill(context, Icons.currency_rupee, budget),
                     const SizedBox(width: 8),
-                    _buildPill(Icons.campaign, source.toUpperCase()),
+                    _buildPill(context, Icons.campaign, source.toUpperCase()),
                   ],
                 ),
                 if (lastNote != null && lastNote!.isNotEmpty) ...[
@@ -188,8 +188,8 @@ class CallerIdOverlaySheet extends StatelessWidget {
                   const SizedBox(height: 8),
                   Text(
                     'Recent Context: $lastNote',
-                    style: const TextStyle(
-                      color: AppColors.textSecondary,
+                    style: TextStyle(
+                      color: AppColors.getTextSecondary(context),
                       fontSize: 12,
                       fontStyle: FontStyle.italic,
                     ),
@@ -249,23 +249,23 @@ class CallerIdOverlaySheet extends StatelessWidget {
     );
   }
 
-  Widget _buildPill(IconData icon, String label) {
+  Widget _buildPill(BuildContext context, IconData icon, String label) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: AppColors.surfaceCard,
+        color: AppColors.getCard(context),
         borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: AppColors.borderSubtle),
+        border: Border.all(color: AppColors.getBorder(context)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 12, color: AppColors.textSecondary),
+          Icon(icon, size: 12, color: AppColors.getTextSecondary(context)),
           const SizedBox(width: 4),
           Text(
             label,
-            style: const TextStyle(
-              color: AppColors.textSecondary,
+            style: TextStyle(
+              color: AppColors.getTextSecondary(context),
               fontSize: 11,
               fontWeight: FontWeight.w500,
             ),

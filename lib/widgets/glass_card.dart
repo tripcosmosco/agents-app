@@ -27,6 +27,8 @@ class GlassCard extends StatelessWidget {
     final isLight = Theme.of(context).brightness == Brightness.light;
     final defaultBg = isLight ? AppColors.lightSurfaceCard : AppColors.surfaceCard;
     final defaultBorder = isLight ? AppColors.lightBorderSubtle : AppColors.borderSubtle;
+    final defaultTextColor = isLight ? AppColors.lightTextPrimary : AppColors.textPrimary;
+    final defaultIconColor = isLight ? AppColors.lightTextPrimary : AppColors.textPrimary;
     final shadowColor = isLight ? Colors.black.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.25);
 
     final cardContent = Container(
@@ -47,7 +49,13 @@ class GlassCard extends StatelessWidget {
           ),
         ],
       ),
-      child: child,
+      child: DefaultTextStyle.merge(
+        style: TextStyle(color: defaultTextColor),
+        child: IconTheme.merge(
+          data: IconThemeData(color: defaultIconColor),
+          child: child,
+        ),
+      ),
     );
 
     if (onTap != null) {

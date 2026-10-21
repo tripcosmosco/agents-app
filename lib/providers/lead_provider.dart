@@ -4,6 +4,7 @@ import 'package:uuid/uuid.dart';
 
 import '../models/lead_model.dart';
 import '../services/api_service.dart';
+import '../services/notification_service.dart';
 import '../services/storage_service.dart';
 
 class LeadProvider extends ChangeNotifier {
@@ -189,6 +190,15 @@ class LeadProvider extends ChangeNotifier {
     try {
       final serverLeads = await apiService.fetchLeads();
       if (serverLeads.isNotEmpty) {
+        if (_leads.isNotEmpty && serverLeads.length > _leads.length) {
+          final newLead = serverLeads.first;
+          NotificationService().showNewLeadNotification(
+            leadName: newLead.name,
+            phone: newLead.phone,
+            destination: newLead.destination,
+            source: newLead.source,
+          );
+        }
         _leads = serverLeads;
         _isLiveConnected = true;
         _saveLeadsToCache();

@@ -6,6 +6,7 @@ import 'package:uuid/uuid.dart';
 
 import '../models/call_log_model.dart';
 import '../services/api_service.dart';
+import '../services/notification_service.dart';
 import '../services/storage_service.dart';
 import '../services/telephony_service.dart';
 
@@ -184,6 +185,14 @@ class CallProvider extends ChangeNotifier {
     try {
       final queue = await apiService.fetchCallQueue();
       if (queue.isNotEmpty || _pendingQueue.isNotEmpty) {
+        if (queue.isNotEmpty && queue.length > _pendingQueue.length) {
+          final newest = queue.first;
+          NotificationService().showIncomingCallNotification(
+            callerName: newest['name']?.toString() ?? 'Traveler',
+            phoneNumber: newest['phone']?.toString() ?? '',
+            tourInterest: newest['tour_interest']?.toString() ?? 'Kashi Pilgrimage Inquiry',
+          );
+        }
         _pendingQueue = queue;
         notifyListeners();
       }
@@ -316,6 +325,7 @@ class CallProvider extends ChangeNotifier {
   /// End active call and prepare post-call quick action sheet
   Future<void> endCall({String notes = ''}) async {
     _durationTimer?.cancel();
+    NotificationService().stopRingtone();
     final completedId = _activeCallId ?? const Uuid().v4();
     final duration = _callDurationSeconds;
 

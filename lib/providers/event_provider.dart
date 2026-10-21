@@ -59,7 +59,7 @@ class EventProvider extends ChangeNotifier {
       if (res == null) return;
 
       _updateServerCounters(res);
-      final fetched = (res['events'] as List<EventModel>?) ?? [];
+      final fetched = (res['events'] as List?)?.whereType<EventModel>().toList() ?? [];
       if (fetched.isEmpty) {
         notifyListeners();
         return;
@@ -147,7 +147,7 @@ class EventProvider extends ChangeNotifier {
     final res = await apiService.fetchEventsWithStats(limit: 60);
     if (res != null) {
       _updateServerCounters(res);
-      final allEvents = (res['events'] as List<EventModel>?) ?? [];
+      final allEvents = (res['events'] as List?)?.whereType<EventModel>().toList() ?? [];
       if (allEvents.isNotEmpty) {
         _events = allEvents;
         _latestEventId = allEvents.map((e) => e.id).reduce((a, b) => a > b ? a : b);
