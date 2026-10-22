@@ -26,6 +26,7 @@ class MainNavigationScreen extends StatefulWidget {
 
 class _MainNavigationScreenState extends State<MainNavigationScreen> {
   int _currentIndex = 0;
+  bool _isPostCallSheetOpen = false;
 
   final List<Widget> _screens = const [
     DialerScreen(),
@@ -42,11 +43,15 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     final wpProvider = Provider.of<WhatsAppProvider>(context);
     final wpUnread = wpProvider.totalUnreadCount;
 
-    // Trigger Post-Call Action Sheet whenever a call ends anywhere across screens
-    if (callProvider.lastCompletedCall != null) {
+    // Trigger Post-Call Action Sheet safely whenever a call ends anywhere across screens
+    if (callProvider.lastCompletedCall != null && !_isPostCallSheetOpen) {
       final completedCall = callProvider.lastCompletedCall!;
+      _isPostCallSheetOpen = true;
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted || callProvider.lastCompletedCall == null) return;
+        if (!mounted) {
+          _isPostCallSheetOpen = false;
+          return;
+        }
         callProvider.clearLastCompletedCall();
         showModalBottomSheet(
           context: context,
@@ -54,9 +59,19 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
           backgroundColor: Colors.transparent,
           builder: (ctx) => PostCallActionSheet(
             callLog: completedCall,
-            onDismiss: () => Navigator.pop(ctx),
+            onDismiss: () {
+              if (Navigator.of(ctx).canPop()) {
+                Navigator.pop(ctx);
+              }
+            },
           ),
-        );
+        ).whenComplete(() {
+          if (mounted) {
+            setState(() {
+              _isPostCallSheetOpen = false;
+            });
+          }
+        });
       });
     }
 

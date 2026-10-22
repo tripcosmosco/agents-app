@@ -405,7 +405,9 @@ class WhatsAppProvider extends ChangeNotifier {
       );
 
       if (data != null && data['messages'] is List) {
-        final rawMessages = List<Map<String, dynamic>>.from(data['messages']);
+        final rawMessages = (data['messages'] as List)
+            .map((m) => Map<String, dynamic>.from(m as Map))
+            .toList();
         final parsedMessages = rawMessages.map((m) {
           final tsStr = m['timestamp']?.toString() ?? '';
           final parsedTs = DateTime.tryParse(tsStr) ?? DateTime.now();
@@ -451,7 +453,9 @@ class WhatsAppProvider extends ChangeNotifier {
       if (hubData != null) {
         _evolutionOnline = hubData['evolution_online'] == true;
         final rawLeads = hubData['leads'] is List
-            ? List<Map<String, dynamic>>.from(hubData['leads'])
+            ? (hubData['leads'] as List)
+                .map((e) => Map<String, dynamic>.from(e as Map))
+                .toList()
             : <Map<String, dynamic>>[];
 
         if (rawLeads.isNotEmpty) {

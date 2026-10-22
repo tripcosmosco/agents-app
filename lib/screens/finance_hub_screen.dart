@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
@@ -6,6 +7,7 @@ import '../core/theme/app_colors.dart';
 import '../models/financial_hub_model.dart';
 import '../models/lead_model.dart';
 import '../providers/lead_provider.dart';
+import '../services/api_service.dart';
 import '../widgets/glass_card.dart';
 
 class FinanceHubScreen extends StatefulWidget {
@@ -121,7 +123,7 @@ class _FinanceHubScreenState extends State<FinanceHubScreen> with SingleTickerPr
       final api = Provider.of<LeadProvider>(context, listen: false).apiService;
       final res = await api.fetchZohoSummary();
       if (mounted) {
-        if (res != null && res['ok'] == true) {
+        if (res != null && (res['ok'] == true || res['success'] == true)) {
           final metrics = res['metrics'] as Map<String, dynamic>? ?? {};
           final invoicesRaw = res['invoices'] as List<dynamic>? ?? [];
           setState(() {
@@ -130,7 +132,7 @@ class _FinanceHubScreenState extends State<FinanceHubScreen> with SingleTickerPr
             _zohoMetrics = metrics;
             _zohoInvoices = invoicesRaw.whereType<Map>().map((e) => ZohoInvoiceModel.fromJson(Map<String, dynamic>.from(e))).toList();
             _isLoadingZoho = false;
-            _zohoError = null;
+            _zohoError = _zohoConnected ? null : (res['message']?.toString() ?? 'Zoho Books credentials pending.');
           });
         } else {
           setState(() {
@@ -147,6 +149,21 @@ class _FinanceHubScreenState extends State<FinanceHubScreen> with SingleTickerPr
         });
       }
     }
+  }
+
+  void _showZohoConnectSheet() {
+    final api = Provider.of<LeadProvider>(context, listen: false).apiService;
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => _ZohoConnectSheet(
+        apiService: api,
+        onConnected: () {
+          _loadZohoData();
+        },
+      ),
+    );
   }
 
   Future<void> _loadGoogleAdsData() async {
@@ -194,7 +211,7 @@ class _FinanceHubScreenState extends State<FinanceHubScreen> with SingleTickerPr
     final api = Provider.of<LeadProvider>(context, listen: false).apiService;
     final res = await api.syncZohoInvoices();
     if (mounted) {
-      if (res != null && res['ok'] == true) {
+      if (res != null && (res['ok'] == true || res['success'] == true)) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             backgroundColor: Colors.green,
@@ -334,7 +351,9 @@ class _FinanceHubScreenState extends State<FinanceHubScreen> with SingleTickerPr
                                 );
                                 setModalState(() => isSubmitting = false);
                                 if (mounted) {
-                                  navigator.pop();
+                                  if (navigator.canPop()) {
+                                    navigator.pop();
+                                  }
                                   if (res != null && res['ok'] == true) {
                                     messenger.showSnackBar(
                                       SnackBar(
@@ -1047,7 +1066,7 @@ class _FinanceHubScreenState extends State<FinanceHubScreen> with SingleTickerPr
                               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5, color: AppColors.getTextPrimary(context)),
                             ),
                             Text(
-                              _zohoConnected ? 'Connected & Token Active' : 'Zoho OAuth Configured (Ready to sync)',
+                              _zohoConnected ? 'Connected & Token Active' : 'Not Connected • Tap to Link',
                               style: TextStyle(
                                 fontSize: 11,
                                 color: _zohoConnected ? Colors.green : Colors.orange,
@@ -1056,16 +1075,36 @@ class _FinanceHubScreenState extends State<FinanceHubScreen> with SingleTickerPr
                           ],
                         ),
                       ),
-                      ElevatedButton.icon(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.accentGold,
-                          foregroundColor: AppColors.primaryDark,
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      if (_zohoConnected) ...[
+                        IconButton(
+                          icon: const Icon(Icons.settings_outlined, size: 20),
+                          tooltip: 'Zoho Settings',
+                          color: AppColors.getTextSecondary(context),
+                          onPressed: _showZohoConnectSheet,
                         ),
-                        icon: const Icon(Icons.sync_rounded, size: 15),
-                        label: const Text('Sync Now', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700)),
-                        onPressed: _syncZoho,
-                      ),
+                        const SizedBox(width: 4),
+                        ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.accentGold,
+                            foregroundColor: AppColors.primaryDark,
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          ),
+                          icon: const Icon(Icons.sync_rounded, size: 15),
+                          label: const Text('Sync Now', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700)),
+                          onPressed: _syncZoho,
+                        ),
+                      ] else ...[
+                        ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.accentGold,
+                            foregroundColor: AppColors.primaryDark,
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          ),
+                          icon: const Icon(Icons.link_rounded, size: 16),
+                          label: const Text('Connect Zoho', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+                          onPressed: _showZohoConnectSheet,
+                        ),
+                      ],
                     ],
                   ),
                   if (_zohoHelp.isNotEmpty) ...[
@@ -1140,19 +1179,35 @@ class _FinanceHubScreenState extends State<FinanceHubScreen> with SingleTickerPr
               child: Center(
                 child: Column(
                   children: [
-                    Icon(Icons.receipt_long_outlined, size: 48, color: AppColors.getTextMuted(context)),
-                    const SizedBox(height: 10),
+                    Icon(
+                      _zohoConnected ? Icons.receipt_long_outlined : Icons.account_balance_wallet_outlined,
+                      size: 48,
+                      color: AppColors.accentGold.withValues(alpha: 0.8),
+                    ),
+                    const SizedBox(height: 12),
                     Text(
-                      _zohoError ?? (_zohoConnected ? 'No Zoho invoices created yet.' : 'Zoho Books connection is pending OAuth credentials in WP Settings.'),
+                      _zohoError ?? (_zohoConnected ? 'No Zoho invoices created yet.' : 'Zoho Books is not connected yet. Connect your accounts.zoho.in account to view live invoices.'),
                       textAlign: TextAlign.center,
-                      style: TextStyle(color: AppColors.getTextSecondary(context), fontSize: 12),
+                      style: TextStyle(color: AppColors.getTextSecondary(context), fontSize: 13),
                     ),
-                    const SizedBox(height: 14),
-                    OutlinedButton.icon(
-                      icon: const Icon(Icons.sync, size: 16),
-                      label: const Text('Trigger Zoho Sync'),
-                      onPressed: _syncZoho,
-                    ),
+                    const SizedBox(height: 16),
+                    if (!_zohoConnected)
+                      ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.accentGold,
+                          foregroundColor: AppColors.primaryDark,
+                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                        ),
+                        icon: const Icon(Icons.link_rounded, size: 18),
+                        label: const Text('Connect Zoho Books', style: TextStyle(fontWeight: FontWeight.bold)),
+                        onPressed: _showZohoConnectSheet,
+                      )
+                    else
+                      OutlinedButton.icon(
+                        icon: const Icon(Icons.sync, size: 16),
+                        label: const Text('Trigger Zoho Sync'),
+                        onPressed: _syncZoho,
+                      ),
                   ],
                 ),
               ),
@@ -1543,6 +1598,413 @@ class _FinanceHubScreenState extends State<FinanceHubScreen> with SingleTickerPr
                     ],
                   ),
                 ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ZohoConnectSheet extends StatefulWidget {
+  final ApiService apiService;
+  final VoidCallback onConnected;
+
+  const _ZohoConnectSheet({
+    required this.apiService,
+    required this.onConnected,
+  });
+
+  @override
+  State<_ZohoConnectSheet> createState() => _ZohoConnectSheetState();
+}
+
+class _ZohoConnectSheetState extends State<_ZohoConnectSheet> {
+  final _formKey = GlobalKey<FormState>();
+  final _orgIdController = TextEditingController();
+  final _clientIdController = TextEditingController();
+  final _clientSecretController = TextEditingController();
+  final _refreshTokenController = TextEditingController();
+
+  String _datacenter = 'zoho.in';
+  bool _obscureSecret = true;
+  bool _isConnecting = false;
+  String? _errorMessage;
+  String? _successMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadExistingConfig();
+  }
+
+  Future<void> _loadExistingConfig() async {
+    try {
+      final config = await widget.apiService.fetchZohoConfig();
+      if (config != null && mounted) {
+        setState(() {
+          final dc = config['datacenter']?.toString();
+          if (dc != null && dc.isNotEmpty) {
+            _datacenter = dc;
+          }
+          final org = config['org_id']?.toString();
+          if (org != null && org.isNotEmpty) {
+            _orgIdController.text = org;
+          }
+        });
+      }
+    } catch (_) {}
+  }
+
+  @override
+  void dispose() {
+    _orgIdController.dispose();
+    _clientIdController.dispose();
+    _clientSecretController.dispose();
+    _refreshTokenController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _pasteTo(TextEditingController controller) async {
+    final data = await Clipboard.getData(Clipboard.kTextPlain);
+    if (data != null && data.text != null && data.text!.isNotEmpty) {
+      setState(() {
+        controller.text = data.text!.trim();
+      });
+    }
+  }
+
+  Future<void> _submitConnect() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() {
+      _isConnecting = true;
+      _errorMessage = null;
+      _successMessage = null;
+    });
+
+    final res = await widget.apiService.connectZoho(
+      clientId: _clientIdController.text,
+      clientSecret: _clientSecretController.text,
+      refreshToken: _refreshTokenController.text,
+      orgId: _orgIdController.text,
+      datacenter: _datacenter,
+    );
+
+    if (!mounted) return;
+
+    if (res != null && (res['ok'] == true || res['success'] == true)) {
+      setState(() {
+        _isConnecting = false;
+        _successMessage = res['message']?.toString() ?? 'Connected to Zoho Books successfully!';
+      });
+
+      widget.onConnected();
+
+      Future.delayed(const Duration(milliseconds: 900), () {
+        if (mounted && Navigator.canPop(context)) {
+          Navigator.pop(context);
+        }
+      });
+    } else {
+      setState(() {
+        _isConnecting = false;
+        _errorMessage = res?['message']?.toString() ?? res?['error']?.toString() ?? 'Failed to authenticate with Zoho Books.';
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+
+    return Container(
+      constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.9),
+      decoration: BoxDecoration(
+        color: AppColors.getCard(context),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      padding: EdgeInsets.fromLTRB(20, 14, 20, bottomInset + 20),
+      child: SingleChildScrollView(
+        child: Form(
+          key: _formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: AppColors.getTextMuted(context).withValues(alpha: 0.3),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppColors.accentGold.withValues(alpha: 0.15),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.receipt_long_rounded, color: AppColors.accentGold, size: 22),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Connect Zoho Books',
+                          style: TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.getTextPrimary(context),
+                          ),
+                        ),
+                        Text(
+                          'OAuth 2.0 Invoicing & Ledger API',
+                          style: TextStyle(fontSize: 11.5, color: AppColors.getTextSecondary(context)),
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close_rounded),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+
+              if (_errorMessage != null) ...[
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.red.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.error_outline_rounded, color: Colors.red, size: 20),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          _errorMessage!,
+                          style: const TextStyle(color: Colors.red, fontSize: 12),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
+              ],
+
+              if (_successMessage != null) ...[
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.green.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.green.withValues(alpha: 0.3)),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.check_circle_outline_rounded, color: Colors.green, size: 20),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          _successMessage!,
+                          style: const TextStyle(color: Colors.green, fontSize: 12, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
+              ],
+
+              Text(
+                'Data Center Region',
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.getTextPrimary(context)),
+              ),
+              const SizedBox(height: 6),
+              DropdownButtonFormField<String>(
+                initialValue: _datacenter,
+                decoration: InputDecoration(
+                  filled: true,
+                  fillColor: AppColors.getElevated(context),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                ),
+                items: const [
+                  DropdownMenuItem(value: 'zoho.in', child: Text('India (accounts.zoho.in)')),
+                  DropdownMenuItem(value: 'zoho.com', child: Text('Global / US (accounts.zoho.com)')),
+                  DropdownMenuItem(value: 'zoho.eu', child: Text('Europe (accounts.zoho.eu)')),
+                ],
+                onChanged: (val) {
+                  if (val != null) setState(() => _datacenter = val);
+                },
+              ),
+              const SizedBox(height: 14),
+
+              Text(
+                'Organization ID',
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.getTextPrimary(context)),
+              ),
+              const SizedBox(height: 6),
+              TextFormField(
+                controller: _orgIdController,
+                style: TextStyle(color: AppColors.getTextPrimary(context), fontSize: 13),
+                decoration: InputDecoration(
+                  hintText: 'e.g. 60012345678',
+                  filled: true,
+                  fillColor: AppColors.getElevated(context),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  suffixIcon: IconButton(
+                    icon: const Icon(Icons.paste_rounded, size: 18),
+                    tooltip: 'Paste',
+                    onPressed: () => _pasteTo(_orgIdController),
+                  ),
+                ),
+                validator: (v) => (v == null || v.trim().isEmpty) ? 'Organization ID is required' : null,
+              ),
+              const SizedBox(height: 14),
+
+              Text(
+                'Client ID',
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.getTextPrimary(context)),
+              ),
+              const SizedBox(height: 6),
+              TextFormField(
+                controller: _clientIdController,
+                style: TextStyle(color: AppColors.getTextPrimary(context), fontSize: 13),
+                decoration: InputDecoration(
+                  hintText: 'e.g. 1000.XXXXX',
+                  filled: true,
+                  fillColor: AppColors.getElevated(context),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  suffixIcon: IconButton(
+                    icon: const Icon(Icons.paste_rounded, size: 18),
+                    tooltip: 'Paste',
+                    onPressed: () => _pasteTo(_clientIdController),
+                  ),
+                ),
+                validator: (v) => (v == null || v.trim().isEmpty) ? 'Client ID is required' : null,
+              ),
+              const SizedBox(height: 14),
+
+              Text(
+                'Client Secret',
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.getTextPrimary(context)),
+              ),
+              const SizedBox(height: 6),
+              TextFormField(
+                controller: _clientSecretController,
+                obscureText: _obscureSecret,
+                style: TextStyle(color: AppColors.getTextPrimary(context), fontSize: 13),
+                decoration: InputDecoration(
+                  hintText: 'Client Secret key',
+                  filled: true,
+                  fillColor: AppColors.getElevated(context),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  suffixIcon: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        icon: Icon(_obscureSecret ? Icons.visibility_off : Icons.visibility, size: 18),
+                        onPressed: () => setState(() => _obscureSecret = !_obscureSecret),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.paste_rounded, size: 18),
+                        tooltip: 'Paste',
+                        onPressed: () => _pasteTo(_clientSecretController),
+                      ),
+                    ],
+                  ),
+                ),
+                validator: (v) => (v == null || v.trim().isEmpty) ? 'Client Secret is required' : null,
+              ),
+              const SizedBox(height: 14),
+
+              Text(
+                'OAuth Refresh Token',
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.getTextPrimary(context)),
+              ),
+              const SizedBox(height: 6),
+              TextFormField(
+                controller: _refreshTokenController,
+                maxLines: 2,
+                style: TextStyle(color: AppColors.getTextPrimary(context), fontSize: 12, fontFamily: 'monospace'),
+                decoration: InputDecoration(
+                  hintText: '1000.XXXXX...',
+                  filled: true,
+                  fillColor: AppColors.getElevated(context),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                  contentPadding: const EdgeInsets.all(12),
+                  suffixIcon: IconButton(
+                    icon: const Icon(Icons.paste_rounded, size: 18),
+                    tooltip: 'Paste',
+                    onPressed: () => _pasteTo(_refreshTokenController),
+                  ),
+                ),
+                validator: (v) => (v == null || v.trim().isEmpty) ? 'Refresh token is required' : null,
+              ),
+              const SizedBox(height: 14),
+
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppColors.accentGold.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppColors.accentGold.withValues(alpha: 0.2)),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Icon(Icons.info_outline_rounded, color: AppColors.accentGold, size: 18),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Generate tokens from api-console.zoho.in (Self Client) with scope: ZohoBooks.fullaccess.all',
+                        style: TextStyle(fontSize: 11, color: AppColors.getTextSecondary(context), height: 1.4),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.accentGold,
+                    foregroundColor: AppColors.primaryDark,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  onPressed: _isConnecting ? null : _submitConnect,
+                  child: _isConnecting
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primaryDark),
+                        )
+                      : const Text(
+                          'Test & Connect Zoho Books',
+                          style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                        ),
+                ),
               ),
             ],
           ),

@@ -167,7 +167,9 @@ class ApiService {
         final data = _safeJsonDecode(response.body);
         final isSuccess = data != null && (data['ok'] == true || data['success'] == true);
         if (isSuccess && data['calls'] is List) {
-          return List<Map<String, dynamic>>.from(data['calls']);
+          return (data['calls'] as List)
+              .map((e) => Map<String, dynamic>.from(e as Map))
+              .toList();
         }
       }
     } catch (_) {
@@ -391,7 +393,9 @@ class ApiService {
   Future<List<Map<String, dynamic>>> fetchWhatsAppLeads() async {
     final data = await fetchWhatsAppHubData();
     if (data != null && data['leads'] is List) {
-      return List<Map<String, dynamic>>.from(data['leads']);
+      return (data['leads'] as List)
+          .map((e) => Map<String, dynamic>.from(e as Map))
+          .toList();
     }
     return [];
   }
@@ -754,7 +758,9 @@ class ApiService {
       if (response.statusCode == 200) {
         final data = _safeJsonDecode(response.body);
         if (data != null && data['ok'] == true && data['chats'] is List) {
-          return List<Map<String, dynamic>>.from(data['chats']);
+          return (data['chats'] as List)
+              .map((e) => Map<String, dynamic>.from(e as Map))
+              .toList();
         }
       }
     } catch (e) {
@@ -1188,6 +1194,51 @@ class ApiService {
       }
     } catch (e) {
       debugPrint('Error syncing Zoho: $e');
+    }
+    return null;
+  }
+
+  /// 34a. Fetch Zoho Books Safe Config Status
+  Future<Map<String, dynamic>?> fetchZohoConfig() async {
+    try {
+      final uri = Uri.parse('$baseUrl/mobile/zoho/config');
+      final response = await http.get(uri, headers: _headers).timeout(const Duration(seconds: 10));
+      if (response.statusCode < 500 && response.body.isNotEmpty) {
+        return _safeJsonDecode(response.body);
+      }
+    } catch (e) {
+      debugPrint('Error fetching Zoho config: $e');
+    }
+    return null;
+  }
+
+  /// 34b. Connect & Save Zoho Books Credentials (In-App)
+  Future<Map<String, dynamic>?> connectZoho({
+    required String clientId,
+    required String clientSecret,
+    required String refreshToken,
+    required String orgId,
+    String datacenter = 'zoho.in',
+  }) async {
+    try {
+      final uri = Uri.parse('$baseUrl/mobile/zoho/connect');
+      final payload = {
+        'client_id': clientId.trim(),
+        'client_secret': clientSecret.trim(),
+        'refresh_token': refreshToken.trim(),
+        'org_id': orgId.trim(),
+        'datacenter': datacenter.trim(),
+      };
+      final response = await http.post(
+        uri,
+        headers: _headers,
+        body: jsonEncode(payload),
+      ).timeout(const Duration(seconds: 25));
+      if (response.body.isNotEmpty) {
+        return _safeJsonDecode(response.body);
+      }
+    } catch (e) {
+      debugPrint('Error connecting Zoho: $e');
     }
     return null;
   }

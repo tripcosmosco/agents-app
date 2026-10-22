@@ -80,7 +80,8 @@ class _WebChatDetailScreenState extends State<WebChatDetailScreen> {
 
     if (detail != null && detail['messages'] is List) {
       setState(() {
-        _messages = List<Map<String, dynamic>>.from(detail['messages'])
+        _messages = (detail['messages'] as List)
+            .map((m) => Map<String, dynamic>.from(m as Map))
             .where((m) => (m['content']?.toString() ?? '').trim().isNotEmpty)
             .toList();
         _isAiActive = detail['is_ai_active'] ?? _isAiActive;
@@ -96,7 +97,8 @@ class _WebChatDetailScreenState extends State<WebChatDetailScreen> {
     final detail = await widget.apiService.fetchWebChatDetail(_sessionId);
     if (!mounted || detail == null) return;
 
-    final incoming = List<Map<String, dynamic>>.from(detail['messages'] ?? [])
+    final incoming = (detail['messages'] as List? ?? [])
+        .map((m) => Map<String, dynamic>.from(m as Map))
         .where((m) => (m['content']?.toString() ?? '').trim().isNotEmpty)
         .toList();
     if (incoming.length != _messages.length) {

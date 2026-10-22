@@ -1542,7 +1542,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               _buildFeatureTile(
                 Icons.sync_alt_rounded,
                 'Multi-CRM Bi-Directional Synchronization',
-                'Synchronizes leads with WordPress CRM table, FluentCRM tags, and TwentyCRM.',
+                'Synchronizes leads natively with WordPress CRM tables and FluentCRM tags & lists.',
                 AppColors.accentGold,
               ),
 

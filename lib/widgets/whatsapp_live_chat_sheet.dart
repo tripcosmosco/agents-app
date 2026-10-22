@@ -104,7 +104,9 @@ class _WhatsAppLiveChatSheetState extends State<WhatsAppLiveChatSheet> {
     try {
       final data = await _apiService.fetchWhatsAppMessages(phone: widget.phone);
       if (data != null && data['messages'] is List && mounted) {
-        final rawMessages = List<Map<String, dynamic>>.from(data['messages']);
+        final rawMessages = (data['messages'] as List)
+            .map((m) => Map<String, dynamic>.from(m as Map))
+            .toList();
         if (rawMessages.isNotEmpty) {
           setState(() {
             _messages = rawMessages.map((m) {

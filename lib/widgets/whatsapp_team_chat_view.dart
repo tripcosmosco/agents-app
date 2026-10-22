@@ -79,6 +79,20 @@ class _WhatsAppTeamChatViewState extends State<WhatsAppTeamChatView> {
   }
 
   @override
+  void didUpdateWidget(WhatsAppTeamChatView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.thread.id != widget.thread.id) {
+      _textController.clear();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        context.read<WhatsAppProvider>().loadThreadMessages(widget.thread.id).then((_) {
+          _scrollToBottom();
+        });
+      });
+    }
+  }
+
+  @override
   void dispose() {
     _textController.dispose();
     _scrollController.dispose();
