@@ -10,12 +10,14 @@ class ChatMessage {
   final bool isUser;
   final DateTime timestamp;
   final String? provider;
+  final List<String>? suggestions;
 
   ChatMessage({
     required this.text,
     required this.isUser,
     required this.timestamp,
     this.provider,
+    this.suggestions,
   });
 }
 
@@ -53,10 +55,20 @@ class AiAgentProvider extends ChangeNotifier {
   bool _isQueryingRag = false;
   bool get isQueryingRag => _isQueryingRag;
 
+  List<ChatMessage> _masterAssistantMessages = [];
+  List<ChatMessage> get masterAssistantMessages => _masterAssistantMessages;
+
+  bool _isQueryingMasterAi = false;
+  bool get isQueryingMasterAi => _isQueryingMasterAi;
+
+  String? _masterAiError;
+  String? get masterAiError => _masterAiError;
+
   AiAgentProvider({required this.apiService}) {
     _personas = AiAgentPersona.defaultTravelPersonas();
     _loadPreferences();
     _initializePlayground();
+    _initializeMasterAssistant();
   }
 
   Future<void> _loadPreferences() async {
@@ -247,5 +259,153 @@ class AiAgentProvider extends ChangeNotifier {
 
   void clearPlayground() {
     _initializePlayground();
+  }
+
+  void _initializeMasterAssistant() {
+    _masterAssistantMessages = [
+      ChatMessage(
+        text: 'Namaste! I am Garuda Master AI, your Chief Operations & Sales Intelligence Co-Pilot for TripCosmos.co.\n\nI have real-time visibility across CRM leads, wholesale B2B travel partners, staff payroll, bank balances, and dynamic tour tariffs. How can I assist you right now?',
+        isUser: false,
+        timestamp: DateTime.now(),
+        provider: 'Garuda Master AI (Gateway)',
+        suggestions: const [
+          '🌅 Daily Operations Briefing',
+          '🔥 Hot Leads Triaging',
+          '💰 Financial & Payroll Status',
+          '🚗 Cab Tariff Calculator',
+          '🤝 B2B Wholesale Intel',
+        ],
+      ),
+    ];
+    notifyListeners();
+  }
+
+  /// Send a conversational query to Master AI Assistant with multi-turn history and business context
+  Future<void> sendMasterAiQuery(String question, {Map<String, dynamic>? context}) async {
+    final trimmed = question.trim();
+    if (trimmed.isEmpty) return;
+
+    final userMsg = ChatMessage(
+      text: trimmed,
+      isUser: true,
+      timestamp: DateTime.now(),
+    );
+    _masterAssistantMessages.add(userMsg);
+    _isQueryingMasterAi = true;
+    _masterAiError = null;
+    notifyListeners();
+
+    // Prepare history (last 6 messages)
+    final history = _masterAssistantMessages
+        .take(_masterAssistantMessages.length - 1)
+        .map((m) => {
+              'role': m.isUser ? 'user' : 'assistant',
+              'content': m.text,
+            })
+        .toList();
+
+    try {
+      final res = await apiService.queryMasterAssistant(
+        message: trimmed,
+        history: history,
+        context: context,
+      );
+
+      if (res != null && (res['ok'] == true || res['success'] == true)) {
+        final replyText = res['reply']?.toString() ?? 'Operations status verified.';
+        final provider = res['provider']?.toString() ?? 'Gateway';
+        final rawSuggestions = (res['suggestions'] as List?)?.map((s) => s.toString()).toList();
+
+        final aiMsg = ChatMessage(
+          text: replyText,
+          isUser: false,
+          timestamp: DateTime.now(),
+          provider: 'Garuda Master AI ($provider)',
+          suggestions: rawSuggestions,
+        );
+        _masterAssistantMessages.add(aiMsg);
+      } else {
+        _masterAiError = res?['error']?.toString() ?? 'Error receiving response from Master AI';
+        _masterAssistantMessages.add(
+          ChatMessage(
+            text: 'I encountered an operational issue: ${_masterAiError ?? "Please verify connection."}',
+            isUser: false,
+            timestamp: DateTime.now(),
+            provider: 'System Error',
+          ),
+        );
+      }
+    } catch (e) {
+      _masterAiError = 'Connection error: $e';
+      _masterAssistantMessages.add(
+        ChatMessage(
+          text: 'Unable to reach Master AI router: $e',
+          isUser: false,
+          timestamp: DateTime.now(),
+          provider: 'System Error',
+        ),
+      );
+    } finally {
+      _isQueryingMasterAi = false;
+      notifyListeners();
+    }
+  }
+
+  /// 1-Click Morning Operations & Sales Briefing
+  Future<void> requestMasterBriefing() async {
+    _isQueryingMasterAi = true;
+    _masterAiError = null;
+    _masterAssistantMessages.add(
+      ChatMessage(
+        text: '🌅 Daily Operations Briefing',
+        isUser: true,
+        timestamp: DateTime.now(),
+      ),
+    );
+    notifyListeners();
+
+    try {
+      final res = await apiService.fetchMasterAssistantBriefing();
+      if (res != null && (res['ok'] == true || res['success'] == true)) {
+        final replyText = res['reply']?.toString() ?? 'Morning briefing compiled.';
+        final provider = res['provider']?.toString() ?? 'Gateway';
+        final rawSuggestions = (res['suggestions'] as List?)?.map((s) => s.toString()).toList();
+
+        _masterAssistantMessages.add(
+          ChatMessage(
+            text: replyText,
+            isUser: false,
+            timestamp: DateTime.now(),
+            provider: 'Garuda Master AI ($provider)',
+            suggestions: rawSuggestions,
+          ),
+        );
+      } else {
+        _masterAssistantMessages.add(
+          ChatMessage(
+            text: 'Could not generate briefing: ${res?["error"] ?? "Unknown error"}',
+            isUser: false,
+            timestamp: DateTime.now(),
+            provider: 'System Error',
+          ),
+        );
+      }
+    } catch (e) {
+      _masterAssistantMessages.add(
+        ChatMessage(
+          text: 'Briefing request failed: $e',
+          isUser: false,
+          timestamp: DateTime.now(),
+          provider: 'System Error',
+        ),
+      );
+    } finally {
+      _isQueryingMasterAi = false;
+      notifyListeners();
+    }
+  }
+
+  void clearMasterAssistant() {
+    _initializeMasterAssistant();
   }
 }

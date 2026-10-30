@@ -1661,6 +1661,47 @@ class ApiService {
     }
     return null;
   }
+
+  /// 43. Master AI Assistant: Conversational Operations & Intelligence Query
+  Future<Map<String, dynamic>?> queryMasterAssistant({
+    required String message,
+    List<Map<String, String>>? history,
+    Map<String, dynamic>? context,
+  }) async {
+    try {
+      final uri = Uri.parse('$baseUrl/mobile/master-assistant/chat');
+      final payload = {
+        'message': message.trim(),
+        if (history != null) 'history': history,
+        if (context != null) 'context': context,
+      };
+      final response = await http
+          .post(uri, headers: _headers, body: jsonEncode(payload))
+          .timeout(const Duration(seconds: 40));
+      if (response.body.isNotEmpty) {
+        return _safeJsonDecode(response.body);
+      }
+    } catch (e) {
+      debugPrint('Error querying Master AI Assistant: $e');
+    }
+    return null;
+  }
+
+  /// 44. Master AI Assistant: 1-Click Morning Daily Operations Briefing
+  Future<Map<String, dynamic>?> fetchMasterAssistantBriefing() async {
+    try {
+      final uri = Uri.parse('$baseUrl/mobile/master-assistant/briefing');
+      final response = await http
+          .get(uri, headers: _headers)
+          .timeout(const Duration(seconds: 40));
+      if (response.body.isNotEmpty) {
+        return _safeJsonDecode(response.body);
+      }
+    } catch (e) {
+      debugPrint('Error fetching Master AI Briefing: $e');
+    }
+    return null;
+  }
 }
 
 

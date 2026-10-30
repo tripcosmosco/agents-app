@@ -6,6 +6,7 @@ import '../models/ai_agent_model.dart';
 import '../providers/ai_agent_provider.dart';
 import '../providers/lead_provider.dart';
 import '../widgets/glass_card.dart';
+import '../widgets/master_ai_assistant_view.dart';
 
 class AiAgentsScreen extends StatefulWidget {
   const AiAgentsScreen({super.key});
@@ -14,11 +15,19 @@ class AiAgentsScreen extends StatefulWidget {
   State<AiAgentsScreen> createState() => _AiAgentsScreenState();
 }
 
-class _AiAgentsScreenState extends State<AiAgentsScreen> {
+class _AiAgentsScreenState extends State<AiAgentsScreen> with SingleTickerProviderStateMixin {
+  late TabController _tabController;
   final TextEditingController _chatController = TextEditingController();
 
   @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+  }
+
+  @override
   void dispose() {
+    _tabController.dispose();
     _chatController.dispose();
     super.dispose();
   }
@@ -473,13 +482,23 @@ class _AiAgentsScreenState extends State<AiAgentsScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'AI Sales Team Command Center',
+              'TripCosmos AI Command Center',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
             ),
             Text(
-              'Multi-Agent Personas • Custom Skills • WhatsApp & Spoken Voice AI',
+              'Master AI Co-Pilot • Multi-Agent Personas • Spoken Voice & WhatsApp',
               style: TextStyle(fontSize: 11, color: AppColors.accentGold),
             ),
+          ],
+        ),
+        bottom: TabBar(
+          controller: _tabController,
+          indicatorColor: AppColors.accentGold,
+          labelColor: AppColors.accentGold,
+          unselectedLabelColor: AppColors.getTextSecondary(context),
+          tabs: const [
+            Tab(icon: Icon(Icons.bolt_rounded, size: 19), text: 'Master AI Co-Pilot'),
+            Tab(icon: Icon(Icons.groups_rounded, size: 19), text: 'Team Personas & Skills'),
           ],
         ),
         actions: [
@@ -490,12 +509,29 @@ class _AiAgentsScreenState extends State<AiAgentsScreen> {
           ),
         ],
       ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+      body: TabBarView(
+        controller: _tabController,
+        children: [
+          const MasterAiAssistantView(),
+          _buildPersonasTab(context, aiProvider, selectedPersona, humanAgent, pairedAiName),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPersonasTab(
+    BuildContext context,
+    AiAgentProvider aiProvider,
+    AiAgentPersona selectedPersona,
+    String humanAgent,
+    String pairedAiName,
+  ) {
+    return SafeArea(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
               // 0. Human + AI Co-Pilot Team Duo Card
               Container(
                 margin: const EdgeInsets.only(bottom: 20),
@@ -1181,8 +1217,7 @@ class _AiAgentsScreenState extends State<AiAgentsScreen> {
             ],
           ),
         ),
-      ),
-    );
+      );
   }
 
   Widget _buildMetricPill(BuildContext context, String label, String value, IconData icon) {

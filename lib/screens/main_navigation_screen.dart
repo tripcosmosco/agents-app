@@ -14,6 +14,7 @@ import 'whatsapp_hub_screen.dart';
 import '../services/api_service.dart';
 import '../widgets/active_call_hud.dart';
 import '../widgets/live_activity_banner.dart';
+import '../widgets/master_ai_assistant_view.dart';
 import '../widgets/post_call_action_sheet.dart';
 
 class MainNavigationScreen extends StatefulWidget {
@@ -28,6 +29,21 @@ class MainNavigationScreen extends StatefulWidget {
 class _MainNavigationScreenState extends State<MainNavigationScreen> {
   int _currentIndex = 0;
   bool _isPostCallSheetOpen = false;
+
+  void _openMasterAiModal(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => FractionallySizedBox(
+        heightFactor: 0.90,
+        child: MasterAiAssistantView(
+          isBottomSheet: true,
+          onClose: () => Navigator.pop(ctx),
+        ),
+      ),
+    );
+  }
 
   final List<Widget> _screens = const [
     DialerScreen(),
@@ -174,6 +190,50 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
             ],
           ),
         ),
+        if (_currentIndex != 3)
+          Positioned(
+            right: 16,
+            bottom: 16,
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: () => _openMasterAiModal(context),
+                borderRadius: BorderRadius.circular(28),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFFD4AF37), Color(0xFFF59E0B)],
+                    ),
+                    borderRadius: BorderRadius.circular(28),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFFD4AF37).withValues(alpha: 0.4),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.bolt_rounded, color: Colors.black, size: 20),
+                      SizedBox(width: 6),
+                      Text(
+                        'Master AI',
+                        style: TextStyle(
+                          color: Colors.black,
+                          fontWeight: FontWeight.w900,
+                          fontSize: 12.5,
+                          letterSpacing: 0.3,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
       ],
     );
 
