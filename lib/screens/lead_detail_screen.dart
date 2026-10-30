@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../core/constants/app_constants.dart';
 import '../core/theme/app_colors.dart';
 import '../models/call_log_model.dart';
 import '../models/lead_model.dart';
 import '../models/whatsapp_thread_model.dart';
+import '../providers/auth_provider.dart';
 import '../providers/call_provider.dart';
 import '../providers/lead_provider.dart';
 import '../providers/whatsapp_provider.dart';
@@ -1125,6 +1127,14 @@ class _LeadDetailScreenState extends State<LeadDetailScreen> with SingleTickerPr
     Color stageColor,
     CallProvider callProvider,
   ) {
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+    final canViewFullPhone = auth.isAdmin || auth.hasPermission('view_full_contact');
+    final maskedPhone = canViewFullPhone
+        ? lead.phone
+        : (lead.phone.length > 7
+            ? '${lead.phone.substring(0, lead.phone.length - 4)}••••'
+            : lead.phone);
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
@@ -1179,7 +1189,7 @@ class _LeadDetailScreenState extends State<LeadDetailScreen> with SingleTickerPr
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      '${lead.companyOrCity.toUpperCase()} • ${lead.phone}',
+                      '${lead.companyOrCity.toUpperCase()} • $maskedPhone',
                       style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.getTextSecondary(context)),
                     ),
                   ],
@@ -1318,6 +1328,72 @@ class _LeadDetailScreenState extends State<LeadDetailScreen> with SingleTickerPr
                     }
                   }
                 },
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+
+          // Fast Conversion Action Ribbon: 1-Tap Advance UPI & Dispatch Driver
+          Row(
+            children: [
+              Expanded(
+                child: InkWell(
+                  onTap: () => _showPaymentLinkSheet(context, lead),
+                  borderRadius: BorderRadius.circular(10),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 9, horizontal: 10),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF10B981).withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: const Color(0xFF10B981), width: 1.2),
+                    ),
+                    child: const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.payment_rounded, size: 16, color: Color(0xFF10B981)),
+                        SizedBox(width: 6),
+                        Text(
+                          'Collect Advance UPI',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF10B981),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: InkWell(
+                  onTap: () => _showDispatchDriverSheet(context, lead),
+                  borderRadius: BorderRadius.circular(10),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 9, horizontal: 10),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF0284C7).withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: const Color(0xFF0284C7), width: 1.2),
+                    ),
+                    child: const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.local_taxi_rounded, size: 16, color: Color(0xFF0284C7)),
+                        SizedBox(width: 6),
+                        Text(
+                          'Dispatch Driver',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF0284C7),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               ),
             ],
           ),

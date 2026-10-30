@@ -443,4 +443,25 @@ class LeadProvider extends ChangeNotifier {
       refreshLeadsFromServer();
     }
   }
+
+  /// Generate 1-Tap UPI / Online Payment Link for Lead
+  Future<Map<String, dynamic>?> generatePaymentLink({
+    required String leadId,
+    required double amount,
+    required String purpose,
+    bool sendWhatsApp = false,
+  }) async {
+    final numericId = int.tryParse(leadId.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;
+    if (numericId <= 0) return null;
+    final res = await apiService.generatePaymentLink(
+      leadId: numericId,
+      amount: amount,
+      purpose: purpose,
+      sendWhatsApp: sendWhatsApp,
+    );
+    if (res != null && res['ok'] == true) {
+      addLeadNote(leadId, '💳 Generated Payment Link for ₹${amount.toInt()}: ${res['primary_url'] ?? res['upi_url']}');
+    }
+    return res;
+  }
 }

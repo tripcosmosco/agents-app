@@ -1306,6 +1306,49 @@ class _TravelQuoteDialogState extends State<TravelQuoteDialog> {
                 ],
               ),
             ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      side: const BorderSide(color: AppColors.accentGold),
+                    ),
+                    icon: const Icon(Icons.copy_rounded, size: 16, color: AppColors.accentGold),
+                    label: const Text('Copy Proposal', style: TextStyle(color: AppColors.accentGold, fontWeight: FontWeight.w700, fontSize: 13)),
+                    onPressed: () {
+                      Clipboard.setData(ClipboardData(text: _generateQuotationText(forceWhiteLabel: _isB2bMode)));
+                      Navigator.pop(ctx);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('✓ Proposal copied to clipboard!'), backgroundColor: AppColors.successGreen),
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF10B981),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                    icon: const Icon(Icons.send_rounded, size: 16, color: Colors.white),
+                    label: const Text('Send WhatsApp', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 13)),
+                    onPressed: () async {
+                      final apiService = Provider.of<LeadProvider>(context, listen: false).apiService;
+                      final txt = _generateQuotationText(forceWhiteLabel: _isB2bMode);
+                      Navigator.pop(ctx);
+                      Navigator.pop(context);
+                      await apiService.sendWhatsAppMessage(phone: widget.lead.phone, message: txt);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('✓ Proposal dispatched via WhatsApp to ${widget.lead.name}!'), backgroundColor: AppColors.successGreen),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
           ],
         ),
       ),
