@@ -141,23 +141,6 @@ class AuthProvider extends ChangeNotifier {
     return false;
   }
 
-  Future<void> continueAsDemoAgent({String role = 'tc_sales_agent'}) async {
-    _user = UserModel(
-      id: 999,
-      name: 'Offline Demo Agent',
-      email: 'demo@tripcosmos.co',
-      username: 'demo_agent',
-      role: role,
-      roleLabel: 'Offline Demo (Read-Only)',
-      avatarUrl: '',
-      permissions: const ['leads_view', 'dialer'],
-    );
-    // Explicitly set null API token so offline demo NEVER touches live production API or WhatsApp
-    await apiService.setApiToken(null);
-    await _saveUserLocally(_user!);
-    notifyListeners();
-  }
-
   Future<void> _saveUserLocally(UserModel user) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('tc_auth_user', json.encode(user.toJson()));

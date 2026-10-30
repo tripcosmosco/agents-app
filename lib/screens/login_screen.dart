@@ -280,19 +280,6 @@ class _LoginScreenState extends State<LoginScreen> {
                         ],
                       ),
                     ),
-                  const SizedBox(height: 24),
-
-                  // Companion Demo Mode Link
-                  Center(
-                    child: TextButton.icon(
-                      icon: const Icon(Icons.play_circle_outline, size: 16),
-                      label: const Text('Continue in Companion Demo Mode (Offline)'),
-                      onPressed: () async {
-                        await auth.continueAsDemoAgent();
-                        widget.onLoginSuccess();
-                      },
-                    ),
-                  ),
                 ],
               ),
             ),
