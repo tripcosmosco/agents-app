@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import '../core/theme/app_colors.dart';
+import '../providers/auth_provider.dart';
 import '../providers/call_provider.dart';
 import '../providers/event_provider.dart';
 import '../providers/lead_provider.dart';
@@ -65,23 +66,28 @@ class _ReportsScreenState extends State<ReportsScreen> {
     final localPipelineVal = leads.fold(0.0, (sum, l) => sum + l.dealValue);
     final localWonVal = wonLeads.fold(0.0, (sum, l) => sum + l.dealValue);
 
-    // Financial summary from server
-    final summary = _financialData?['summary'] as Map<String, dynamic>?;
+    // Financial summary from server safely deserialized
+    final summaryRaw = _financialData?['summary'];
+    final summary = summaryRaw is Map ? Map<String, dynamic>.from(summaryRaw) : null;
     final gmv = double.tryParse(summary?['gmv']?.toString() ?? '') ?? localWonVal;
     final collected = double.tryParse(summary?['total_collected']?.toString() ?? '') ?? 0.0;
     final pendingReceivables = double.tryParse(summary?['pending_receivables']?.toString() ?? '') ?? max(0.0, gmv - collected);
     final pipelineVal = double.tryParse(summary?['pipeline_value']?.toString() ?? '') ?? localPipelineVal;
     final collectionRate = double.tryParse(summary?['collection_rate']?.toString() ?? '') ?? (gmv > 0 ? (collected / gmv * 100) : 0.0);
 
-    final methodSplit = _financialData?['method_split'] as Map<String, dynamic>? ?? {};
-    final recentTx = (_financialData?['recent_transactions'] as List<dynamic>?) ?? [];
-    final serverLeaderboard = (_financialData?['sales_leaderboard'] as List<dynamic>?) ?? [];
+    final methodSplitRaw = _financialData?['method_split'];
+    final methodSplit = methodSplitRaw is Map ? Map<String, dynamic>.from(methodSplitRaw) : <String, dynamic>{};
+    final recentTx = (_financialData?['recent_transactions'] is List) ? (_financialData!['recent_transactions'] as List) : const [];
+    final serverLeaderboard = (_financialData?['sales_leaderboard'] is List) ? (_financialData!['sales_leaderboard'] as List) : const [];
 
     final winRate = totalLeads > 0 ? ((wonLeads.length / totalLeads) * 100).toStringAsFixed(1) : '0.0';
 
     final totalCalls = callProvider.callLogs.length;
     final liveVisitors = eventProvider.visitors24hCount;
     final activeNow = eventProvider.activeNowCount;
+
+    final auth = Provider.of<AuthProvider>(context);
+    final canViewFinance = auth.isAdmin || auth.hasPermission('financial_hub');
 
     final totalDurationSecs = callProvider.callLogs.fold<int>(0, (sum, c) => sum + c.durationSeconds);
     final totalCallMinutes = (totalDurationSecs / 60).ceil();
@@ -104,18 +110,19 @@ class _ReportsScreenState extends State<ReportsScreen> {
           ],
         ),
         actions: [
-          IconButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => const FinanceHubScreen(),
-                ),
-              );
-            },
-            icon: const Icon(Icons.account_balance_rounded, color: AppColors.accentGold),
-            tooltip: 'Financial Intelligence Hub (SBI, Zoho, Google Ads)',
-          ),
+          if (canViewFinance)
+            IconButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const FinanceHubScreen(),
+                  ),
+                );
+              },
+              icon: const Icon(Icons.account_balance_rounded, color: AppColors.accentGold),
+              tooltip: 'Financial Intelligence Hub (SBI, Zoho, Google Ads)',
+            ),
           IconButton(
             onPressed: () => LiveActivitySheet.show(context),
             icon: const Icon(Icons.radar_rounded, color: AppColors.successGreen),
@@ -160,65 +167,66 @@ class _ReportsScreenState extends State<ReportsScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // 0. FINANCE HUB QUICK ACCESS BANNER (SBI, Zoho, Google Ads)
-                GestureDetector(
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const FinanceHubScreen(),
+                if (canViewFinance)
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const FinanceHubScreen(),
+                        ),
+                      );
+                    },
+                    child: Container(
+                      margin: const EdgeInsets.only(bottom: 16),
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            AppColors.primary.withValues(alpha: 0.25),
+                            Colors.blueAccent.withValues(alpha: 0.15),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
                       ),
-                    );
-                  },
-                  child: Container(
-                    margin: const EdgeInsets.only(bottom: 16),
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          AppColors.primary.withValues(alpha: 0.25),
-                          Colors.blueAccent.withValues(alpha: 0.15),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: AppColors.primary.withValues(alpha: 0.2),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(Icons.account_balance_rounded, color: AppColors.primary, size: 22),
+                          ),
+                          const SizedBox(width: 12),
+                          const Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Text(
+                                      'Financial Intelligence Hub',
+                                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                                    ),
+                                    SizedBox(width: 6),
+                                    Icon(Icons.arrow_forward_ios_rounded, size: 12, color: Colors.grey),
+                                  ],
+                                ),
+                                SizedBox(height: 2),
+                                Text(
+                                  'SBI Statement Importer • Zoho Books • Google Ads Attribution',
+                                  style: TextStyle(fontSize: 11, color: Colors.grey),
+                                ),
+                              ],
+                            ),
+                          ),
                         ],
                       ),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            color: AppColors.primary.withValues(alpha: 0.2),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(Icons.account_balance_rounded, color: AppColors.primary, size: 22),
-                        ),
-                        const SizedBox(width: 12),
-                        const Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Text(
-                                    'Financial Intelligence Hub',
-                                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                                  ),
-                                  SizedBox(width: 6),
-                                  Icon(Icons.arrow_forward_ios_rounded, size: 12, color: Colors.grey),
-                                ],
-                              ),
-                              SizedBox(height: 2),
-                              Text(
-                                'SBI Statement Importer • Zoho Books • Google Ads Attribution',
-                                style: TextStyle(fontSize: 11, color: Colors.grey),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
                     ),
                   ),
-                ),
 
                 // 1. FINANCIAL REVENUE & CASHFLOW AUDIT (Featured Card)
                 Row(

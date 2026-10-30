@@ -16,7 +16,9 @@ class ApiService {
 
   ApiService({String? baseUrl, String? apiToken})
       : _baseUrl = baseUrl ?? AppConstants.defaultApiBaseUrl {
-    _apiToken = apiToken;
+    _apiToken = (apiToken != null && apiToken.trim().isNotEmpty)
+        ? apiToken.trim()
+        : null;
   }
 
   String get baseUrl {
@@ -33,7 +35,10 @@ class ApiService {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
     if (!kIsWeb) 'User-Agent': 'X-Agents-Mobile/1.0.0 (Android; Flutter)',
-    if (_apiToken != null && _apiToken!.isNotEmpty) 'X-Mobile-Token': _apiToken!,
+    if (_apiToken != null && _apiToken!.isNotEmpty) ...{
+      'X-Mobile-Token': _apiToken!,
+      'Authorization': 'Bearer $_apiToken',
+    },
   };
 
   dynamic _safeJsonDecode(String body) {
@@ -84,9 +89,9 @@ class ApiService {
   }
 
   /// Update active mobile API token
-  Future<bool> setApiToken(String token) async {
+  Future<bool> setApiToken(String? token) async {
     try {
-      final clean = token.trim();
+      final clean = (token ?? '').trim();
       final prefs = await SharedPreferences.getInstance();
       if (clean.isEmpty) {
         _apiToken = null;
@@ -971,6 +976,83 @@ class ApiService {
     return null;
   }
 
+  /// 23b. Launch Automated B2B Dev Deepawali Multi-Channel Campaign (WhatsApp + Brevo + FluentCRM Drip)
+  Future<Map<String, dynamic>?> launchB2bBatchCampaign({
+    String? city,
+    int limit = 10,
+    bool force = false,
+    bool ignoreQuietHours = false,
+  }) async {
+    try {
+      final uri = Uri.parse('$baseUrl/mobile/b2b-batch-pitch');
+      final body = json.encode({
+        if (city != null && city.isNotEmpty && city.toLowerCase() != 'all') 'city': city,
+        'limit': limit,
+        'force': force,
+        'ignore_quiet_hours': ignoreQuietHours,
+      });
+      final response = await http
+          .post(uri, headers: _headers, body: body)
+          .timeout(const Duration(seconds: 30));
+      if (response.statusCode == 200) {
+        return _safeJsonDecode(response.body);
+      }
+    } catch (e) {
+      debugPrint('Error launching B2B batch campaign: $e');
+    }
+    return null;
+  }
+
+  /// 23c. Fetch Live Tour Package Catalog from WordPress (33+ Packages)
+  Future<List<Map<String, dynamic>>> fetchCatalog() async {
+    try {
+      final uri = Uri.parse('$baseUrl/catalog');
+      final response = await http.get(uri, headers: _headers).timeout(const Duration(seconds: 12));
+      if (response.statusCode == 200) {
+        final decoded = _safeJsonDecode(response.body);
+        if (decoded is Map && decoded['items'] is List) {
+          return List<Map<String, dynamic>>.from(
+            (decoded['items'] as List).map((e) => Map<String, dynamic>.from(e as Map)),
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint('Error fetching tour catalog: $e');
+    }
+    return [];
+  }
+
+  /// 23d. Official Quote & Booking Dispatch (stores in wp_tc_agent_quotes & wp_tc_agent_bookings)
+  Future<Map<String, dynamic>?> dispatchQuote({
+    required int contactId,
+    required String destination,
+    required String tier,
+    required int pax,
+    required double dealValue,
+    required double advanceAmount,
+    String? message,
+  }) async {
+    try {
+      final uri = Uri.parse('$baseUrl/mobile/dispatch-quote');
+      final body = json.encode({
+        'contact_id': contactId,
+        'destination': destination,
+        'tier': tier,
+        'pax': pax,
+        'deal_value': dealValue,
+        'advance_amount': advanceAmount,
+        if (message != null && message.isNotEmpty) 'message': message,
+      });
+      final response = await http.post(uri, headers: _headers, body: body).timeout(const Duration(seconds: 15));
+      if (response.statusCode == 200) {
+        return _safeJsonDecode(response.body);
+      }
+    } catch (e) {
+      debugPrint('Error dispatching quote: $e');
+    }
+    return null;
+  }
+
   /// 24. Real-Time Financials & Revenue Analytics
   Future<Map<String, dynamic>?> fetchFinancials() async {
     try {
@@ -1243,6 +1325,165 @@ class ApiService {
     return null;
   }
 
+  /// 34c. Google Ads Live Campaign & Ad Spend Sync
+  Future<Map<String, dynamic>?> syncGoogleAds() async {
+    try {
+      final uri = Uri.parse('$baseUrl/mobile/google-ads/sync');
+      final response = await http.post(uri, headers: _headers).timeout(const Duration(seconds: 25));
+      if (response.body.isNotEmpty) {
+        return _safeJsonDecode(response.body);
+      }
+    } catch (e) {
+      debugPrint('Error syncing Google Ads: $e');
+    }
+    return null;
+  }
+
+  /// 34d. Fetch Customer Margins & Unit Economics
+  Future<Map<String, dynamic>?> fetchCustomerMargins() async {
+    try {
+      final uri = Uri.parse('$baseUrl/mobile/customer-margins');
+      final response = await http.get(uri, headers: _headers).timeout(const Duration(seconds: 25));
+      if (response.body.isNotEmpty) {
+        return _safeJsonDecode(response.body);
+      }
+    } catch (e) {
+      debugPrint('Error fetching customer margins: $e');
+    }
+    return null;
+  }
+
+  /// 34e. Add Customer Direct Expense (Hotel, Cab, Aarti/Boat, Guide)
+  Future<Map<String, dynamic>?> addCustomerExpense({
+    required String invoiceNo,
+    String? customerName,
+    required String category,
+    required double amount,
+    String? vendorName,
+    String? expenseDate,
+    String paymentMethod = 'bank_debit',
+    int? bankTxnId,
+    String? notes,
+  }) async {
+    try {
+      final uri = Uri.parse('$baseUrl/mobile/customer-expenses/add');
+      final payload = {
+        'invoice_number': invoiceNo,
+        if (customerName != null) 'customer_name': customerName,
+        'category': category,
+        'amount': amount,
+        if (vendorName != null) 'vendor_name': vendorName,
+        if (expenseDate != null) 'expense_date': expenseDate,
+        'payment_method': paymentMethod,
+        if (bankTxnId != null) 'bank_txn_id': bankTxnId,
+        if (notes != null) 'notes': notes,
+      };
+      final response = await http.post(
+        uri,
+        headers: _headers,
+        body: jsonEncode(payload),
+      ).timeout(const Duration(seconds: 20));
+      if (response.body.isNotEmpty) {
+        return _safeJsonDecode(response.body);
+      }
+    } catch (e) {
+      debugPrint('Error adding customer expense: $e');
+    }
+    return null;
+  }
+
+  /// 34f. Link Bank Debit Transaction directly to Customer Invoice
+  Future<Map<String, dynamic>?> linkDebitToInvoice({
+    required int transactionId,
+    required String invoiceNo,
+    String? customerName,
+    String category = 'cab',
+    String? vendorName,
+    String? notes,
+  }) async {
+    try {
+      final uri = Uri.parse('$baseUrl/mobile/customer-expenses/link-debit');
+      final payload = {
+        'transaction_id': transactionId,
+        'invoice_number': invoiceNo,
+        if (customerName != null) 'customer_name': customerName,
+        'category': category,
+        if (vendorName != null) 'vendor_name': vendorName,
+        if (notes != null) 'notes': notes,
+      };
+      final response = await http.post(
+        uri,
+        headers: _headers,
+        body: jsonEncode(payload),
+      ).timeout(const Duration(seconds: 20));
+      if (response.body.isNotEmpty) {
+        return _safeJsonDecode(response.body);
+      }
+    } catch (e) {
+      debugPrint('Error linking debit to invoice: $e');
+    }
+    return null;
+  }
+
+  /// 34g. Delete Customer Expense
+  Future<Map<String, dynamic>?> deleteCustomerExpense(int expenseId) async {
+    try {
+      final uri = Uri.parse('$baseUrl/mobile/customer-expenses/delete');
+      final response = await http.post(
+        uri,
+        headers: _headers,
+        body: jsonEncode({'id': expenseId}),
+      ).timeout(const Duration(seconds: 15));
+      if (response.body.isNotEmpty) {
+        return _safeJsonDecode(response.body);
+      }
+    } catch (e) {
+      debugPrint('Error deleting customer expense: $e');
+    }
+    return null;
+  }
+
+  /// 34d. Fetch Google Ads Configuration & Connection Status
+  Future<Map<String, dynamic>?> fetchGoogleAdsConfig() async {
+    try {
+      final uri = Uri.parse('$baseUrl/mobile/google-ads/config');
+      final response = await http.get(uri, headers: _headers).timeout(const Duration(seconds: 12));
+      if (response.body.isNotEmpty) {
+        return _safeJsonDecode(response.body);
+      }
+    } catch (e) {
+      debugPrint('Error fetching Google Ads config: $e');
+    }
+    return null;
+  }
+
+  /// 34e. Upload Offline Conversion (OCT) to Google Ads for Target ROAS
+  Future<Map<String, dynamic>?> uploadGoogleAdsConversion({
+    required String gclid,
+    required double value,
+    String? orderId,
+  }) async {
+    try {
+      final uri = Uri.parse('$baseUrl/mobile/google-ads/upload-conversion');
+      final payload = {
+        'gclid': gclid.trim(),
+        'value': value,
+        if (orderId != null) 'order_id': orderId.trim(),
+      };
+      final response = await http.post(
+        uri,
+        headers: _headers,
+        body: jsonEncode(payload),
+      ).timeout(const Duration(seconds: 20));
+      if (response.body.isNotEmpty) {
+        return _safeJsonDecode(response.body);
+      }
+    } catch (e) {
+      debugPrint('Error uploading Google Ads OCT: $e');
+    }
+    return null;
+  }
+
   /// 35. 1-Click Google Sign-In Authentication
   Future<Map<String, dynamic>?> loginWithGoogle({
     required String email,
@@ -1266,6 +1507,8 @@ class ApiService {
           await setApiToken(data['token'].toString());
         }
         return data;
+      } else {
+        return _safeJsonDecode(response.body);
       }
     } catch (e) {
       debugPrint('Error with Google login: $e');
@@ -1312,6 +1555,109 @@ class ApiService {
       }
     } catch (e) {
       debugPrint('Error fetching me profile: $e');
+    }
+    return null;
+  }
+
+  /// 38. Payroll: Fetch Employees Directory
+  Future<Map<String, dynamic>?> fetchPayrollEmployees() async {
+    try {
+      final uri = Uri.parse('$baseUrl/mobile/payroll/employees');
+      final response = await http.get(uri, headers: _headers).timeout(const Duration(seconds: 15));
+      if (response.body.isNotEmpty) {
+        return _safeJsonDecode(response.body);
+      }
+    } catch (e) {
+      debugPrint('Error fetching payroll employees: $e');
+    }
+    return null;
+  }
+
+  /// 39. Payroll: Save or Update Employee
+  Future<Map<String, dynamic>?> savePayrollEmployee(Map<String, dynamic> employeeData) async {
+    try {
+      final uri = Uri.parse('$baseUrl/mobile/payroll/employees');
+      final response = await http.post(
+        uri,
+        headers: _headers,
+        body: jsonEncode(employeeData),
+      ).timeout(const Duration(seconds: 15));
+      if (response.body.isNotEmpty) {
+        return _safeJsonDecode(response.body);
+      }
+    } catch (e) {
+      debugPrint('Error saving payroll employee: $e');
+    }
+    return null;
+  }
+
+  /// 40. Payroll: Calculate Monthly Breakdown
+  Future<Map<String, dynamic>?> calculatePayroll({
+    String? month,
+    Map<String, dynamic>? attendance,
+  }) async {
+    try {
+      final uri = Uri.parse('$baseUrl/mobile/payroll/calculate');
+      final payload = {
+        if (month != null) 'month': month,
+        if (attendance != null) 'attendance': attendance,
+      };
+      final response = await http.post(
+        uri,
+        headers: _headers,
+        body: jsonEncode(payload),
+      ).timeout(const Duration(seconds: 20));
+      if (response.body.isNotEmpty) {
+        return _safeJsonDecode(response.body);
+      }
+    } catch (e) {
+      debugPrint('Error calculating payroll: $e');
+    }
+    return null;
+  }
+
+  /// 41. Payroll: Generate & Dispatch Payslip via WhatsApp
+  Future<Map<String, dynamic>?> dispatchPayrollPayslip({
+    required String employeeId,
+    String? month,
+  }) async {
+    try {
+      final uri = Uri.parse('$baseUrl/mobile/payroll/dispatch-payslip');
+      final payload = {
+        'employee_id': employeeId,
+        if (month != null) 'month': month,
+      };
+      final response = await http.post(
+        uri,
+        headers: _headers,
+        body: jsonEncode(payload),
+      ).timeout(const Duration(seconds: 20));
+      if (response.body.isNotEmpty) {
+        return _safeJsonDecode(response.body);
+      }
+    } catch (e) {
+      debugPrint('Error dispatching payslip: $e');
+    }
+    return null;
+  }
+
+  /// 42. Payroll: Sync Monthly Payroll Manual Journal to Zoho Books (Free Tier)
+  Future<Map<String, dynamic>?> syncPayrollToZoho({String? month}) async {
+    try {
+      final uri = Uri.parse('$baseUrl/mobile/payroll/sync-zoho');
+      final payload = {
+        if (month != null) 'month': month,
+      };
+      final response = await http.post(
+        uri,
+        headers: _headers,
+        body: jsonEncode(payload),
+      ).timeout(const Duration(seconds: 25));
+      if (response.body.isNotEmpty) {
+        return _safeJsonDecode(response.body);
+      }
+    } catch (e) {
+      debugPrint('Error syncing payroll to Zoho: $e');
     }
     return null;
   }

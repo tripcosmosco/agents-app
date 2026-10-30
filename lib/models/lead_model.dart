@@ -79,15 +79,15 @@ class LeadModel {
 
     return LeadModel(
       id: json['id']?.toString() ?? '',
-      name: json['name'] ?? json['customer_name'] ?? 'Prospective Traveler',
-      phone: json['phone'] ?? '',
-      email: json['email'] ?? '',
-      destination: json['destination'] ?? 'Varanasi',
-      companyOrCity: json['company'] ?? json['city'] ?? (json['destination'] ?? 'Varanasi'),
+      name: (json['name'] ?? json['customer_name'] ?? 'Prospective Traveler').toString(),
+      phone: (json['phone'] ?? '').toString(),
+      email: (json['email'] ?? '').toString(),
+      destination: (json['destination'] ?? 'Varanasi').toString(),
+      companyOrCity: (json['company'] ?? json['city'] ?? json['destination'] ?? 'Varanasi').toString(),
       pax: int.tryParse(json['pax']?.toString() ?? '2') ?? 2,
-      budget: json['deal_value'] != null ? '₹${json['deal_value']}' : (json['budget'] ?? ''),
+      budget: json['deal_value'] != null ? '₹${json['deal_value']}' : (json['budget']?.toString() ?? ''),
       stage: normalizedStage,
-      source: json['source_channel'] ?? json['source'] ?? 'website_chat',
+      source: (json['source_channel'] ?? json['source'] ?? 'website_chat').toString(),
       stickyAgent: (json['owner'] ?? json['sticky_agent'] ?? json['assigned_to'] ?? json['assigned_manager'] ?? '').toString().trim(),
       score: int.tryParse(json['score']?.toString() ?? '65') ?? 65,
       createdAt: json['created_at'] != null
@@ -103,7 +103,7 @@ class LeadModel {
       notes: (json['notes'] is List)
           ? List<String>.from(json['notes'].map((e) => e.toString()))
           : [],
-      lastChatSummary: json['last_chat_summary'] ?? json['requirements'] ?? json['last_message'] ?? json['reason'],
+      lastChatSummary: (json['last_chat_summary'] ?? json['requirements'] ?? json['last_message'] ?? json['reason'])?.toString(),
     );
   }
 

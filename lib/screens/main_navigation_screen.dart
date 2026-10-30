@@ -5,6 +5,7 @@ import '../core/theme/app_colors.dart';
 import '../providers/call_provider.dart';
 import '../providers/whatsapp_provider.dart';
 import 'ai_agents_screen.dart';
+import 'b2b_network_screen.dart';
 import 'dialer_screen.dart';
 import 'leads_screen.dart';
 import 'reports_screen.dart';
@@ -31,6 +32,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   final List<Widget> _screens = const [
     DialerScreen(),
     LeadsScreen(),
+    B2bNetworkScreen(),
     AiAgentsScreen(),
     WhatsAppHubScreen(),
     ReportsScreen(),
@@ -241,7 +243,11 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
             ),
             const BottomNavigationBarItem(
               icon: Icon(Icons.people_alt_rounded),
-              label: 'Leads CRM',
+              label: 'Leads',
+            ),
+            const BottomNavigationBarItem(
+              icon: Icon(Icons.hub_rounded),
+              label: 'B2B Hub',
             ),
             const BottomNavigationBarItem(
               icon: Icon(Icons.smart_toy_rounded),

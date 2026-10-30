@@ -89,6 +89,24 @@ class _TravelQuoteDialogState extends State<TravelQuoteDialog> {
     _advanceTokenController.text = _isB2bMode ? '2000' : '3000';
     _syncPriceControllers();
     _quoteMessageController.text = _generateQuotationText();
+
+    // Dynamically load live catalog tours from WordPress /catalog
+    final apiService = Provider.of<LeadProvider>(context, listen: false).apiService;
+    Future.microtask(() async {
+      try {
+        final items = await apiService.fetchCatalog();
+        if (items.isNotEmpty && mounted) {
+          setState(() {
+            for (final item in items) {
+              final title = (item['title'] ?? '').toString();
+              if (title.isNotEmpty && !_circuits.contains(title)) {
+                _circuits.insert(0, title);
+              }
+            }
+          });
+        }
+      } catch (_) {}
+    });
   }
 
   @override
@@ -1006,13 +1024,29 @@ class _TravelQuoteDialogState extends State<TravelQuoteDialog> {
                         onPressed: () async {
                           final quoteText = _isMessageManuallyEdited ? _quoteMessageController.text : _generateQuotationText();
                           final leadProvider = Provider.of<LeadProvider>(context, listen: false);
+                          final apiService = leadProvider.apiService;
+
                           leadProvider.updateLeadStage(widget.lead.id, 'quote_sent');
                           leadProvider.addLeadNote(
                             widget.lead.id,
                             '⚡ ${_isB2bMode ? "B2B Net Tariff" : "Custom Quotation"} for $_resolvedCircuit ($totalFormatted) dispatched via official WhatsApp.',
                           );
 
-                          final apiService = leadProvider.apiService;
+                          // 1. Officially persist quote & booking in WordPress database (wp_tc_agent_quotes & wp_tc_agent_bookings)
+                          final contactId = int.tryParse(widget.lead.id.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;
+                          if (contactId > 0) {
+                            await apiService.dispatchQuote(
+                              contactId: contactId,
+                              destination: _resolvedCircuit,
+                              tier: _hotelCategory.toLowerCase(),
+                              pax: _pax,
+                              dealValue: _activePrice.toDouble(),
+                              advanceAmount: _advanceToken.toDouble(),
+                              message: quoteText,
+                            );
+                          }
+
+                          // 2. Deliver via official WhatsApp
                           final delivered = await apiService.sendWhatsAppMessage(
                             phone: widget.lead.phone,
                             message: quoteText,

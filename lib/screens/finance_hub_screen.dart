@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../core/theme/app_colors.dart';
 import '../models/financial_hub_model.dart';
@@ -25,13 +26,23 @@ class FinanceHubScreen extends StatefulWidget {
 class _FinanceHubScreenState extends State<FinanceHubScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
-  bool _isLoadingBank = false;
-  bool _isLoadingZoho = false;
-  bool _isLoadingGAds = false;
+  bool _isLoadingMargins = true;
+  bool _isLoadingBank = true;
+  bool _isLoadingZoho = true;
+  bool _isLoadingGAds = true;
+  bool _isLoadingPayroll = true;
+  bool _isPostingToZoho = false;
+  final Set<String> _dispatchingPayslipEmpIds = {};
 
+  String? _marginsError;
   String? _bankError;
   String? _zohoError;
   String? _gadsError;
+  String? _payrollError;
+
+  Map<String, dynamic>? _marginsSummary;
+  List<CustomerMarginModel> _customerMargins = [];
+  String _searchQuery = '';
 
   BankSummaryModel? _bankSummary;
   List<BankTransactionModel> _bankTransactions = [];
@@ -46,15 +57,20 @@ class _FinanceHubScreenState extends State<FinanceHubScreen> with SingleTickerPr
   List<dynamic> _gadsCampaigns = [];
   List<GoogleAdsConversionModel> _gadsEvents = [];
 
+  List<Map<String, dynamic>> _payrollEmployees = [];
+  Map<String, dynamic>? _payrollRunSummary;
+  String _selectedPayrollMonth = DateFormat('yyyy-MM').format(DateTime.now());
+  final Map<String, Map<String, dynamic>> _attendanceOverrides = {};
+
   final currencyFormatter = NumberFormat.currency(locale: 'en_IN', symbol: '₹', decimalDigits: 0);
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(
-      length: 3,
+      length: 5,
       vsync: this,
-      initialIndex: widget.initialTabIndex.clamp(0, 2),
+      initialIndex: widget.initialTabIndex.clamp(0, 4),
     );
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadAll();
@@ -69,10 +85,48 @@ class _FinanceHubScreenState extends State<FinanceHubScreen> with SingleTickerPr
 
   Future<void> _loadAll() async {
     await Future.wait([
+      _loadCustomerMargins(),
       _loadBankData(),
       _loadZohoData(),
       _loadGoogleAdsData(),
+      _loadPayrollData(),
     ]);
+  }
+
+  Future<void> _loadCustomerMargins() async {
+    if (!mounted) return;
+    setState(() {
+      _isLoadingMargins = true;
+      _marginsError = null;
+    });
+    try {
+      final api = Provider.of<LeadProvider>(context, listen: false).apiService;
+      final res = await api.fetchCustomerMargins();
+      if (mounted) {
+        if (res != null && (res['ok'] == true || res['success'] == true)) {
+          final summaryRaw = (res['summary'] is Map) ? Map<String, dynamic>.from(res['summary'] as Map) : null;
+          final custRaw = (res['customers'] is List) ? (res['customers'] as List) : const [];
+          setState(() {
+            _marginsSummary = summaryRaw;
+            _customerMargins = custRaw.whereType<Map>().map((e) => CustomerMarginModel.fromJson(Map<String, dynamic>.from(e))).toList();
+            _isLoadingMargins = false;
+            _marginsError = null;
+          });
+        } else {
+          setState(() {
+            _isLoadingMargins = false;
+            _marginsError = res?['message']?.toString() ?? res?['error']?.toString() ?? 'Unable to fetch customer margins.';
+          });
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoadingMargins = false;
+          _marginsError = 'Connection error: $e';
+        });
+      }
+    }
   }
 
   Future<void> _loadBankData() async {
@@ -83,14 +137,14 @@ class _FinanceHubScreenState extends State<FinanceHubScreen> with SingleTickerPr
     });
     try {
       final api = Provider.of<LeadProvider>(context, listen: false).apiService;
-      final res = await api.fetchBankTransactions(limit: 100);
+      final res = await api.fetchBankTransactions(limit: 500);
       if (mounted) {
-        if (res != null && res['ok'] == true) {
-          final summaryRaw = res['summary'] as Map<String, dynamic>?;
-          final txnsRaw = res['transactions'] as List<dynamic>? ?? [];
+        if (res != null && (res['ok'] == true || res['success'] == true)) {
+          final summaryRaw = res['summary'] is Map ? Map<String, dynamic>.from(res['summary'] as Map) : null;
+          final txnsRaw = (res['transactions'] is List) ? (res['transactions'] as List) : const [];
           setState(() {
             if (summaryRaw != null) {
-              _bankSummary = BankSummaryModel.fromJson(Map<String, dynamic>.from(summaryRaw));
+              _bankSummary = BankSummaryModel.fromJson(summaryRaw);
             }
             _bankTransactions = txnsRaw.whereType<Map>().map((e) => BankTransactionModel.fromJson(Map<String, dynamic>.from(e))).toList();
             _isLoadingBank = false;
@@ -124,8 +178,8 @@ class _FinanceHubScreenState extends State<FinanceHubScreen> with SingleTickerPr
       final res = await api.fetchZohoSummary();
       if (mounted) {
         if (res != null && (res['ok'] == true || res['success'] == true)) {
-          final metrics = res['metrics'] as Map<String, dynamic>? ?? {};
-          final invoicesRaw = res['invoices'] as List<dynamic>? ?? [];
+          final metrics = res['metrics'] is Map ? Map<String, dynamic>.from(res['metrics'] as Map) : <String, dynamic>{};
+          final invoicesRaw = (res['invoices'] is List) ? (res['invoices'] as List) : const [];
           setState(() {
             _zohoConnected = res['connected'] == true;
             _zohoHelp = res['help']?.toString() ?? '';
@@ -176,10 +230,10 @@ class _FinanceHubScreenState extends State<FinanceHubScreen> with SingleTickerPr
       final api = Provider.of<LeadProvider>(context, listen: false).apiService;
       final res = await api.fetchGoogleAdsConversions();
       if (mounted) {
-        if (res != null && res['ok'] == true) {
-          final summary = res['summary'] as Map<String, dynamic>? ?? {};
-          final campaigns = res['by_campaign'] as List<dynamic>? ?? [];
-          final eventsRaw = res['events'] as List<dynamic>? ?? [];
+        if (res != null && (res['ok'] == true || res['success'] == true)) {
+          final summary = res['summary'] is Map ? Map<String, dynamic>.from(res['summary'] as Map) : <String, dynamic>{};
+          final campaigns = (res['by_campaign'] is List) ? (res['by_campaign'] as List) : const [];
+          final eventsRaw = (res['events'] is List) ? (res['events'] as List) : const [];
           setState(() {
             _gadsSummary = summary;
             _gadsCampaigns = campaigns;
@@ -224,6 +278,33 @@ class _FinanceHubScreenState extends State<FinanceHubScreen> with SingleTickerPr
           SnackBar(
             backgroundColor: Colors.orange,
             content: Text(res?['message'] ?? res?['error'] ?? 'Zoho Books connection ready.'),
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _syncGoogleAds() async {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Syncing live campaigns from Google Ads API...')),
+    );
+    final api = Provider.of<LeadProvider>(context, listen: false).apiService;
+    final res = await api.syncGoogleAds();
+    if (mounted) {
+      if (res != null && (res['ok'] == true || res['success'] == true)) {
+        final spend = res['total_spend']?.toString() ?? '0';
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            backgroundColor: Colors.green,
+            content: Text('✓ Google Ads API synced! 30-day spend: ₹$spend'),
+          ),
+        );
+        _loadGoogleAdsData();
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            backgroundColor: Colors.orange,
+            content: Text(res?['message'] ?? res?['error'] ?? 'Google Ads API ready.'),
           ),
         );
       }
@@ -611,10 +692,13 @@ class _FinanceHubScreenState extends State<FinanceHubScreen> with SingleTickerPr
               indicatorColor: AppColors.accentGold,
               labelColor: AppColors.accentGold,
               unselectedLabelColor: AppColors.getTextSecondary(context),
+              isScrollable: true,
               tabs: const [
+                Tab(icon: Icon(Icons.pie_chart_rounded, size: 19), text: 'Margins'),
                 Tab(icon: Icon(Icons.account_balance_rounded, size: 19), text: 'SBI Banking'),
                 Tab(icon: Icon(Icons.receipt_long_rounded, size: 19), text: 'Zoho Books'),
                 Tab(icon: Icon(Icons.track_changes_rounded, size: 19), text: 'Google Ads'),
+                Tab(icon: Icon(Icons.badge_rounded, size: 19), text: 'Payroll & Staff'),
               ],
             ),
           ),
@@ -623,10 +707,397 @@ class _FinanceHubScreenState extends State<FinanceHubScreen> with SingleTickerPr
       body: TabBarView(
         controller: _tabController,
         children: [
+          _buildCustomerMarginsTab(),
           _buildBankTab(),
           _buildZohoTab(),
           _buildGoogleAdsTab(),
+          _buildPayrollTab(),
         ],
+      ),
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // TAB 0: CUSTOMER PROFIT & MARGIN LEDGER
+  // ---------------------------------------------------------------------------
+  Widget _buildCustomerMarginsTab() {
+    if (_isLoadingMargins && _customerMargins.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const CircularProgressIndicator(color: AppColors.accentGold),
+            const SizedBox(height: 16),
+            Text('Calculating customer unit margins...', style: TextStyle(color: AppColors.getTextSecondary(context))),
+          ],
+        ),
+      );
+    }
+
+    if (_marginsError != null && _customerMargins.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.error_outline_rounded, color: Colors.orange, size: 40),
+              const SizedBox(height: 12),
+              Text(_marginsError!, textAlign: TextAlign.center, style: TextStyle(color: AppColors.getTextPrimary(context))),
+              const SizedBox(height: 16),
+              ElevatedButton(onPressed: _loadCustomerMargins, child: const Text('Retry')),
+            ],
+          ),
+        ),
+      );
+    }
+
+    final totalInvoiced = double.tryParse(_marginsSummary?['total_invoiced']?.toString() ?? '0') ?? 0.0;
+    final totalCogs = double.tryParse(_marginsSummary?['total_cogs']?.toString() ?? '0') ?? 0.0;
+    final netProfit = double.tryParse(_marginsSummary?['net_profit']?.toString() ?? '0') ?? 0.0;
+    final avgMargin = double.tryParse(_marginsSummary?['avg_margin_pct']?.toString() ?? '0') ?? 0.0;
+
+    final filtered = _customerMargins.where((c) {
+      if (_searchQuery.isEmpty) return true;
+      final q = _searchQuery.toLowerCase();
+      return c.customerName.toLowerCase().contains(q) || c.invoiceNumber.toLowerCase().contains(q);
+    }).toList();
+
+    return RefreshIndicator(
+      color: AppColors.accentGold,
+      onRefresh: _loadCustomerMargins,
+      child: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          // 4-Card Summary Grid
+          GridView.count(
+            crossAxisCount: 2,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            mainAxisSpacing: 10,
+            crossAxisSpacing: 10,
+            childAspectRatio: 2.1,
+            children: [
+              _buildMetricTile('Total Invoiced', currencyFormatter.format(totalInvoiced), Icons.receipt_rounded, Colors.blue),
+              _buildMetricTile('Direct Costs (COGS)', currencyFormatter.format(totalCogs), Icons.money_off_rounded, Colors.redAccent),
+              _buildMetricTile('Net Profit', currencyFormatter.format(netProfit), Icons.trending_up_rounded, Colors.green),
+              _buildMetricTile('Avg Margin %', '${avgMargin.toStringAsFixed(1)}%', Icons.pie_chart_outline_rounded, Colors.amber),
+            ],
+          ),
+          const SizedBox(height: 14),
+
+          // Search Bar & Add Button Row
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  decoration: InputDecoration(
+                    hintText: 'Search traveler name or invoice #...',
+                    hintStyle: TextStyle(fontSize: 12.5, color: AppColors.getTextSecondary(context)),
+                    prefixIcon: const Icon(Icons.search, size: 18),
+                    isDense: true,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  onChanged: (val) => setState(() => _searchQuery = val.trim()),
+                ),
+              ),
+              const SizedBox(width: 8),
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.accentGold,
+                  foregroundColor: AppColors.primaryDark,
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                icon: const Icon(Icons.add, size: 16),
+                label: const Text('Add Cost', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                onPressed: () => _showAddExpenseModal(null),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+
+          if (filtered.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 40),
+              child: Center(
+                child: Text('No customers matching search.', style: TextStyle(color: AppColors.getTextSecondary(context))),
+              ),
+            )
+          else
+            ...filtered.map((item) => _buildCustomerMarginCard(item)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCustomerMarginCard(CustomerMarginModel item) {
+    Color marginColor = Colors.green;
+    if (item.totalInvoiced <= 0 || item.marginPct < 15) {
+      marginColor = Colors.redAccent;
+    } else if (item.marginPct <= 30) {
+      marginColor = Colors.amber;
+    }
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: GlassCard(
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          item.customerName,
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppColors.getTextPrimary(context)),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          '${item.invoiceNumber} • ${item.date}',
+                          style: TextStyle(fontSize: 11, color: AppColors.getTextSecondary(context)),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: marginColor.withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: marginColor.withOpacity(0.5)),
+                    ),
+                    child: Text(
+                      '${item.marginPct.toStringAsFixed(1)}% Margin',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: marginColor),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+
+              // Invoiced vs Paid
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                decoration: BoxDecoration(
+                  color: AppColors.getSurface(context).withOpacity(0.5),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Invoiced: ${currencyFormatter.format(item.totalInvoiced)}', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12)),
+                    Text('Paid: ${currencyFormatter.format(item.totalPaid)}', style: const TextStyle(color: Colors.green, fontWeight: FontWeight.w600, fontSize: 11.5)),
+                    if (item.balance > 0)
+                      Text('Bal: ${currencyFormatter.format(item.balance)}', style: const TextStyle(color: Colors.redAccent, fontWeight: FontWeight.w600, fontSize: 11.5)),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 10),
+
+              // Breakdown Chips
+              Wrap(
+                spacing: 6,
+                runSpacing: 4,
+                children: [
+                  if (item.hotelExpense > 0) _buildCostChip('🏨 Hotel', item.hotelExpense),
+                  if (item.cabExpense > 0) _buildCostChip('🚕 Cab', item.cabExpense),
+                  if (item.aartiBoatExpense > 0) _buildCostChip('🪔 Aarti/Boat', item.aartiBoatExpense),
+                  if (item.guideTempleExpense > 0) _buildCostChip('🛕 Guide', item.guideTempleExpense),
+                  if (item.mealsExpense > 0) _buildCostChip('🍲 Meals', item.mealsExpense),
+                  if (item.otherExpense > 0) _buildCostChip('📦 Other', item.otherExpense),
+                  if (item.totalCogs == 0)
+                    Text('No tour expenses logged yet', style: TextStyle(fontSize: 11, fontStyle: FontStyle.italic, color: AppColors.getTextSecondary(context))),
+                ],
+              ),
+              const SizedBox(height: 10),
+              const Divider(height: 1),
+              const SizedBox(height: 8),
+
+              // Bottom Net Profit & Actions
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Net Customer Profit', style: TextStyle(fontSize: 10, color: AppColors.getTextSecondary(context))),
+                      Text(
+                        currencyFormatter.format(item.netProfit),
+                        style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: marginColor),
+                      ),
+                    ],
+                  ),
+                  OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      visualDensity: VisualDensity.compact,
+                    ),
+                    icon: const Icon(Icons.add_rounded, size: 14),
+                    label: const Text('Add Cost', style: TextStyle(fontSize: 11)),
+                    onPressed: () => _showAddExpenseModal(item),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCostChip(String label, double amount) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+      decoration: BoxDecoration(
+        color: Colors.red.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: Colors.red.withOpacity(0.2)),
+      ),
+      child: Text(
+        '$label: ${currencyFormatter.format(amount)}',
+        style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w600, color: Colors.redAccent),
+      ),
+    );
+  }
+
+  void _showAddExpenseModal(CustomerMarginModel? margin) {
+    String selectedInvoice = margin?.invoiceNumber ?? (_customerMargins.isNotEmpty ? _customerMargins.first.invoiceNumber : '');
+    String selectedCategory = 'cab';
+    final amountController = TextEditingController();
+    final vendorController = TextEditingController();
+    final notesController = TextEditingController();
+    bool isSaving = false;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setModalState) => Container(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(ctx).viewInsets.bottom + MediaQuery.of(ctx).padding.bottom + 20,
+            top: 20,
+            left: 20,
+            right: 20,
+          ),
+          decoration: BoxDecoration(
+            color: Theme.of(ctx).scaffoldBackgroundColor,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text('➕ Add Direct Tour Cost', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                    IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(ctx)),
+                  ],
+                ),
+                const SizedBox(height: 12),
+
+                // Invoice Dropdown
+                DropdownButtonFormField<String>(
+                  value: selectedInvoice.isNotEmpty ? selectedInvoice : null,
+                  decoration: const InputDecoration(labelText: 'Customer / Invoice *', border: OutlineInputBorder()),
+                  items: _customerMargins.map((c) => DropdownMenuItem(
+                    value: c.invoiceNumber,
+                    child: Text('${c.invoiceNumber} - ${c.customerName}', overflow: TextOverflow.ellipsis),
+                  )).toList(),
+                  onChanged: (val) => setModalState(() => selectedInvoice = val ?? ''),
+                ),
+                const SizedBox(height: 12),
+
+                // Category Dropdown
+                DropdownButtonFormField<String>(
+                  value: selectedCategory,
+                  decoration: const InputDecoration(labelText: 'Cost Category *', border: OutlineInputBorder()),
+                  items: const [
+                    DropdownMenuItem(value: 'hotel', child: Text('🏨 Hotel & Stay')),
+                    DropdownMenuItem(value: 'cab', child: Text('🚕 Cab & Transport')),
+                    DropdownMenuItem(value: 'aarti_boat', child: Text('🪔 Ganga Aarti & Boat')),
+                    DropdownMenuItem(value: 'guide_temple', child: Text('🛕 Guide & Temple VIP')),
+                    DropdownMenuItem(value: 'meals', child: Text('🍲 Meals & Food')),
+                    DropdownMenuItem(value: 'other', child: Text('📦 Other Tour Cost')),
+                  ],
+                  onChanged: (val) => setModalState(() => selectedCategory = val ?? 'cab'),
+                ),
+                const SizedBox(height: 12),
+
+                // Amount
+                TextField(
+                  controller: amountController,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(labelText: 'Amount (₹) *', prefixText: '₹ ', border: OutlineInputBorder()),
+                ),
+                const SizedBox(height: 12),
+
+                // Vendor / Payee
+                TextField(
+                  controller: vendorController,
+                  decoration: const InputDecoration(labelText: 'Vendor / Payee Name', hintText: 'e.g. Hotel Surya / Driver Ramesh', border: OutlineInputBorder()),
+                ),
+                const SizedBox(height: 12),
+
+                // Notes
+                TextField(
+                  controller: notesController,
+                  decoration: const InputDecoration(labelText: 'Notes', hintText: 'Remarks or route details', border: OutlineInputBorder()),
+                ),
+                const SizedBox(height: 16),
+
+                SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.accentGold,
+                      foregroundColor: AppColors.primaryDark,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    onPressed: isSaving ? null : () async {
+                      final amt = double.tryParse(amountController.text.trim()) ?? 0.0;
+                      if (selectedInvoice.isEmpty || amt <= 0) {
+                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please select invoice and enter valid amount.')));
+                        return;
+                      }
+                      setModalState(() => isSaving = true);
+                      final api = Provider.of<LeadProvider>(context, listen: false).apiService;
+                      final res = await api.addCustomerExpense(
+                        invoiceNo: selectedInvoice,
+                        category: selectedCategory,
+                        amount: amt,
+                        vendorName: vendorController.text.trim(),
+                        notes: notesController.text.trim(),
+                      );
+                      if (mounted) {
+                        Navigator.pop(ctx);
+                        if (res != null && (res['ok'] == true || res['success'] == true)) {
+                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(backgroundColor: Colors.green, content: Text('✓ Expense recorded & margin recalculated!')));
+                          _loadCustomerMargins();
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(res?['error'] ?? 'Could not add expense.')));
+                        }
+                      }
+                    },
+                    child: isSaving ? const CircularProgressIndicator() : const Text('Save Cost & Deduct Margin', style: TextStyle(fontWeight: FontWeight.bold)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -779,9 +1250,9 @@ class _FinanceHubScreenState extends State<FinanceHubScreen> with SingleTickerPr
               children: [
                 _buildFilterChip('All (${_bankTransactions.length})', 'all'),
                 const SizedBox(width: 8),
-                _buildFilterChip('Inflow (Credits)', 'credit'),
+                _buildFilterChip('Debits / Expenses (${_bankTransactions.where((t) => t.type == "debit").length})', 'debit'),
                 const SizedBox(width: 8),
-                _buildFilterChip('Outflow (Debits)', 'debit'),
+                _buildFilterChip('Credits / Inflow (${_bankTransactions.where((t) => t.type == "credit").length})', 'credit'),
                 const SizedBox(width: 8),
                 _buildFilterChip('Unreconciled', 'pending'),
               ],
@@ -962,13 +1433,43 @@ class _FinanceHubScreenState extends State<FinanceHubScreen> with SingleTickerPr
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                    decoration: BoxDecoration(
-                      color: Colors.grey.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(6),
+                  Expanded(
+                    child: Wrap(
+                      spacing: 6,
+                      runSpacing: 4,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+                          decoration: BoxDecoration(
+                            color: (isCredit ? Colors.green : Colors.redAccent).withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(5),
+                          ),
+                          child: Text(
+                            isCredit ? 'CREDIT / INFLOW' : 'DEBIT / EXPENSE',
+                            style: TextStyle(
+                              fontSize: 9.5,
+                              fontWeight: FontWeight.w800,
+                              color: isCredit ? Colors.green : Colors.redAccent,
+                              letterSpacing: 0.3,
+                            ),
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: Colors.grey.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            t.category,
+                            style: TextStyle(fontSize: 10, color: AppColors.getTextSecondary(context)),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
                     ),
-                    child: Text(t.category, style: TextStyle(fontSize: 10, color: AppColors.getTextSecondary(context))),
                   ),
                   const SizedBox(width: 8),
                   if (isCredit)
@@ -1375,6 +1876,26 @@ class _FinanceHubScreenState extends State<FinanceHubScreen> with SingleTickerPr
               ),
             ),
           ),
+          const SizedBox(height: 12),
+
+          // Google Ads API Live Sync Action Bar
+          Row(
+            children: [
+              Expanded(
+                child: ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue.shade700,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    minimumSize: const Size.fromHeight(40),
+                  ),
+                  icon: const Icon(Icons.sync_rounded, size: 16),
+                  label: const Text('Sync Google Ads API (30D Spend)', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                  onPressed: _syncGoogleAds,
+                ),
+              ),
+            ],
+          ),
           const SizedBox(height: 14),
 
           // KPI Grid
@@ -1454,8 +1975,9 @@ class _FinanceHubScreenState extends State<FinanceHubScreen> with SingleTickerPr
                 padding: const EdgeInsets.all(14),
                 child: Column(
                   children: _gadsCampaigns.map((c) {
-                    final name = c['campaign_name']?.toString() ?? 'Direct';
-                    final cnt = int.tryParse(c['count']?.toString() ?? '0') ?? 0;
+                    final cMap = c is Map ? c : const {};
+                    final name = cMap['campaign_name']?.toString() ?? 'Direct';
+                    final cnt = int.tryParse(cMap['count']?.toString() ?? '0') ?? 0;
                     return Padding(
                       padding: const EdgeInsets.symmetric(vertical: 4),
                       child: Row(
@@ -1602,6 +2124,877 @@ class _FinanceHubScreenState extends State<FinanceHubScreen> with SingleTickerPr
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // TAB 4: ZERO-COST EMPLOYEE SALARY & PAYROLL HUB
+  // ---------------------------------------------------------------------------
+  Future<void> _loadPayrollData({bool showLoader = true}) async {
+    if (!mounted) return;
+    if (showLoader) {
+      setState(() {
+        _isLoadingPayroll = true;
+        _payrollError = null;
+      });
+    }
+    try {
+      final api = Provider.of<LeadProvider>(context, listen: false).apiService;
+      final empRes = await api.fetchPayrollEmployees();
+      final calcRes = await api.calculatePayroll(
+        month: _selectedPayrollMonth,
+        attendance: _attendanceOverrides,
+      );
+
+      if (mounted) {
+        if (empRes != null && empRes['success'] == true) {
+          final list = (empRes['employees'] as List?)?.whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList() ?? [];
+          final run = (calcRes != null && calcRes['success'] == true && calcRes['payroll'] is Map)
+              ? Map<String, dynamic>.from(calcRes['payroll'] as Map)
+              : null;
+          setState(() {
+            _payrollEmployees = list;
+            _payrollRunSummary = run;
+            _isLoadingPayroll = false;
+            _payrollError = null;
+          });
+        } else {
+          setState(() {
+            _isLoadingPayroll = false;
+            _payrollError = empRes?['message']?.toString() ?? 'Unable to fetch employees';
+          });
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoadingPayroll = false;
+          _payrollError = 'Error: $e';
+        });
+      }
+    }
+  }
+
+  Future<void> _recalculatePayroll() async {
+    try {
+      final api = Provider.of<LeadProvider>(context, listen: false).apiService;
+      final calcRes = await api.calculatePayroll(
+        month: _selectedPayrollMonth,
+        attendance: _attendanceOverrides,
+      );
+      if (mounted && calcRes != null && calcRes['success'] == true && calcRes['payroll'] is Map) {
+        setState(() {
+          _payrollRunSummary = Map<String, dynamic>.from(calcRes['payroll'] as Map);
+        });
+      }
+    } catch (e) {
+      debugPrint('Error recalculating payroll: $e');
+    }
+  }
+
+  Future<void> _dispatchPayslipWhatsApp(String empId, String empName) async {
+    setState(() => _dispatchingPayslipEmpIds.add(empId));
+    try {
+      final api = Provider.of<LeadProvider>(context, listen: false).apiService;
+      final res = await api.dispatchPayrollPayslip(
+        employeeId: empId,
+        month: _selectedPayrollMonth,
+      );
+      if (mounted) {
+        if (res != null && res['success'] == true) {
+          final payslipUrl = res['payslip_url']?.toString() ?? '';
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              backgroundColor: Colors.green.shade800,
+              content: Row(
+                children: [
+                  const Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text('Payslip sent to $empName via WhatsApp!'),
+                  ),
+                  if (payslipUrl.isNotEmpty)
+                    TextButton(
+                      onPressed: () => launchUrl(Uri.parse(payslipUrl), mode: LaunchMode.externalApplication),
+                      child: const Text('VIEW', style: TextStyle(color: AppColors.accentGold, fontWeight: FontWeight.bold)),
+                    ),
+                ],
+              ),
+              duration: const Duration(seconds: 4),
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              backgroundColor: Colors.red.shade800,
+              content: Text(res?['message']?.toString() ?? 'Failed to dispatch payslip.'),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(backgroundColor: Colors.red.shade800, content: Text('Error: $e')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _dispatchingPayslipEmpIds.remove(empId));
+      }
+    }
+  }
+
+  Future<void> _syncPayrollToZoho() async {
+    setState(() => _isPostingToZoho = true);
+    try {
+      final api = Provider.of<LeadProvider>(context, listen: false).apiService;
+      final res = await api.syncPayrollToZoho(month: _selectedPayrollMonth);
+      if (mounted) {
+        if (res != null && res['success'] == true) {
+          final jId = res['journal_id']?.toString() ?? '';
+          showDialog(
+            context: context,
+            builder: (ctx) => AlertDialog(
+              backgroundColor: AppColors.getSurface(context),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              title: Row(
+                children: const [
+                  Icon(Icons.check_circle_rounded, color: Colors.green, size: 26),
+                  SizedBox(width: 10),
+                  Text('Zoho Books Synced', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                ],
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    res['message']?.toString() ?? 'Manual Journal Entry recorded in Zoho Books (Free Plan)!',
+                    style: TextStyle(color: AppColors.getTextPrimary(context), fontSize: 14),
+                  ),
+                  const SizedBox(height: 12),
+                  if (jId.isNotEmpty)
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: AppColors.getElevated(context),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text('Journal ID: $jId\nRef: PAYROLL-$_selectedPayrollMonth', style: const TextStyle(fontFamily: 'monospace', fontSize: 12)),
+                    ),
+                  const SizedBox(height: 10),
+                  const Text(
+                    '₹0 Cost: Recorded via Zoho Books manual journals without requiring a paid Zoho Payroll subscription.',
+                    style: TextStyle(fontSize: 12, color: Colors.teal),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: const Text('OK', style: TextStyle(color: AppColors.accentGold)),
+                ),
+              ],
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              backgroundColor: Colors.orange.shade800,
+              content: Text(res?['message']?.toString() ?? 'Zoho Books sync pending or failed.'),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(backgroundColor: Colors.red.shade800, content: Text('Error syncing to Zoho: $e')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isPostingToZoho = false);
+      }
+    }
+  }
+
+  void _openAddEmployeeDialog([Map<String, dynamic>? initial]) {
+    final isEdit = initial != null;
+    final nameCtrl = TextEditingController(text: initial?['name']?.toString() ?? '');
+    final emailCtrl = TextEditingController(text: initial?['email']?.toString() ?? '');
+    final phoneCtrl = TextEditingController(text: initial?['phone']?.toString() ?? '');
+    final roleCtrl = TextEditingController(text: initial?['designation']?.toString() ?? '');
+    final deptCtrl = TextEditingController(text: initial?['department']?.toString() ?? 'Operations');
+    final ctcCtrl = TextEditingController(text: initial?['monthly_ctc']?.toString() ?? '30000');
+    final bankCtrl = TextEditingController(text: initial?['bank_name']?.toString() ?? 'State Bank of India');
+    final accCtrl = TextEditingController(text: initial?['account_no']?.toString() ?? '');
+    final ifscCtrl = TextEditingController(text: initial?['ifsc']?.toString() ?? '');
+    final upiCtrl = TextEditingController(text: initial?['upi_id']?.toString() ?? '');
+    final panCtrl = TextEditingController(text: initial?['pan']?.toString() ?? '');
+
+    bool isSubmitting = false;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setModalState) => Container(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(ctx).viewInsets.bottom + MediaQuery.of(ctx).padding.bottom + 20,
+            top: 20,
+            left: 20,
+            right: 20,
+          ),
+          decoration: BoxDecoration(
+            color: AppColors.getSurface(context),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      isEdit ? 'Edit Employee Profile' : 'Add Team Member',
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.getTextPrimary(context)),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close_rounded),
+                      onPressed: () => Navigator.pop(ctx),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: nameCtrl,
+                  decoration: const InputDecoration(labelText: 'Full Name *', border: OutlineInputBorder()),
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: roleCtrl,
+                        decoration: const InputDecoration(labelText: 'Designation / Role *', border: OutlineInputBorder()),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: TextField(
+                        controller: deptCtrl,
+                        decoration: const InputDecoration(labelText: 'Department', border: OutlineInputBorder()),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: phoneCtrl,
+                        keyboardType: TextInputType.phone,
+                        decoration: const InputDecoration(labelText: 'WhatsApp Phone *', border: OutlineInputBorder()),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: TextField(
+                        controller: emailCtrl,
+                        keyboardType: TextInputType.emailAddress,
+                        decoration: const InputDecoration(labelText: 'Email Address', border: OutlineInputBorder()),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: ctcCtrl,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(labelText: 'Monthly Gross CTC (₹) *', border: OutlineInputBorder()),
+                ),
+                const SizedBox(height: 12),
+                Text('Bank & UPI Payout Info', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.accentGold)),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: bankCtrl,
+                        decoration: const InputDecoration(labelText: 'Bank Name', border: OutlineInputBorder()),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: TextField(
+                        controller: ifscCtrl,
+                        decoration: const InputDecoration(labelText: 'IFSC Code', border: OutlineInputBorder()),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: accCtrl,
+                        keyboardType: TextInputType.number,
+                        decoration: const InputDecoration(labelText: 'Bank Account No', border: OutlineInputBorder()),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: TextField(
+                        controller: upiCtrl,
+                        decoration: const InputDecoration(labelText: 'UPI ID (e.g. name@upi)', border: OutlineInputBorder()),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: panCtrl,
+                  decoration: const InputDecoration(labelText: 'PAN Card Number', border: OutlineInputBorder()),
+                ),
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.accentGold,
+                      foregroundColor: AppColors.primaryDark,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    onPressed: isSubmitting
+                        ? null
+                        : () async {
+                            final name = nameCtrl.text.trim();
+                            final phone = phoneCtrl.text.trim();
+                            final ctc = double.tryParse(ctcCtrl.text.trim()) ?? 0;
+                            if (name.isEmpty || phone.isEmpty || ctc <= 0) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Please fill all required fields.')),
+                              );
+                              return;
+                            }
+                            setModalState(() => isSubmitting = true);
+                            final api = Provider.of<LeadProvider>(context, listen: false).apiService;
+                            final res = await api.savePayrollEmployee({
+                              if (isEdit) 'id': initial['id'],
+                              'name': name,
+                              'email': emailCtrl.text.trim(),
+                              'phone': phone,
+                              'designation': roleCtrl.text.trim(),
+                              'department': deptCtrl.text.trim(),
+                              'monthly_ctc': ctc,
+                              'bank_name': bankCtrl.text.trim(),
+                              'account_no': accCtrl.text.trim(),
+                              'ifsc': ifscCtrl.text.trim(),
+                              'upi_id': upiCtrl.text.trim(),
+                              'pan': panCtrl.text.trim(),
+                            });
+                            if (mounted) {
+                              Navigator.pop(ctx);
+                              if (res != null && res['success'] == true) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(backgroundColor: Colors.green, content: Text('Employee saved successfully!')),
+                                );
+                                _loadPayrollData();
+                              } else {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(backgroundColor: Colors.red, content: Text(res?['error'] ?? 'Save failed')),
+                                );
+                              }
+                            }
+                          },
+                    child: isSubmitting
+                        ? const CircularProgressIndicator(color: AppColors.primaryDark)
+                        : Text(isEdit ? 'Save Changes' : 'Add Employee', style: const TextStyle(fontWeight: FontWeight.bold)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPayrollTab() {
+    if (_isLoadingPayroll && _payrollEmployees.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const CircularProgressIndicator(color: AppColors.accentGold),
+            const SizedBox(height: 16),
+            Text('Loading payroll engine...', style: TextStyle(color: AppColors.getTextSecondary(context))),
+          ],
+        ),
+      );
+    }
+
+    if (_payrollError != null && _payrollEmployees.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.error_outline_rounded, color: Colors.orange, size: 40),
+              const SizedBox(height: 12),
+              Text(_payrollError!, textAlign: TextAlign.center, style: TextStyle(color: AppColors.getTextPrimary(context))),
+              const SizedBox(height: 16),
+              ElevatedButton(onPressed: _loadPayrollData, child: const Text('Retry')),
+            ],
+          ),
+        ),
+      );
+    }
+
+    final totalNet = double.tryParse(_payrollRunSummary?['total_net']?.toString() ?? '0') ?? 0.0;
+    final totalGross = double.tryParse(_payrollRunSummary?['total_gross']?.toString() ?? '0') ?? 0.0;
+    final totalDeductions = double.tryParse(_payrollRunSummary?['total_deductions']?.toString() ?? '0') ?? 0.0;
+    final staffCount = _payrollRunSummary?['employee_count'] ?? _payrollEmployees.length;
+
+    final runItems = (_payrollRunSummary?['items'] as List?)?.whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList() ?? [];
+
+    return RefreshIndicator(
+      onRefresh: () => _loadPayrollData(showLoader: false),
+      color: AppColors.accentGold,
+      child: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          // 1. Controls Header: Month selector, Post to Zoho, Add Staff
+          Row(
+            children: [
+              // Month selector pill
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: AppColors.getElevated(context),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppColors.getBorder(context)),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.calendar_month_rounded, size: 16, color: AppColors.accentGold),
+                    const SizedBox(width: 8),
+                    Text(
+                      _payrollRunSummary?['month_name']?.toString() ?? _selectedPayrollMonth,
+                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.getTextPrimary(context)),
+                    ),
+                  ],
+                ),
+              ),
+              const Spacer(),
+              // Add Staff Button
+              IconButton(
+                icon: const Icon(Icons.person_add_rounded, color: AppColors.accentGold),
+                tooltip: 'Add Staff Member',
+                onPressed: () => _openAddEmployeeDialog(),
+              ),
+              // Refresh Button
+              IconButton(
+                icon: const Icon(Icons.refresh_rounded),
+                tooltip: 'Refresh Payroll',
+                onPressed: () => _loadPayrollData(),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+
+          // 2. Monthly Run Hero Card
+          GlassCard(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'NET SALARY PAYOUT',
+                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.getTextSecondary(context), letterSpacing: 0.5),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            currencyFormatter.format(totalNet),
+                            style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: Colors.green),
+                          ),
+                        ],
+                      ),
+                      // Post to Zoho Books Button
+                      ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.teal.shade700,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                        onPressed: _isPostingToZoho ? null : _syncPayrollToZoho,
+                        icon: _isPostingToZoho
+                            ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                            : const Icon(Icons.account_balance_wallet_rounded, size: 16),
+                        label: Text(_isPostingToZoho ? 'Syncing...' : 'Post to Zoho', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 14),
+                  const Divider(height: 1),
+                  const SizedBox(height: 14),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Gross CTC', style: TextStyle(fontSize: 11, color: AppColors.getTextMuted(context))),
+                            const SizedBox(height: 2),
+                            Text(currencyFormatter.format(totalGross), style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.getTextPrimary(context))),
+                          ],
+                        ),
+                      ),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('LOP / Deductions', style: TextStyle(fontSize: 11, color: AppColors.getTextMuted(context))),
+                            const SizedBox(height: 2),
+                            Text(currencyFormatter.format(totalDeductions), style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.orange)),
+                          ],
+                        ),
+                      ),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Active Staff', style: TextStyle(fontSize: 11, color: AppColors.getTextMuted(context))),
+                            const SizedBox(height: 2),
+                            Text('$staffCount Members', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.accentGold)),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          // 3. Zero-Cost Zoho Books Callout Banner
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            decoration: BoxDecoration(
+              color: Colors.teal.withOpacity(0.08),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.teal.withOpacity(0.25)),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.verified_rounded, color: Colors.teal, size: 18),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    '100% Free Compliance: Auto-syncs Manual Journal Entry (Debit: Salaries Expense / Credit: Payroll Payable) directly to Zoho Books Free Tier without paying ₹50/emp for Zoho Payroll.',
+                    style: TextStyle(fontSize: 11, color: AppColors.getTextSecondary(context), height: 1.3),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // 4. Employee Directory & Salary Breakdown List
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Staff Directory & Disbursals (${_payrollEmployees.length})',
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.getTextPrimary(context)),
+              ),
+              Text(
+                'Statutory CTC: 50/20/30',
+                style: TextStyle(fontSize: 11, color: AppColors.accentGold, fontWeight: FontWeight.w600),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+
+          ..._payrollEmployees.map((emp) {
+            final empId = emp['id']?.toString() ?? '';
+            final empName = emp['name']?.toString() ?? 'Staff';
+            final role = emp['designation']?.toString() ?? 'Associate';
+            final dept = emp['department']?.toString() ?? 'Ops';
+            final phone = emp['phone']?.toString() ?? '';
+            final upi = emp['upi_id']?.toString() ?? '';
+            final bank = emp['bank_name']?.toString() ?? '';
+            final acc = emp['account_no']?.toString() ?? '';
+            final ifsc = emp['ifsc']?.toString() ?? '';
+
+            // Find computed item for this employee
+            final item = runItems.firstWhere(
+              (it) => it['employee_id'] == empId,
+              orElse: () => emp,
+            );
+
+            final ctc = double.tryParse(item['monthly_ctc']?.toString() ?? '0') ?? 0.0;
+            final netPay = double.tryParse(item['net_payable']?.toString() ?? '0') ?? ctc;
+            final lopDays = double.tryParse(item['lop_days']?.toString() ?? '0') ?? 0.0;
+            final isDispatching = _dispatchingPayslipEmpIds.contains(empId);
+
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: GlassCard(
+                child: Padding(
+                  padding: const EdgeInsets.all(14),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Employee Header
+                      Row(
+                        children: [
+                          CircleAvatar(
+                            radius: 18,
+                            backgroundColor: AppColors.accentGold.withOpacity(0.15),
+                            child: Text(
+                              empName.isNotEmpty ? empName[0].toUpperCase() : 'E',
+                              style: const TextStyle(color: AppColors.accentGold, fontWeight: FontWeight.bold, fontSize: 14),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Flexible(
+                                      child: Text(
+                                        empName,
+                                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.getTextPrimary(context)),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                      decoration: BoxDecoration(
+                                        color: AppColors.accentGold.withOpacity(0.12),
+                                        borderRadius: BorderRadius.circular(6),
+                                      ),
+                                      child: Text(dept, style: const TextStyle(fontSize: 9, color: AppColors.accentGold, fontWeight: FontWeight.bold)),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  phone.isNotEmpty ? '$role • +$phone' : role,
+                                  style: TextStyle(fontSize: 11, color: AppColors.getTextSecondary(context)),
+                                ),
+                              ],
+                            ),
+                          ),
+                          // Edit icon
+                          IconButton(
+                            icon: const Icon(Icons.edit_outlined, size: 16),
+                            color: AppColors.getTextMuted(context),
+                            tooltip: 'Edit Profile',
+                            onPressed: () => _openAddEmployeeDialog(emp),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+
+                      // Salary Breakdown Row
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: AppColors.getElevated(context),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text('Gross CTC', style: TextStyle(fontSize: 10, color: AppColors.getTextMuted(context))),
+                                  const SizedBox(height: 2),
+                                  Text(currencyFormatter.format(ctc), style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.getTextPrimary(context))),
+                                ],
+                              ),
+                            ),
+                            // LOP Stepper
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  Text('LOP (Leaves)', style: TextStyle(fontSize: 10, color: AppColors.getTextMuted(context))),
+                                  const SizedBox(height: 2),
+                                  Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      InkWell(
+                                        onTap: () {
+                                          if (lopDays > 0) {
+                                            _attendanceOverrides[empId] = {
+                                              ...?_attendanceOverrides[empId],
+                                              'lop_days': lopDays - 1,
+                                            };
+                                            _recalculatePayroll();
+                                          }
+                                        },
+                                        child: const Padding(
+                                          padding: EdgeInsets.all(2),
+                                          child: Icon(Icons.remove_circle_outline_rounded, size: 15, color: Colors.orange),
+                                        ),
+                                      ),
+                                      Padding(
+                                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                                        child: Text(
+                                          '${lopDays.toInt()}d',
+                                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.orange),
+                                        ),
+                                      ),
+                                      InkWell(
+                                        onTap: () {
+                                          _attendanceOverrides[empId] = {
+                                            ...?_attendanceOverrides[empId],
+                                            'lop_days': lopDays + 1,
+                                          };
+                                          _recalculatePayroll();
+                                        },
+                                        child: const Padding(
+                                          padding: EdgeInsets.all(2),
+                                          child: Icon(Icons.add_circle_outline_rounded, size: 15, color: Colors.orange),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                            // Net Salary
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: [
+                                  Text('Net Payout', style: TextStyle(fontSize: 10, color: AppColors.getTextMuted(context))),
+                                  const SizedBox(height: 2),
+                                  Text(currencyFormatter.format(netPay), style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: Colors.green)),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+
+                      // Bank / UPI Details
+                      Row(
+                        children: [
+                          Icon(Icons.account_balance_rounded, size: 13, color: AppColors.getTextMuted(context)),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Text(
+                              '$bank ${acc.length > 4 ? "• • ${acc.substring(acc.length - 4)}" : acc} ($ifsc)',
+                              style: TextStyle(fontSize: 10, color: AppColors.getTextSecondary(context)),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          if (upi.isNotEmpty) ...[
+                            const SizedBox(width: 6),
+                            InkWell(
+                              onTap: () {
+                                Clipboard.setData(ClipboardData(text: upi));
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(duration: const Duration(seconds: 2), content: Text('Copied UPI: $upi')),
+                                );
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: Colors.blue.withOpacity(0.12),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(Icons.copy_rounded, size: 10, color: Colors.blue),
+                                    const SizedBox(width: 4),
+                                    Text(upi, style: const TextStyle(fontSize: 10, color: Colors.blue, fontWeight: FontWeight.bold)),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+
+                      // Action Buttons: View Payslip & Send WhatsApp
+                      Row(
+                        children: [
+                          // View Payslip Button
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              style: OutlinedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(vertical: 8),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                side: BorderSide(color: AppColors.getBorder(context)),
+                              ),
+                              onPressed: () {
+                                final payslipUrl = 'https://tripcosmos.co/wp-content/uploads/payslips/payslip_${_selectedPayrollMonth}_$empId.html';
+                                launchUrl(Uri.parse(payslipUrl), mode: LaunchMode.externalApplication);
+                              },
+                              icon: const Icon(Icons.description_outlined, size: 15),
+                              label: const Text('View Payslip', style: TextStyle(fontSize: 11)),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          // WhatsApp Dispatch Button
+                          Expanded(
+                            child: ElevatedButton.icon(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF25D366),
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(vertical: 8),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                              ),
+                              onPressed: isDispatching ? null : () => _dispatchPayslipWhatsApp(empId, empName),
+                              icon: isDispatching
+                                  ? const SizedBox(width: 12, height: 12, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                                  : const Icon(Icons.send_rounded, size: 14),
+                              label: Text(isDispatching ? 'Sending...' : 'WhatsApp', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          }),
+
+          const SizedBox(height: 40),
+        ],
       ),
     );
   }

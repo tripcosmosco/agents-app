@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import '../models/event_model.dart';
 import '../services/api_service.dart';
+import '../services/notification_service.dart';
 
 class EventProvider extends ChangeNotifier {
   final ApiService apiService;
@@ -114,6 +115,27 @@ class EventProvider extends ChangeNotifier {
       HapticFeedback.heavyImpact();
       SystemSound.play(SystemSoundType.alert);
     } catch (_) {}
+
+    // Dispatch system heads-up notification for leads & calls
+    try {
+      if (event.isCallQueued) {
+        NotificationService().showIncomingCallNotification(
+          callerName: event.title,
+          phoneNumber: event.details['phone']?.toString() ?? '',
+          tourInterest: event.details['destination']?.toString(),
+        );
+      } else if (event.isLeadCapture) {
+        NotificationService().showNewLeadNotification(
+          leadName: event.title,
+          phone: event.details['phone']?.toString() ?? '',
+          destination: event.details['destination']?.toString() ?? 'Varanasi',
+          source: event.details['source']?.toString(),
+        );
+      }
+    } catch (e) {
+      debugPrint('Notification dispatch error: $e');
+    }
+
     _alertDismissTimer?.cancel();
     // Auto-dismiss banner after 7 seconds
     _alertDismissTimer = Timer(const Duration(seconds: 7), () {

@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../core/constants/app_constants.dart';
 import '../models/user_model.dart';
 import '../services/api_service.dart';
 
@@ -20,9 +19,12 @@ class AuthProvider extends ChangeNotifier {
   String? get errorMessage => _errorMessage;
 
   bool get isAuthenticated => _user != null;
+  bool get isAdmin => _user?.role == 'administrator';
+  bool hasPermission(String perm) => _user?.hasPermission(perm) ?? false;
 
   final GoogleSignIn _googleSignIn = GoogleSignIn(
     scopes: ['email', 'profile'],
+    serverClientId: '77399722057-6o97tf20jmhjaaid60gks1ajn5k1029s.apps.googleusercontent.com',
   );
 
   AuthProvider({required this.apiService}) {
@@ -74,6 +76,13 @@ class AuthProvider extends ChangeNotifier {
       }
 
       final auth = await account.authentication;
+      if (auth.idToken == null || auth.idToken!.isEmpty) {
+        _errorMessage = 'Google authentication did not provide an ID token. Check Google Play Services.';
+        _isLoading = false;
+        notifyListeners();
+        return false;
+      }
+
       final res = await apiService.loginWithGoogle(
         email: account.email,
         idToken: auth.idToken,
@@ -135,15 +144,16 @@ class AuthProvider extends ChangeNotifier {
   Future<void> continueAsDemoAgent({String role = 'tc_sales_agent'}) async {
     _user = UserModel(
       id: 999,
-      name: 'Demo Agent Companion',
+      name: 'Offline Demo Agent',
       email: 'demo@tripcosmos.co',
       username: 'demo_agent',
       role: role,
-      roleLabel: role == 'administrator' ? 'Administrator' : 'Sales Representative',
+      roleLabel: 'Offline Demo (Read-Only)',
       avatarUrl: '',
-      permissions: const ['all'],
+      permissions: const ['leads_view', 'dialer'],
     );
-    await apiService.setApiToken(AppConstants.defaultMobileToken);
+    // Explicitly set null API token so offline demo NEVER touches live production API or WhatsApp
+    await apiService.setApiToken(null);
     await _saveUserLocally(_user!);
     notifyListeners();
   }

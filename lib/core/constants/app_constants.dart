@@ -8,7 +8,8 @@ class AppConstants {
   // Production WordPress REST Endpoints
   static const String defaultApiBaseUrl =
       'https://tripcosmos.co/wp-json/tc-agents/v1';
-  static const String defaultMobileToken = 'a9P3cHjoyDq5Fkm0ucODllxnuuy35rXJ';
+  // Tokens are obtained strictly via authenticated login (Google OAuth or WordPress credentials)
+  static const String? defaultMobileToken = null;
 
   // Primary Free Hardware Bridge
   static const String officeJioPhone = '+919336116210';

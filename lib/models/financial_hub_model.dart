@@ -122,6 +122,113 @@ class ZohoInvoiceModel {
   }
 }
 
+class CustomerMarginModel {
+  final String invoiceNumber;
+  final String customerName;
+  final String date;
+  final String dueDate;
+  final String status;
+  final double totalInvoiced;
+  final double totalPaid;
+  final double balance;
+  final double hotelExpense;
+  final double cabExpense;
+  final double aartiBoatExpense;
+  final double guideTempleExpense;
+  final double mealsExpense;
+  final double otherExpense;
+  final double totalCogs;
+  final double netProfit;
+  final double marginPct;
+  final int expenseCount;
+
+  CustomerMarginModel({
+    required this.invoiceNumber,
+    required this.customerName,
+    required this.date,
+    required this.dueDate,
+    required this.status,
+    required this.totalInvoiced,
+    required this.totalPaid,
+    required this.balance,
+    required this.hotelExpense,
+    required this.cabExpense,
+    required this.aartiBoatExpense,
+    required this.guideTempleExpense,
+    required this.mealsExpense,
+    required this.otherExpense,
+    required this.totalCogs,
+    required this.netProfit,
+    required this.marginPct,
+    required this.expenseCount,
+  });
+
+  factory CustomerMarginModel.fromJson(Map<String, dynamic> json) {
+    final exp = (json['expenses'] is Map) ? Map<String, dynamic>.from(json['expenses'] as Map) : <String, dynamic>{};
+    return CustomerMarginModel(
+      invoiceNumber: json['invoice_number']?.toString() ?? '',
+      customerName: json['customer_name']?.toString() ?? 'Traveler',
+      date: json['date']?.toString() ?? '',
+      dueDate: json['due_date']?.toString() ?? '',
+      status: json['status']?.toString().toLowerCase() ?? 'draft',
+      totalInvoiced: double.tryParse(json['total_invoiced']?.toString() ?? '0') ?? 0.0,
+      totalPaid: double.tryParse(json['total_paid']?.toString() ?? '0') ?? 0.0,
+      balance: double.tryParse(json['balance']?.toString() ?? '0') ?? 0.0,
+      hotelExpense: double.tryParse(exp['hotel']?.toString() ?? '0') ?? 0.0,
+      cabExpense: double.tryParse(exp['cab']?.toString() ?? '0') ?? 0.0,
+      aartiBoatExpense: double.tryParse(exp['aarti_boat']?.toString() ?? '0') ?? 0.0,
+      guideTempleExpense: double.tryParse(exp['guide_temple']?.toString() ?? '0') ?? 0.0,
+      mealsExpense: double.tryParse(exp['meals']?.toString() ?? '0') ?? 0.0,
+      otherExpense: double.tryParse(exp['other']?.toString() ?? '0') ?? 0.0,
+      totalCogs: double.tryParse(exp['total']?.toString() ?? '0') ?? 0.0,
+      netProfit: double.tryParse(json['net_profit']?.toString() ?? '0') ?? 0.0,
+      marginPct: double.tryParse(json['margin_pct']?.toString() ?? '0') ?? 0.0,
+      expenseCount: int.tryParse(json['expense_count']?.toString() ?? '0') ?? 0,
+    );
+  }
+}
+
+class CustomerExpenseItemModel {
+  final int id;
+  final String invoiceNo;
+  final String customerName;
+  final String category;
+  final String vendorName;
+  final double amount;
+  final String expenseDate;
+  final String paymentMethod;
+  final int? bankTxnId;
+  final String notes;
+
+  CustomerExpenseItemModel({
+    required this.id,
+    required this.invoiceNo,
+    required this.customerName,
+    required this.category,
+    required this.vendorName,
+    required this.amount,
+    required this.expenseDate,
+    required this.paymentMethod,
+    this.bankTxnId,
+    required this.notes,
+  });
+
+  factory CustomerExpenseItemModel.fromJson(Map<String, dynamic> json) {
+    return CustomerExpenseItemModel(
+      id: int.tryParse(json['id']?.toString() ?? '0') ?? 0,
+      invoiceNo: json['invoice_no']?.toString() ?? '',
+      customerName: json['customer_name']?.toString() ?? '',
+      category: json['category']?.toString() ?? 'other',
+      vendorName: json['vendor_name']?.toString() ?? '',
+      amount: double.tryParse(json['amount']?.toString() ?? '0') ?? 0.0,
+      expenseDate: json['expense_date']?.toString() ?? '',
+      paymentMethod: json['payment_method']?.toString() ?? 'bank_debit',
+      bankTxnId: int.tryParse(json['bank_txn_id']?.toString() ?? ''),
+      notes: json['notes']?.toString() ?? '',
+    );
+  }
+}
+
 class GoogleAdsConversionModel {
   final int id;
   final String eventType;

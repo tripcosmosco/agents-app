@@ -73,6 +73,161 @@ class _B2bPartnersViewState extends State<B2bPartnersView> {
     }
   }
 
+  void _showDevDiwaliCampaignDialog(BuildContext context) {
+    String targetCity = _selectedCity == 'All' ? 'Mumbai' : _selectedCity;
+    int limit = 10;
+    bool forceSend = true; // Default true so testing during evening/quiet hours works seamlessly
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          backgroundColor: const Color(0xFF0F172A),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18), side: const BorderSide(color: Color(0xFFF59E0B), width: 1.2)),
+          title: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF59E0B).withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(Icons.rocket_launch_rounded, color: Color(0xFFFBBF24), size: 24),
+              ),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Dev Deepawali 2026 B2B Campaign',
+                      style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w800),
+                    ),
+                    Text(
+                      'Automated WhatsApp + Email + Sequence Drip',
+                      style: TextStyle(color: Color(0xFFFBBF24), fontSize: 11, fontWeight: FontWeight.w600),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1E293B),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.white12),
+                  ),
+                  child: const Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '🎯 Multi-Channel B2B Wholesale Outreach:',
+                        style: TextStyle(color: Colors.white, fontSize: 11.5, fontWeight: FontWeight.w700),
+                      ),
+                      SizedBox(height: 6),
+                      Text(
+                        '• WhatsApp Pitch: Evolution API verified numbers\n• Wholesale Rate Card: Brevo responsive HTML\n• Sequence 6 Drip: Touch 2 (+48h) & Touch 3 (+96h)\n• CRM: Automatic FluentCRM List 8 & Tag sync',
+                        style: TextStyle(color: Colors.white70, fontSize: 11, height: 1.4),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 14),
+                const Text('Target City / Cluster', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700)),
+                const SizedBox(height: 6),
+                DropdownButtonFormField<String>(
+                  initialValue: targetCity,
+                  dropdownColor: const Color(0xFF1E293B),
+                  style: const TextStyle(color: Colors.white, fontSize: 13),
+                  decoration: const InputDecoration(isDense: true),
+                  items: ['All', 'Mumbai', 'Ahmedabad', 'Surat', 'Delhi', 'Bengaluru', 'Kolkata', 'Hyderabad', 'Pune']
+                      .map((c) => DropdownMenuItem(value: c, child: Text(c == 'All' ? 'All Ingested Cities' : c)))
+                      .toList(),
+                  onChanged: (val) {
+                    if (val != null) setDialogState(() => targetCity = val);
+                  },
+                ),
+                const SizedBox(height: 14),
+                Row(
+                  children: [
+                    const Expanded(
+                      child: Text('Agencies per Batch', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700)),
+                    ),
+                    Text('$limit agencies', style: const TextStyle(color: Color(0xFFFBBF24), fontWeight: FontWeight.w800, fontSize: 12)),
+                  ],
+                ),
+                Slider(
+                  value: limit.toDouble(),
+                  min: 1,
+                  max: 25,
+                  divisions: 24,
+                  activeColor: const Color(0xFFF59E0B),
+                  onChanged: (val) => setDialogState(() => limit = val.round()),
+                ),
+                const SizedBox(height: 6),
+                SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  dense: true,
+                  title: const Text('Force Send (Bypass Quiet Hours / Test Mode)', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700)),
+                  subtitle: const Text('Sends immediately even outside 8:30 AM - 9:00 PM IST', style: TextStyle(color: Colors.white54, fontSize: 10.5)),
+                  value: forceSend,
+                  activeTrackColor: const Color(0xFF10B981),
+                  onChanged: (val) => setDialogState(() => forceSend = val),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancel', style: TextStyle(color: Colors.white54)),
+            ),
+            ElevatedButton.icon(
+              onPressed: () async {
+                Navigator.pop(ctx);
+                setState(() => _isLoading = true);
+                final api = Provider.of<LeadProvider>(context, listen: false).apiService;
+                final res = await api.launchB2bBatchCampaign(
+                  city: targetCity == 'All' ? '' : targetCity,
+                  limit: limit,
+                  force: forceSend,
+                  ignoreQuietHours: forceSend,
+                );
+                await _loadAgenciesFromServer();
+                if (context.mounted) {
+                  final data = res?['data'] is Map ? res!['data'] as Map : res;
+                  final dispatched = data?['dispatched'] ?? 0;
+                  final msg = data?['message']?.toString();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(msg ?? '✓ Dev Deepawali B2B Campaign dispatched to $dispatched agencies!'),
+                      backgroundColor: const Color(0xFF10B981),
+                      duration: const Duration(seconds: 4),
+                    ),
+                  );
+                }
+              },
+              icon: const Icon(Icons.send_rounded, size: 16),
+              label: const Text('Launch Campaign Now'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFF59E0B),
+                foregroundColor: Colors.black,
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   void _showB2bImporterDialog(BuildContext context) {
     final cityCtrl = TextEditingController(text: _nextScheduledCity);
     final rawCtrl = TextEditingController();
@@ -458,6 +613,34 @@ class _B2bPartnersViewState extends State<B2bPartnersView> {
                       ),
                     ),
                     const Spacer(),
+                    InkWell(
+                      onTap: () => _showDevDiwaliCampaignDialog(context),
+                      borderRadius: BorderRadius.circular(8),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFFD97706), Color(0xFFF59E0B)],
+                          ),
+                          borderRadius: BorderRadius.circular(8),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFFF59E0B).withValues(alpha: 0.3),
+                              blurRadius: 6,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: const Row(
+                          children: [
+                            Icon(Icons.rocket_launch_rounded, size: 13, color: Colors.black),
+                            SizedBox(width: 4),
+                            Text('🚀 Campaign', style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w900, color: Colors.black)),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 6),
                     InkWell(
                       onTap: () => _showB2bImporterDialog(context),
                       borderRadius: BorderRadius.circular(8),

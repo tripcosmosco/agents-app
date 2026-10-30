@@ -445,6 +445,11 @@ class WhatsAppProvider extends ChangeNotifier {
   }
 
   Future<void> fetchThreadsFromServer() async {
+    if (!apiService.isAuthenticated) {
+      _isLoading = false;
+      notifyListeners();
+      return;
+    }
     _isLoading = true;
     notifyListeners();
 
