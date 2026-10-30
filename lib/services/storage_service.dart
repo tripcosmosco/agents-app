@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class StorageService {
@@ -5,15 +6,63 @@ class StorageService {
   static const String _keyAgentName = 'tc_agent_name';
   static const String _keyAiOutboundActive = 'tc_ai_outbound_active';
   static const String _keyAiReceptionistActive = 'tc_ai_receptionist_active';
+  static const String _keySecurityPin = 'tc_security_lock_pin';
+
+  // Device-level obfuscation / cipher key for local token and PIN privacy
+  static const String _salt = 'TC_AGENTS_X_ENTERPRISE_2026';
+
+  static String _seal(String plain) {
+    if (plain.isEmpty) return '';
+    final bytes = utf8.encode(plain);
+    final keyBytes = utf8.encode(_salt);
+    final sealed = List<int>.generate(bytes.length, (i) => bytes[i] ^ keyBytes[i % keyBytes.length]);
+    return 'tc_sec:${base64Url.encode(sealed)}';
+  }
+
+  static String _unseal(String val) {
+    if (val.isEmpty) return '';
+    if (!val.startsWith('tc_sec:')) return val; // Graceful backward compatibility
+    try {
+      final raw = base64Url.decode(val.substring(7));
+      final keyBytes = utf8.encode(_salt);
+      final unsealed = List<int>.generate(raw.length, (i) => raw[i] ^ keyBytes[i % keyBytes.length]);
+      return utf8.decode(unsealed);
+    } catch (_) {
+      return '';
+    }
+  }
 
   static Future<String?> getToken() async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(_keyToken);
+    final raw = prefs.getString(_keyToken);
+    if (raw == null || raw.isEmpty) return null;
+    return _unseal(raw);
   }
 
   static Future<void> setToken(String token) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_keyToken, token);
+    if (token.isEmpty) {
+      await prefs.remove(_keyToken);
+    } else {
+      await prefs.setString(_keyToken, _seal(token));
+    }
+  }
+
+  static Future<void> clearToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_keyToken);
+  }
+
+  static Future<String> getSecurityPin() async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString(_keySecurityPin);
+    if (raw == null || raw.isEmpty) return '1234';
+    return _unseal(raw);
+  }
+
+  static Future<void> setSecurityPin(String pin) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_keySecurityPin, _seal(pin));
   }
 
   static const String _keyPairedAiName = 'tc_paired_ai_name';

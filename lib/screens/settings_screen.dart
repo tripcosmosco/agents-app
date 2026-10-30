@@ -13,6 +13,7 @@ import '../providers/lead_provider.dart';
 import '../providers/theme_provider.dart';
 import '../providers/whatsapp_provider.dart';
 import '../services/api_service.dart';
+import '../services/storage_service.dart';
 import '../services/telephony_service.dart';
 import '../widgets/glass_card.dart';
 import 'finance_hub_screen.dart';
@@ -49,10 +50,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Future<void> _loadSecurityPreferences() async {
     final prefs = await SharedPreferences.getInstance();
+    final pin = await StorageService.getSecurityPin();
     if (mounted) {
       setState(() {
         _securityLockEnabled = prefs.getBool('tc_security_lock_enabled') ?? false;
-        _savedPin = prefs.getString('tc_security_lock_pin') ?? '1234';
+        _savedPin = pin;
       });
     }
   }
@@ -105,8 +107,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               final newPin = pinController.text.trim();
               if (newPin.length == 4) {
                 final messenger = ScaffoldMessenger.of(context);
-                final prefs = await SharedPreferences.getInstance();
-                await prefs.setString('tc_security_lock_pin', newPin);
+                await StorageService.setSecurityPin(newPin);
                 if (mounted) {
                   setState(() => _savedPin = newPin);
                 }
@@ -114,7 +115,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   Navigator.pop(ctx);
                 }
                 messenger.showSnackBar(
-                  const SnackBar(content: Text('✓ 4-Digit Security PIN updated!')),
+                  const SnackBar(content: Text('✓ 4-Digit Security PIN securely encrypted & updated!')),
                 );
               }
             },

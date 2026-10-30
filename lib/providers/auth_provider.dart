@@ -1,10 +1,12 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/user_model.dart';
 import '../services/api_service.dart';
+import '../services/storage_service.dart';
 
 class AuthProvider extends ChangeNotifier {
   final ApiService apiService;
@@ -24,6 +26,7 @@ class AuthProvider extends ChangeNotifier {
 
   final GoogleSignIn _googleSignIn = GoogleSignIn(
     scopes: ['email', 'profile'],
+    clientId: kIsWeb ? '77399722057-6o97tf20jmhjaaid60gks1ajn5k1029s.apps.googleusercontent.com' : null,
     serverClientId: '77399722057-6o97tf20jmhjaaid60gks1ajn5k1029s.apps.googleusercontent.com',
   );
 
@@ -34,7 +37,7 @@ class AuthProvider extends ChangeNotifier {
   Future<void> _loadStoredUser() async {
     final prefs = await SharedPreferences.getInstance();
     final userJson = prefs.getString('tc_auth_user');
-    final savedToken = prefs.getString('tc_mobile_api_token');
+    final savedToken = await StorageService.getToken();
 
     // Only restore session if both user profile and token were explicitly saved
     if (userJson != null && userJson.isNotEmpty && savedToken != null && savedToken.trim().isNotEmpty) {
@@ -153,7 +156,7 @@ class AuthProvider extends ChangeNotifier {
     } catch (_) {}
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('tc_auth_user');
-    await prefs.remove('tc_mobile_api_token');
+    await StorageService.clearToken();
     await apiService.setApiToken('');
     notifyListeners();
   }

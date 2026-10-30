@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../core/theme/app_colors.dart';
+import '../services/storage_service.dart';
 
 class AppSecurityLockGate extends StatefulWidget {
   final Widget child;
@@ -28,7 +29,7 @@ class _AppSecurityLockGateState extends State<AppSecurityLockGate> {
   Future<void> _checkLockStatus() async {
     final prefs = await SharedPreferences.getInstance();
     final isEnabled = prefs.getBool('tc_security_lock_enabled') ?? false;
-    final pin = prefs.getString('tc_security_lock_pin') ?? '1234';
+    final pin = await StorageService.getSecurityPin();
 
     if (mounted) {
       setState(() {

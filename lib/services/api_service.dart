@@ -9,6 +9,7 @@ import '../models/call_log_model.dart';
 import '../models/event_model.dart';
 import '../models/lead_model.dart';
 import '../models/quote_model.dart';
+import 'storage_service.dart';
 
 class ApiService {
   String _baseUrl;
@@ -59,7 +60,7 @@ class ApiService {
     try {
       final prefs = await SharedPreferences.getInstance();
       final savedUrl = prefs.getString('tc_api_base_url');
-      final savedToken = prefs.getString('tc_mobile_api_token');
+      final savedToken = await StorageService.getToken();
       if (savedUrl != null && savedUrl.isNotEmpty) {
         _baseUrl = savedUrl;
       }
@@ -78,7 +79,7 @@ class ApiService {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('tc_api_base_url', newBaseUrl.trim());
-      await prefs.setString('tc_mobile_api_token', newApiToken.trim());
+      await StorageService.setToken(newApiToken.trim());
       _baseUrl = newBaseUrl.trim();
       _apiToken = newApiToken.trim();
       return true;
@@ -92,13 +93,12 @@ class ApiService {
   Future<bool> setApiToken(String? token) async {
     try {
       final clean = (token ?? '').trim();
-      final prefs = await SharedPreferences.getInstance();
       if (clean.isEmpty) {
         _apiToken = null;
-        await prefs.remove('tc_mobile_api_token');
+        await StorageService.clearToken();
       } else {
         _apiToken = clean;
-        await prefs.setString('tc_mobile_api_token', clean);
+        await StorageService.setToken(clean);
       }
       return true;
     } catch (e) {
@@ -110,8 +110,7 @@ class ApiService {
   /// Disconnect workspace by removing API token
   Future<bool> clearConfig() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.remove('tc_mobile_api_token');
+      await StorageService.clearToken();
       _apiToken = null;
       return true;
     } catch (e) {
