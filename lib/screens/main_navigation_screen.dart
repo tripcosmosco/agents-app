@@ -11,7 +11,6 @@ import 'leads_screen.dart';
 import 'reports_screen.dart';
 import 'settings_screen.dart';
 import 'whatsapp_hub_screen.dart';
-import 'quotation_desk_screen.dart';
 import '../services/api_service.dart';
 import '../widgets/active_call_hud.dart';
 import '../widgets/live_activity_banner.dart';
@@ -191,95 +190,23 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
             ],
           ),
         ),
-        if (_currentIndex != 3)
-          Positioned(
-            right: 16,
-            bottom: 16,
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    onTap: () => QuotationDeskScreen.open(context),
-                    borderRadius: BorderRadius.circular(28),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 10),
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFF0F766E), Color(0xFF059669)],
-                        ),
-                        borderRadius: BorderRadius.circular(28),
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(0xFF0F766E).withValues(alpha: 0.4),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: const Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.request_quote_rounded, color: Colors.white, size: 18),
-                          SizedBox(width: 5),
-                          Text(
-                            'Quick Quote',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w800,
-                              fontSize: 12,
-                              letterSpacing: 0.3,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    onTap: () => _openMasterAiModal(context),
-                    borderRadius: BorderRadius.circular(28),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFFD4AF37), Color(0xFFF59E0B)],
-                        ),
-                        borderRadius: BorderRadius.circular(28),
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(0xFFD4AF37).withValues(alpha: 0.4),
-                            blurRadius: 12,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: const Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.bolt_rounded, color: Colors.black, size: 20),
-                          SizedBox(width: 6),
-                          Text(
-                            'Master AI',
-                            style: TextStyle(
-                              color: Colors.black,
-                              fontWeight: FontWeight.w900,
-                              fontSize: 12.5,
-                              letterSpacing: 0.3,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ],
+        Positioned(
+          right: 20,
+          bottom: 20,
+          child: GestureDetector(
+            onLongPress: () => _openMasterAiModal(context),
+            child: FloatingActionButton(
+              heroTag: 'fab_add_lead_global',
+              backgroundColor: AppColors.accentGold,
+              foregroundColor: Colors.black,
+              elevation: 6,
+              shape: const CircleBorder(),
+              tooltip: 'Add Lead (Tap) | Master AI (Hold)',
+              onPressed: () => LeadsScreen.showAddLeadDialog(context),
+              child: const Icon(Icons.add_rounded, size: 32, color: Colors.black),
             ),
           ),
+        ),
       ],
     );
 

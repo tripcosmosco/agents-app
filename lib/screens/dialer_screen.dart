@@ -185,6 +185,79 @@ class _DialerScreenState extends State<DialerScreen> {
             // 0. Dedicated Telephony Engine Selector Bar (No collision, full clarity)
             _buildTelephonyEngineBar(context, callProvider),
 
+            // Mode Selector: Recent Calls vs Dialpad
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+              child: Container(
+                padding: const EdgeInsets.all(3),
+                decoration: BoxDecoration(
+                  color: AppColors.getCard(context),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: AppColors.getBorder(context)),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: InkWell(
+                        onTap: () => setState(() => _showKeypad = false),
+                        borderRadius: BorderRadius.circular(8),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          decoration: BoxDecoration(
+                            color: !_showKeypad ? AppColors.accentBlue : Colors.transparent,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.history_rounded, size: 16, color: !_showKeypad ? Colors.white : AppColors.getTextSecondary(context)),
+                              const SizedBox(width: 6),
+                              Text(
+                                'Recent Calls',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                  color: !_showKeypad ? Colors.white : AppColors.getTextSecondary(context),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: InkWell(
+                        onTap: () => setState(() => _showKeypad = true),
+                        borderRadius: BorderRadius.circular(8),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          decoration: BoxDecoration(
+                            color: _showKeypad ? AppColors.accentGold : Colors.transparent,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.dialpad_rounded, size: 16, color: _showKeypad ? Colors.black : AppColors.getTextSecondary(context)),
+                              const SizedBox(width: 6),
+                              Text(
+                                'Dialpad',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                  color: _showKeypad ? Colors.black : AppColors.getTextSecondary(context),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
             // 1. Pending Website Queue Banner
             if (callProvider.pendingQueue.isNotEmpty) ...[
               _buildQueueBanner(context, callProvider),
@@ -203,17 +276,6 @@ class _DialerScreenState extends State<DialerScreen> {
             ),
           ],
         ),
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: AppColors.accentGold,
-        foregroundColor: AppColors.primaryDark,
-        onPressed: () {
-          setState(() {
-            _showKeypad = !_showKeypad;
-          });
-        },
-        icon: Icon(_showKeypad ? Icons.history : Icons.dialpad),
-        label: Text(_showKeypad ? 'Recent Calls' : 'Dialpad'),
       ),
     );
   }

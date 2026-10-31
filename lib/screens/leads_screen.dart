@@ -21,14 +21,7 @@ import 'settings_screen.dart';
 class LeadsScreen extends StatefulWidget {
   const LeadsScreen({super.key});
 
-  @override
-  State<LeadsScreen> createState() => _LeadsScreenState();
-}
-
-class _LeadsScreenState extends State<LeadsScreen> {
-  bool _isB2bMode = false;
-
-  void _showAddLeadDialog(BuildContext context) {
+  static void showAddLeadDialog(BuildContext context) {
     final nameController = TextEditingController();
     final phoneController = TextEditingController();
     final emailController = TextEditingController();
@@ -166,6 +159,13 @@ class _LeadsScreenState extends State<LeadsScreen> {
       noteController.dispose();
     });
   }
+
+  @override
+  State<LeadsScreen> createState() => _LeadsScreenState();
+}
+
+class _LeadsScreenState extends State<LeadsScreen> {
+  bool _isB2bMode = false;
 
   void _showReassignOwnerSheet(BuildContext context, LeadModel lead) {
     showModalBottomSheet(
@@ -313,9 +313,9 @@ class _LeadsScreenState extends State<LeadsScreen> {
             tooltip: 'Quotation Desk',
           ),
           IconButton(
-            onPressed: () => _showAddLeadDialog(context),
-            icon: const Icon(Icons.person_add_alt_1, color: AppColors.accentGold, size: 20),
-            tooltip: 'Capture New Lead',
+            onPressed: () => LeadsScreen.showAddLeadDialog(context),
+            icon: const Icon(Icons.add_circle_outline_rounded, color: AppColors.accentGold, size: 22),
+            tooltip: 'Capture New Lead (+)',
           ),
           IconButton(
             onPressed: () => leadProvider.refreshLeadsFromServer(),
@@ -446,16 +446,7 @@ class _LeadsScreenState extends State<LeadsScreen> {
                 ],
               ),
       ),
-      floatingActionButton: _isB2bMode
-          ? null
-          : FloatingActionButton(
-              backgroundColor: AppColors.accentGold,
-              foregroundColor: AppColors.primaryDark,
-              elevation: 4,
-              onPressed: () => _showAddLeadDialog(context),
-              tooltip: 'Capture New Lead',
-              child: const Icon(Icons.person_add_alt_1),
-            ),
+      floatingActionButton: null,
     );
   }
 

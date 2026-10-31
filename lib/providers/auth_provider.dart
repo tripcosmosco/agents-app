@@ -106,6 +106,8 @@ class AuthProvider extends ChangeNotifier {
       final errStr = e.toString();
       if (errStr.contains('10') || errStr.contains('DEVELOPER_ERROR') || errStr.contains('sign_in_failed')) {
         _errorMessage = 'Google OAuth SHA-1 not registered in Google Cloud. Please use "Sign in with WordPress Username / Password" below.';
+      } else if (errStr.toLowerCase().contains('authentication code') || errStr.toLowerCase().contains('invalid_grant')) {
+        _errorMessage = 'Google authentication code invalid on web. Please use "Sign in with WordPress Username / Password" below.';
       } else {
         _errorMessage = 'Google sign-in error: $e';
       }
