@@ -103,7 +103,12 @@ class AuthProvider extends ChangeNotifier {
         _errorMessage = res?['error'] ?? 'Google sign-in verification failed.';
       }
     } catch (e) {
-      _errorMessage = 'Google sign-in error: $e';
+      final errStr = e.toString();
+      if (errStr.contains('10') || errStr.contains('DEVELOPER_ERROR') || errStr.contains('sign_in_failed')) {
+        _errorMessage = 'Google OAuth SHA-1 not registered in Google Cloud. Please use "Sign in with WordPress Username / Password" below.';
+      } else {
+        _errorMessage = 'Google sign-in error: $e';
+      }
       debugPrint('Google sign in exception: $e');
     }
 

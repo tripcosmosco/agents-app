@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
@@ -1148,27 +1150,54 @@ class _WhatsAppTeamChatViewState extends State<WhatsAppTeamChatView> {
                   ),
           ),
 
-          // Canned Quick Reply Chips
+          // Quick Actions: 1-Tap Quote Builder + Canned Quick Reply Chips
           Container(
             height: 40,
             padding: const EdgeInsets.symmetric(horizontal: 8),
             color: const Color(0xFF1E293B),
-            child: ListView.separated(
+            child: ListView(
               scrollDirection: Axis.horizontal,
-              itemCount: _cannedQuickReplies.length,
-              separatorBuilder: (_, _) => const SizedBox(width: 8),
-              itemBuilder: (ctx, i) {
-                final reply = _cannedQuickReplies[i];
-                return ActionChip(
-                  label: Text(
-                    reply['label']!,
-                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.white),
+              children: [
+                ActionChip(
+                  avatar: const Icon(Icons.flash_on_rounded, size: 14, color: AppColors.primaryDark),
+                  label: const Text(
+                    '⚡ Build & Send Quote',
+                    style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800, color: AppColors.primaryDark),
                   ),
-                  backgroundColor: const Color(0xFF0F172A),
-                  side: const BorderSide(color: Colors.white12),
-                  onPressed: () => _sendMessage(provider, reply['text']),
-                );
-              },
+                  backgroundColor: AppColors.accentGold,
+                  side: BorderSide.none,
+                  onPressed: () {
+                    final tempLead = LeadModel(
+                      id: currentThread.id,
+                      name: currentThread.customerName,
+                      phone: currentThread.customerPhone,
+                      destination: currentThread.circuit,
+                      pax: provider.isB2bThread(currentThread) ? 12 : 4,
+                      stage: currentThread.stage,
+                      source: provider.isB2bThread(currentThread) ? 'b2b_partner' : 'whatsapp',
+                      createdAt: DateTime.now(),
+                    );
+                    TravelQuoteDialog.show(
+                      context,
+                      tempLead,
+                      initialB2bMode: provider.isB2bThread(currentThread),
+                    );
+                  },
+                ),
+                const SizedBox(width: 8),
+                ..._cannedQuickReplies.map((reply) => Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: ActionChip(
+                    label: Text(
+                      reply['label']!,
+                      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.white),
+                    ),
+                    backgroundColor: const Color(0xFF0F172A),
+                    side: const BorderSide(color: Colors.white12),
+                    onPressed: () => _sendMessage(provider, reply['text']),
+                  ),
+                )),
+              ],
             ),
           ),
 
@@ -1473,8 +1502,24 @@ class _WhatsAppTeamChatViewState extends State<WhatsAppTeamChatView> {
 
     final isCustomer = msg.isFromCustomer;
     final isWebChat = msg.channel == 'web';
-
     final isFailed = msg.status == 'failed';
+
+    final hasImage = (msg.mediaType == 'image') ||
+        (msg.mediaUrl != null &&
+            (msg.mediaUrl!.startsWith('data:image') ||
+                msg.mediaUrl!.toLowerCase().contains('.jpg') ||
+                msg.mediaUrl!.toLowerCase().contains('.png') ||
+                msg.mediaUrl!.toLowerCase().contains('.jpeg') ||
+                msg.mediaUrl!.toLowerCase().contains('whatsapp.net')));
+
+    final hasDocument = (msg.mediaType == 'document' || msg.mediaType == 'pdf') ||
+        (msg.mediaUrl != null &&
+            (msg.mediaUrl!.toLowerCase().contains('.pdf') ||
+                msg.mediaUrl!.toLowerCase().contains('.doc') ||
+                msg.mediaUrl!.toLowerCase().contains('.docx') ||
+                msg.mediaUrl!.toLowerCase().contains('.xls'))) ||
+        msg.text.contains('[Document:');
+
     final bubble = Container(
       margin: const EdgeInsets.only(bottom: 8),
       constraints: const BoxConstraints(maxWidth: 320),
@@ -1509,11 +1554,105 @@ class _WhatsAppTeamChatViewState extends State<WhatsAppTeamChatView> {
                 ),
               ),
             ),
+
+          // Visual Photo Rendering
+          if (hasImage && msg.mediaUrl != null && msg.mediaUrl!.isNotEmpty) ...[
+            GestureDetector(
+              onTap: () => _showFullScreenImage(context, msg.mediaUrl!),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: msg.mediaUrl!.startsWith('data:image')
+                    ? Image.memory(
+                        base64Decode(msg.mediaUrl!.split(',').last),
+                        fit: BoxFit.cover,
+                        height: 180,
+                        width: double.infinity,
+                      )
+                    : Image.network(
+                        msg.mediaUrl!,
+                        fit: BoxFit.cover,
+                        height: 180,
+                        width: double.infinity,
+                        loadingBuilder: (ctx, child, progress) => progress == null
+                            ? child
+                            : Container(
+                                height: 180,
+                                color: Colors.white10,
+                                child: const Center(
+                                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                ),
+                              ),
+                        errorBuilder: (_, __, ___) => Container(
+                          height: 80,
+                          color: Colors.white10,
+                          child: const Center(
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.photo_rounded, size: 20, color: Colors.white54),
+                                SizedBox(width: 6),
+                                Text('Photo attachment', style: TextStyle(color: Colors.white70, fontSize: 11)),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+              ),
+            ),
+            const SizedBox(height: 6),
+          ],
+
+          // Visual Document / PDF Card Rendering
+          if (hasDocument) ...[
+            InkWell(
+              onTap: () {
+                if (msg.mediaUrl != null && msg.mediaUrl!.isNotEmpty) {
+                  TelephonyService.openUrl(msg.mediaUrl!);
+                }
+              },
+              child: Container(
+                margin: const EdgeInsets.only(bottom: 6),
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.black26,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: Colors.white12),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.picture_as_pdf_rounded, color: Color(0xFFEF4444), size: 28),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            msg.text.replaceAll('[Document: ', '').replaceAll(']', '').trim().isNotEmpty
+                                ? msg.text.replaceAll('[Document: ', '').replaceAll(']', '').trim()
+                                : 'PDF Document',
+                            style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const Text('Tap to open / download', style: TextStyle(color: Colors.white54, fontSize: 10)),
+                        ],
+                      ),
+                    ),
+                    const Icon(Icons.open_in_new_rounded, color: Colors.white70, size: 16),
+                  ],
+                ),
+              ),
+            ),
+          ],
+
+          // Message Text
           Text(
             msg.text,
             style: const TextStyle(color: Colors.white, fontSize: 13, height: 1.35),
           ),
           const SizedBox(height: 4),
+
+          // Metadata Row (Timestamp & Delivery Receipts)
           Row(
             mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.end,
@@ -1547,20 +1686,146 @@ class _WhatsAppTeamChatViewState extends State<WhatsAppTeamChatView> {
 
     return Align(
       alignment: isCustomer ? Alignment.centerLeft : Alignment.centerRight,
-      child: isFailed
-          ? InkWell(
-              onTap: () {
+      child: InkWell(
+        onTap: isFailed
+            ? () {
                 final waProvider = context.read<WhatsAppProvider>();
                 final currentThread = waProvider.threads.firstWhere(
                   (th) => th.id == widget.thread.id,
                   orElse: () => widget.thread,
                 );
                 _showFailedMessageDetailsSheet(context, waProvider, msg, currentThread);
-              },
+              }
+            : null,
+        onLongPress: () {
+          HapticFeedback.mediumImpact();
+          _showMessageActionsSheet(context, msg, thread);
+        },
+        borderRadius: BorderRadius.circular(16),
+        child: bubble,
+      ),
+    );
+  }
+
+  void _showFullScreenImage(BuildContext context, String imageUrl) {
+    showDialog(
+      context: context,
+      builder: (ctx) => Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.all(12),
+        child: Stack(
+          alignment: Alignment.topRight,
+          children: [
+            ClipRRect(
               borderRadius: BorderRadius.circular(16),
-              child: bubble,
-            )
-          : bubble,
+              child: imageUrl.startsWith('data:image')
+                  ? Image.memory(base64Decode(imageUrl.split(',').last), fit: BoxFit.contain)
+                  : Image.network(imageUrl, fit: BoxFit.contain),
+            ),
+            IconButton(
+              icon: const CircleAvatar(
+                backgroundColor: Colors.black54,
+                child: Icon(Icons.close, color: Colors.white, size: 20),
+              ),
+              onPressed: () => Navigator.pop(ctx),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showMessageActionsSheet(BuildContext context, WhatsAppMessage msg, WhatsAppThread thread) {
+    final isSentByMe = !msg.isFromCustomer && !msg.isInternalNote && !msg.isCallEvent;
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF0F172A),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(width: 36, height: 4, decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(2))),
+              const SizedBox(height: 12),
+              // 1. Copy Message Text
+              ListTile(
+                leading: const Icon(Icons.copy_rounded, color: AppColors.accentGold),
+                title: const Text('Copy Message Text', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+                subtitle: Text(msg.text, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white54, fontSize: 11)),
+                onTap: () {
+                  Clipboard.setData(ClipboardData(text: msg.text));
+                  Navigator.pop(ctx);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('✓ Message copied to clipboard!'),
+                      backgroundColor: AppColors.successGreen,
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
+                },
+              ),
+              // 2. Quote / Reply in Chat
+              ListTile(
+                leading: const Icon(Icons.reply_rounded, color: Color(0xFF38BDF8)),
+                title: const Text('Quote / Reply in Chat', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  setState(() {
+                    _textController.text = '> ${msg.text}\n';
+                  });
+                },
+              ),
+              // 3. Delete Message for Everyone (Outbound WhatsApp messages)
+              if (isSentByMe) ...[
+                const Divider(color: Colors.white12),
+                ListTile(
+                  leading: const Icon(Icons.delete_forever_rounded, color: AppColors.errorRed),
+                  title: const Text('Delete for Everyone', style: TextStyle(color: AppColors.errorRed, fontWeight: FontWeight.w700)),
+                  subtitle: const Text('Retract & delete this message from traveler\'s WhatsApp', style: TextStyle(color: Colors.white54, fontSize: 11)),
+                  onTap: () async {
+                    Navigator.pop(ctx);
+                    final confirmed = await showDialog<bool>(
+                      context: context,
+                      builder: (dCtx) => AlertDialog(
+                        backgroundColor: const Color(0xFF1E293B),
+                        title: const Text('Delete Message?', style: TextStyle(color: Colors.white)),
+                        content: const Text('This will delete this message for everyone in this WhatsApp conversation.', style: TextStyle(color: Colors.white70)),
+                        actions: [
+                           TextButton(onPressed: () => Navigator.pop(dCtx, false), child: const Text('Cancel')),
+                           ElevatedButton(
+                             style: ElevatedButton.styleFrom(backgroundColor: AppColors.errorRed),
+                             onPressed: () => Navigator.pop(dCtx, true),
+                             child: const Text('Delete for Everyone', style: TextStyle(color: Colors.white)),
+                           ),
+                        ],
+                      ),
+                    );
+                    if (confirmed == true && mounted) {
+                      final provider = context.read<WhatsAppProvider>();
+                      final ok = await provider.deleteMessage(
+                        threadId: thread.id,
+                        messageId: msg.id,
+                        remoteJid: thread.remoteJid,
+                        phone: thread.customerPhone,
+                      );
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(ok ? '✓ Message deleted from WhatsApp' : 'Message removed from view'),
+                            backgroundColor: ok ? AppColors.successGreen : Colors.orange,
+                          ),
+                        );
+                      }
+                    }
+                  },
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

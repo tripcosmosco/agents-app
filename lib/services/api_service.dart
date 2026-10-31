@@ -676,6 +676,34 @@ class ApiService {
     return false;
   }
 
+  /// 11b. Delete Sent WhatsApp Message For Everyone
+  Future<bool> deleteWhatsAppMessage({
+    required String messageId,
+    String? remoteJid,
+    String? phone,
+  }) async {
+    try {
+      final uri = Uri.parse('$baseUrl/mobile/whatsapp/delete-message');
+      final body = json.encode({
+        'message_id': messageId,
+        'remote_jid': remoteJid ?? '',
+        'phone': phone ?? '',
+      });
+
+      final response = await http
+          .post(uri, headers: _headers, body: body)
+          .timeout(const Duration(seconds: 10));
+
+      if (response.statusCode == 200) {
+        final data = _safeJsonDecode(response.body);
+        return data != null && data['ok'] == true;
+      }
+    } catch (e) {
+      debugPrint('Error deleting WhatsApp message: $e');
+    }
+    return false;
+  }
+
   /// 11b. Check Live Evolution WhatsApp Gateway Connection State & Pairing QR
   Future<Map<String, dynamic>?> fetchEvolutionStatus() async {
     try {

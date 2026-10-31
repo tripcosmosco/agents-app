@@ -354,6 +354,33 @@ class WhatsAppProvider extends ChangeNotifier {
     return ok;
   }
 
+  /// Delete a sent WhatsApp message for everyone
+  Future<bool> deleteMessage({
+    required String threadId,
+    required String messageId,
+    String? remoteJid,
+    String? phone,
+  }) async {
+    final threadIdx = _threads.indexWhere((th) => th.id == threadId);
+    if (threadIdx == -1) return false;
+
+    final targetThread = _threads[threadIdx];
+    final updatedMsgs = List<WhatsAppMessage>.from(targetThread.messages)
+      ..removeWhere((m) => m.id == messageId);
+
+    _threads[threadIdx] = targetThread.copyWith(messages: updatedMsgs);
+    _saveThreadsToCache();
+    notifyListeners();
+
+    final ok = await apiService.deleteWhatsAppMessage(
+      messageId: messageId,
+      remoteJid: remoteJid ?? targetThread.remoteJid,
+      phone: phone ?? targetThread.customerPhone,
+    );
+
+    return ok;
+  }
+
   Future<void> addInternalNote(String threadId, String noteText) async {
     final index = _threads.indexWhere((th) => th.id == threadId);
     if (index == -1 || noteText.trim().isEmpty) return;
