@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../core/constants/app_constants.dart';
 import '../core/theme/app_colors.dart';
@@ -14,8 +13,8 @@ import '../providers/call_provider.dart';
 import '../providers/lead_provider.dart';
 import '../providers/whatsapp_provider.dart';
 import '../widgets/cab_fare_dialog.dart';
-import '../widgets/travel_quote_dialog.dart';
 import '../widgets/whatsapp_team_chat_view.dart';
+import 'quotation_desk_screen.dart';
 
 class LeadDetailScreen extends StatefulWidget {
   final LeadModel lead;
@@ -1284,7 +1283,7 @@ class _LeadDetailScreenState extends State<LeadDetailScreen> with SingleTickerPr
                 color: Colors.white,
                 backgroundColor: const Color(0xFFD97706),
                 label: 'Quote ⚡',
-                onTap: () => TravelQuoteDialog.show(context, lead),
+                onTap: () => QuotationDeskScreen.open(context, lead),
               ),
               _buildHeaderActionButton(
                 icon: Icons.local_taxi_rounded,
@@ -1914,7 +1913,7 @@ class _LeadDetailScreenState extends State<LeadDetailScreen> with SingleTickerPr
             title: Text('Generate Tour Package Quote ⚡', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.getTextPrimary(context))),
             subtitle: Text('Create full customized itinerary quote with hotels, boats & VIP darshan', style: TextStyle(fontSize: 11.5, color: AppColors.getTextSecondary(context))),
             trailing: Icon(Icons.arrow_forward_ios, size: 14, color: AppColors.getTextMuted(context)),
-            onTap: () => TravelQuoteDialog.show(context, lead),
+            onTap: () => QuotationDeskScreen.open(context, lead),
           ),
         ),
         const SizedBox(height: 10),

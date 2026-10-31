@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import '../core/theme/app_colors.dart';
 import '../models/lead_model.dart';
 import '../providers/lead_provider.dart';
+import '../screens/quotation_desk_screen.dart';
 
 class TravelQuoteDialog extends StatefulWidget {
   final LeadModel lead;
@@ -350,6 +351,14 @@ class _TravelQuoteDialogState extends State<TravelQuoteDialog> {
                           ),
                         ],
                       ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.fullscreen_rounded, color: AppColors.accentGold, size: 22),
+                      tooltip: 'Full Quotation Desk Cockpit',
+                      onPressed: () {
+                        Navigator.pop(context);
+                        QuotationDeskScreen.open(context, widget.lead);
+                      },
                     ),
                     IconButton(
                       icon: Icon(Icons.close, color: AppColors.getTextMuted(context), size: 20),

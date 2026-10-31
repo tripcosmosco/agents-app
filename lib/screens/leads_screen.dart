@@ -15,6 +15,7 @@ import '../widgets/whatsapp_team_chat_view.dart';
 import '../providers/whatsapp_provider.dart';
 import '../services/telephony_service.dart';
 import 'lead_detail_screen.dart';
+import 'quotation_desk_screen.dart';
 import 'settings_screen.dart';
 
 class LeadsScreen extends StatefulWidget {
@@ -305,6 +306,11 @@ class _LeadsScreenState extends State<LeadsScreen> {
                 ),
               );
             },
+          ),
+          IconButton(
+            onPressed: () => QuotationDeskScreen.open(context),
+            icon: const Icon(Icons.request_quote_rounded, color: AppColors.accentGold, size: 21),
+            tooltip: 'Quotation Desk',
           ),
           IconButton(
             onPressed: () => _showAddLeadDialog(context),

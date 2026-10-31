@@ -35,10 +35,20 @@ class _LoginScreenState extends State<LoginScreen> {
     final success = await auth.signInWithGoogle();
     if (success && mounted) {
       widget.onLoginSuccess();
-    } else if (mounted && auth.errorMessage != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(backgroundColor: Colors.redAccent, content: Text(auth.errorMessage!)),
-      );
+    } else if (mounted) {
+      if (auth.errorMessage != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            backgroundColor: const Color(0xFFDC2626),
+            content: Text(auth.errorMessage!),
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+      // Auto-expand WordPress credentials fields for immediate alternative login
+      setState(() {
+        _showWpCredentials = true;
+      });
     }
   }
 

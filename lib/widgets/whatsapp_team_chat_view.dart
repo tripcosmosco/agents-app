@@ -4,7 +4,6 @@ import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
-import '../core/constants/app_constants.dart';
 import '../core/theme/app_colors.dart';
 import '../models/lead_model.dart';
 import '../models/whatsapp_thread_model.dart';
@@ -1582,7 +1581,7 @@ class _WhatsAppTeamChatViewState extends State<WhatsAppTeamChatView> {
                                   child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                                 ),
                               ),
-                        errorBuilder: (_, __, ___) => Container(
+                        errorBuilder: (context, error, stackTrace) => Container(
                           height: 80,
                           color: Colors.white10,
                           child: const Center(
@@ -1737,6 +1736,9 @@ class _WhatsAppTeamChatViewState extends State<WhatsAppTeamChatView> {
 
   void _showMessageActionsSheet(BuildContext context, WhatsAppMessage msg, WhatsAppThread thread) {
     final isSentByMe = !msg.isFromCustomer && !msg.isInternalNote && !msg.isCallEvent;
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+    final provider = context.read<WhatsAppProvider>();
+
     showModalBottomSheet(
       context: context,
       backgroundColor: const Color(0xFF0F172A),
@@ -1757,7 +1759,7 @@ class _WhatsAppTeamChatViewState extends State<WhatsAppTeamChatView> {
                 onTap: () {
                   Clipboard.setData(ClipboardData(text: msg.text));
                   Navigator.pop(ctx);
-                  ScaffoldMessenger.of(context).showSnackBar(
+                  scaffoldMessenger.showSnackBar(
                     const SnackBar(
                       content: Text('✓ Message copied to clipboard!'),
                       backgroundColor: AppColors.successGreen,
@@ -1802,8 +1804,7 @@ class _WhatsAppTeamChatViewState extends State<WhatsAppTeamChatView> {
                         ],
                       ),
                     );
-                    if (confirmed == true && mounted) {
-                      final provider = context.read<WhatsAppProvider>();
+                    if (confirmed == true) {
                       final ok = await provider.deleteMessage(
                         threadId: thread.id,
                         messageId: msg.id,
@@ -1811,7 +1812,7 @@ class _WhatsAppTeamChatViewState extends State<WhatsAppTeamChatView> {
                         phone: thread.customerPhone,
                       );
                       if (mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
+                        scaffoldMessenger.showSnackBar(
                           SnackBar(
                             content: Text(ok ? '✓ Message deleted from WhatsApp' : 'Message removed from view'),
                             backgroundColor: ok ? AppColors.successGreen : Colors.orange,
