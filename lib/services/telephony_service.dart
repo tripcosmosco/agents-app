@@ -67,4 +67,6 @@ class TelephonyService {
       return false;
     }
   }
+
+  static Future<bool> openUrl(String url) => launchBrowser(url);
 }

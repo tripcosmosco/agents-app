@@ -1607,7 +1607,7 @@ class _WhatsAppTeamChatViewState extends State<WhatsAppTeamChatView> {
             InkWell(
               onTap: () {
                 if (msg.mediaUrl != null && msg.mediaUrl!.isNotEmpty) {
-                  TelephonyService.openUrl(msg.mediaUrl!);
+                  TelephonyService.launchBrowser(msg.mediaUrl!);
                 }
               },
               child: Container(
