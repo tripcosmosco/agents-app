@@ -27,7 +27,7 @@ class AuthProvider extends ChangeNotifier {
   final GoogleSignIn _googleSignIn = GoogleSignIn(
     scopes: ['email', 'profile'],
     clientId: kIsWeb ? '77399722057-6o97tf20jmhjaaid60gks1ajn5k1029s.apps.googleusercontent.com' : null,
-    serverClientId: '77399722057-6o97tf20jmhjaaid60gks1ajn5k1029s.apps.googleusercontent.com',
+    serverClientId: kIsWeb ? null : '77399722057-6o97tf20jmhjaaid60gks1ajn5k1029s.apps.googleusercontent.com',
   );
 
   AuthProvider({required this.apiService}) {
