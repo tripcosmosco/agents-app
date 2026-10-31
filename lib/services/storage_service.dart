@@ -122,6 +122,7 @@ class StorageService {
   static const String _keyCachedLeads = 'tc_cached_leads_json';
   static const String _keyCachedThreads = 'tc_cached_threads_json';
   static const String _keyCachedCallLogs = 'tc_cached_call_logs_json';
+  static const String _keyCachedTeamMembers = 'tc_cached_team_members_json';
 
   static Future<String?> getCachedLeads() async {
     final prefs = await SharedPreferences.getInstance();
@@ -151,6 +152,16 @@ class StorageService {
   static Future<void> setCachedCallLogs(String jsonStr) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_keyCachedCallLogs, jsonStr);
+  }
+
+  static Future<String?> getCachedTeamMembers() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_keyCachedTeamMembers);
+  }
+
+  static Future<void> setCachedTeamMembers(String jsonStr) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_keyCachedTeamMembers, jsonStr);
   }
 
   static Future<String?> getString(String key) async {

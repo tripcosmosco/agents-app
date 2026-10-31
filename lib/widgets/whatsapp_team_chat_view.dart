@@ -8,6 +8,7 @@ import '../models/lead_model.dart';
 import '../models/whatsapp_thread_model.dart';
 import '../providers/ai_agent_provider.dart';
 import '../providers/call_provider.dart';
+import '../providers/lead_provider.dart';
 import '../providers/whatsapp_provider.dart';
 import 'cab_fare_dialog.dart';
 import 'travel_quote_dialog.dart';
@@ -685,21 +686,22 @@ class _WhatsAppTeamChatViewState extends State<WhatsAppTeamChatView> {
                     style: TextStyle(color: AppColors.textMuted, fontSize: 11, fontWeight: FontWeight.bold),
                   ),
                 ),
-                ...AppConstants.teamMembers.map((member) {
-                  final isCurrent = currentThread.assignedAgent.toLowerCase() == member['name']!.toLowerCase();
+                ...Provider.of<LeadProvider>(context, listen: false).teamMembers.map((member) {
+                  final name = member['name'] ?? '';
+                  final isCurrent = currentThread.assignedAgent.toLowerCase() == name.toLowerCase();
                   return ListTile(
                     leading: CircleAvatar(
                       backgroundColor: AppColors.accentBlue,
                       child: Text(
-                        member['initials']!,
+                        member['initials'] ?? 'AG',
                         style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
                       ),
                     ),
-                    title: Text(member['name']!, style: const TextStyle(color: Colors.white)),
-                    subtitle: Text(member['role']!, style: const TextStyle(color: Colors.white54, fontSize: 11)),
+                    title: Text(name, style: const TextStyle(color: Colors.white)),
+                    subtitle: Text(member['role'] ?? 'Sales Agent', style: const TextStyle(color: Colors.white54, fontSize: 11)),
                     trailing: isCurrent ? const Icon(Icons.check, color: AppColors.successGreen) : null,
                     onTap: () {
-                      provider.assignThreadAgent(currentThread.id, member['name']!);
+                      provider.assignThreadAgent(currentThread.id, name);
                       Navigator.pop(ctx);
                     },
                   );

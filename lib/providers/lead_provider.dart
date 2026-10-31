@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 
+import '../core/constants/app_constants.dart';
 import '../models/lead_model.dart';
 import '../services/api_service.dart';
 import '../services/notification_service.dart';
@@ -25,11 +26,69 @@ class LeadProvider extends ChangeNotifier {
   bool _isLoading = false;
   bool get isLoading => _isLoading;
 
+  List<Map<String, String>> _teamMembers = List.from(AppConstants.teamMembers);
+  List<Map<String, String>> get teamMembers => _teamMembers;
+
   LeadProvider({required this.apiService}) {
     _leads = _buildInitialLeads();
     _initAgentIdentity();
     _loadCachedLeads();
+    _loadCachedTeamMembers();
     refreshLeadsFromServer();
+    refreshTeamMembers();
+  }
+
+  Future<void> _loadCachedTeamMembers() async {
+    try {
+      final cachedJson = await StorageService.getCachedTeamMembers();
+      if (cachedJson != null && cachedJson.isNotEmpty) {
+        final decoded = jsonDecode(cachedJson);
+        if (decoded is List && decoded.isNotEmpty) {
+          final list = decoded.map((e) => Map<String, String>.from(e as Map)).toList();
+          if (list.isNotEmpty) {
+            _teamMembers = _mergeTeamLists(AppConstants.teamMembers, list);
+            notifyListeners();
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('Error loading cached team members: $e');
+    }
+  }
+
+  List<Map<String, String>> _mergeTeamLists(
+    List<Map<String, String>> base,
+    List<Map<String, String>> fetched,
+  ) {
+    final Map<String, Map<String, String>> map = {};
+    for (final m in base) {
+      final name = m['name']?.toLowerCase().trim() ?? '';
+      if (name.isNotEmpty) map[name] = Map.from(m);
+    }
+    for (final m in fetched) {
+      final name = m['name']?.toLowerCase().trim() ?? '';
+      if (name.isNotEmpty) {
+        if (!map.containsKey(name)) {
+          map[name] = Map.from(m);
+        } else {
+          map[name] = {...map[name]!, ...m};
+        }
+      }
+    }
+    return map.values.toList();
+  }
+
+  Future<void> refreshTeamMembers() async {
+    try {
+      final fetched = await apiService.fetchTeamMembers();
+      if (fetched.isNotEmpty) {
+        _teamMembers = _mergeTeamLists(AppConstants.teamMembers, fetched);
+        await StorageService.setCachedTeamMembers(jsonEncode(_teamMembers));
+        notifyListeners();
+      }
+    } catch (e) {
+      debugPrint('Error refreshing team members: $e');
+    }
   }
 
   Future<void> _loadCachedLeads() async {
@@ -208,6 +267,7 @@ class LeadProvider extends ChangeNotifier {
     } finally {
       _isLoading = false;
       notifyListeners();
+      refreshTeamMembers();
     }
   }
 

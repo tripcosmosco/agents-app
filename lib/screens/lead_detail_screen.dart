@@ -118,6 +118,9 @@ class _LeadDetailScreenState extends State<LeadDetailScreen> with SingleTickerPr
   }
 
   void _showReassignOwnerSheet(BuildContext context, LeadModel lead) {
+    final leadProvider = Provider.of<LeadProvider>(context, listen: false);
+    final team = leadProvider.teamMembers;
+
     showModalBottomSheet(
       context: context,
       backgroundColor: AppColors.getCard(context),
@@ -146,7 +149,7 @@ class _LeadDetailScreenState extends State<LeadDetailScreen> with SingleTickerPr
                   style: TextStyle(fontSize: 12, color: AppColors.getTextSecondary(context)),
                 ),
                 const SizedBox(height: 16),
-                ...AppConstants.teamMembers.map((member) {
+                ...team.map((member) {
                   final isCurrent = lead.stickyAgent == member['name'];
                   return ListTile(
                     contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
@@ -154,12 +157,12 @@ class _LeadDetailScreenState extends State<LeadDetailScreen> with SingleTickerPr
                       radius: 18,
                       backgroundColor: isCurrent ? AppColors.accentBlue : AppColors.getElevated(context),
                       child: Text(
-                        member['initials']!,
+                        member['initials'] ?? 'AG',
                         style: TextStyle(fontWeight: FontWeight.w700, color: isCurrent ? Colors.white : AppColors.getTextPrimary(context), fontSize: 13),
                       ),
                     ),
                     title: Text(
-                      member['name']!,
+                      member['name'] ?? '',
                       style: TextStyle(
                         fontWeight: isCurrent ? FontWeight.w700 : FontWeight.w500,
                         color: AppColors.getTextPrimary(context),
@@ -167,7 +170,7 @@ class _LeadDetailScreenState extends State<LeadDetailScreen> with SingleTickerPr
                       ),
                     ),
                     subtitle: Text(
-                      member['role']!,
+                      member['role'] ?? 'Sales Agent',
                       style: TextStyle(color: AppColors.getTextSecondary(context), fontSize: 11),
                     ),
                     trailing: isCurrent

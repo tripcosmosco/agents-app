@@ -1701,6 +1701,44 @@ class ApiService {
     }
     return null;
   }
+
+  /// 45. Fetch Active Team & Staff Directory for Dynamic Lead Assignment
+  Future<List<Map<String, String>>> fetchTeamMembers() async {
+    try {
+      final uri = Uri.parse('$baseUrl/mobile/me');
+      final response = await http.get(uri, headers: _headers).timeout(const Duration(seconds: 10));
+      if (response.statusCode == 200) {
+        final data = _safeJsonDecode(response.body);
+        if (data != null && data['team'] is List) {
+          final List<Map<String, String>> members = [];
+          for (final item in data['team']) {
+            if (item is Map) {
+              final name = (item['name'] ?? '').toString().trim();
+              if (name.isNotEmpty) {
+                final role = (item['role'] ?? 'Sales Agent').toString();
+                final cleanRole = role.replaceAll('tc_', '').replaceAll('_', ' ').trim();
+                final formattedRole = cleanRole.isNotEmpty
+                    ? cleanRole[0].toUpperCase() + cleanRole.substring(1)
+                    : 'Sales Agent';
+                final parts = name.split(' ');
+                final initials = parts.map((p) => p.isNotEmpty ? p[0] : '').take(2).join('').toUpperCase();
+                members.add({
+                  'name': name,
+                  'initials': initials.isEmpty ? 'AG' : initials,
+                  'role': formattedRole,
+                  'id': (item['id'] ?? '').toString(),
+                });
+              }
+            }
+          }
+          return members;
+        }
+      }
+    } catch (e) {
+      debugPrint('Error fetching team members: $e');
+    }
+    return [];
+  }
 }
 
 

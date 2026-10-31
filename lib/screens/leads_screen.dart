@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../core/constants/app_constants.dart';
 import '../core/theme/app_colors.dart';
 import '../models/lead_model.dart';
+import '../providers/auth_provider.dart';
 import '../providers/call_provider.dart';
 import '../providers/event_provider.dart';
 import '../providers/lead_provider.dart';
@@ -109,11 +110,13 @@ class _LeadsScreenState extends State<LeadsScreen> {
                   prefixIcon: Icon(Icons.support_agent_rounded, size: 20),
                 ),
                 dropdownColor: Theme.of(context).cardColor,
-                items: AppConstants.teamMembers.map((member) {
+                items: Provider.of<LeadProvider>(context, listen: false).teamMembers.map((member) {
+                  final name = member['name'] ?? '';
+                  final role = member['role'] ?? 'Staff';
                   return DropdownMenuItem<String>(
-                    value: member['name'],
+                    value: name,
                     child: Text(
-                      '${member['name']} (${member['role']!.contains('AI') ? 'AI Co-Pilot' : 'Human'})',
+                      '$name (${role.contains('AI') ? 'AI Co-Pilot' : 'Human'})',
                       style: const TextStyle(fontSize: 13),
                     ),
                   );
@@ -192,7 +195,7 @@ class _LeadsScreenState extends State<LeadsScreen> {
                   style: TextStyle(fontSize: 12, color: AppColors.getTextSecondary(context)),
                 ),
                 const SizedBox(height: 16),
-                ...AppConstants.teamMembers.map((member) {
+                ...Provider.of<LeadProvider>(context, listen: false).teamMembers.map((member) {
                   final isCurrent = lead.stickyAgent == member['name'];
                   return ListTile(
                     contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
@@ -200,12 +203,12 @@ class _LeadsScreenState extends State<LeadsScreen> {
                       radius: 18,
                       backgroundColor: isCurrent ? AppColors.accentBlue : AppColors.getElevated(context),
                       child: Text(
-                        member['initials']!,
+                        member['initials'] ?? 'AG',
                         style: const TextStyle(fontWeight: FontWeight.w700, color: Colors.white, fontSize: 13),
                       ),
                     ),
                     title: Text(
-                      member['name']!,
+                      member['name'] ?? '',
                       style: TextStyle(
                         fontWeight: isCurrent ? FontWeight.w700 : FontWeight.w500,
                         color: AppColors.getTextPrimary(context),
@@ -213,7 +216,7 @@ class _LeadsScreenState extends State<LeadsScreen> {
                       ),
                     ),
                     subtitle: Text(
-                      member['role']!,
+                      member['role'] ?? 'Sales Agent',
                       style: TextStyle(color: AppColors.getTextMuted(context), fontSize: 11),
                     ),
                     trailing: isCurrent
@@ -492,6 +495,14 @@ class _LeadsScreenState extends State<LeadsScreen> {
         stageColor = AppColors.textMuted;
     }
 
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+    final canViewFullPhone = auth.isAdmin || auth.hasPermission('view_full_contact');
+    final maskedPhone = canViewFullPhone
+        ? lead.phone
+        : (lead.phone.length > 7
+            ? '${lead.phone.substring(0, lead.phone.length - 4)}••••'
+            : lead.phone);
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 10.0),
       child: GlassCard(
@@ -561,7 +572,7 @@ class _LeadsScreenState extends State<LeadsScreen> {
                   ),
                 ),
                 Text(
-                  lead.phone,
+                  maskedPhone,
                   style: TextStyle(
                     fontSize: 12,
                     color: AppColors.getTextMuted(context),
