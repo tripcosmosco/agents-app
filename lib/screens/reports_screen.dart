@@ -100,29 +100,17 @@ class _ReportsScreenState extends State<ReportsScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Financials & CRM Reports',
+              'CRM & Growth Analytics',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
             ),
             Text(
-              'Real-Time Live Revenue, Cashflow & Pipeline',
+              'Real-Time Live Sales Pipeline, Funnel & Telephony ROI',
               style: TextStyle(fontSize: 11, color: AppColors.textMuted),
             ),
           ],
         ),
         actions: [
-          if (canViewFinance)
-            IconButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const FinanceHubScreen(),
-                  ),
-                );
-              },
-              icon: const Icon(Icons.account_balance_rounded, color: AppColors.accentGold),
-              tooltip: 'Financial Intelligence Hub (SBI, Zoho, Google Ads)',
-            ),
+
           IconButton(
             onPressed: () => LiveActivitySheet.show(context),
             icon: const Icon(Icons.radar_rounded, color: AppColors.successGreen),
@@ -166,68 +154,6 @@ class _ReportsScreenState extends State<ReportsScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // 0. FINANCE HUB QUICK ACCESS BANNER (SBI, Zoho, Google Ads)
-                if (canViewFinance)
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const FinanceHubScreen(),
-                        ),
-                      );
-                    },
-                    child: Container(
-                      margin: const EdgeInsets.only(bottom: 16),
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            AppColors.primary.withValues(alpha: 0.25),
-                            Colors.blueAccent.withValues(alpha: 0.15),
-                          ],
-                        ),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
-                      ),
-                      child: Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              color: AppColors.primary.withValues(alpha: 0.2),
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(Icons.account_balance_rounded, color: AppColors.primary, size: 22),
-                          ),
-                          const SizedBox(width: 12),
-                          const Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    Text(
-                                      'Financial Intelligence Hub',
-                                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                                    ),
-                                    SizedBox(width: 6),
-                                    Icon(Icons.arrow_forward_ios_rounded, size: 12, color: Colors.grey),
-                                  ],
-                                ),
-                                SizedBox(height: 2),
-                                Text(
-                                  'SBI Statement Importer • Zoho Books • Google Ads Attribution',
-                                  style: TextStyle(fontSize: 11, color: Colors.grey),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-
                 // 1. FINANCIAL REVENUE & CASHFLOW AUDIT (Featured Card)
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,

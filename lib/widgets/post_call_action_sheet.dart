@@ -76,6 +76,7 @@ class _PostCallActionSheetState extends State<PostCallActionSheet> {
   }
 
   Future<void> _sendBrochure(String title, String summary, String price) async {
+    // ignore: unused_local_variable
     final message =
         '''
 Namaste ${widget.callLog.customerName} ji! 🙏

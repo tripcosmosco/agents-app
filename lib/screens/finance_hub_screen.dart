@@ -694,7 +694,7 @@ class _FinanceHubScreenState extends State<FinanceHubScreen> with SingleTickerPr
               unselectedLabelColor: AppColors.getTextSecondary(context),
               isScrollable: true,
               tabs: const [
-                Tab(icon: Icon(Icons.pie_chart_rounded, size: 19), text: 'Margins'),
+                Tab(icon: Icon(Icons.pie_chart_rounded, size: 19), text: 'B2B & Tour Margins'),
                 Tab(icon: Icon(Icons.account_balance_rounded, size: 19), text: 'SBI Banking'),
                 Tab(icon: Icon(Icons.receipt_long_rounded, size: 19), text: 'Zoho Books'),
                 Tab(icon: Icon(Icons.track_changes_rounded, size: 19), text: 'Google Ads'),

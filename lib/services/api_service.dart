@@ -1836,6 +1836,36 @@ class ApiService {
     }
     return [];
   }
+
+  /// 45. VM SEO Brain & Blog Intelligence Overview
+  Future<Map<String, dynamic>?> fetchSeoBrainOverview() async {
+    try {
+      final res = await http.get(
+        Uri.parse('$baseUrl/mobile/seo-brain/overview'),
+        headers: _headers,
+      );
+      if (res.statusCode == 200) {
+        return jsonDecode(res.body) as Map<String, dynamic>;
+      }
+    } catch (e) {
+      debugPrint('Error fetching SEO Brain overview: $e');
+    }
+    return null;
+  }
+
+  /// 46. VM Social AI & Multi-Platform Intelligence Overview
+  Future<Map<String, dynamic>?> fetchSocialAiOverview() async {
+    try {
+      final res = await http.get(
+        Uri.parse('$baseUrl/mobile/social-ai/overview'),
+        headers: _headers,
+      );
+      if (res.statusCode == 200) {
+        return jsonDecode(res.body) as Map<String, dynamic>;
+      }
+    } catch (e) {
+      debugPrint('Error fetching Social AI overview: $e');
+    }
+    return null;
+  }
 }
-
-
