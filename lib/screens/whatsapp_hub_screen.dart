@@ -1,4 +1,4 @@
-﻿import 'dart:convert';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -1014,6 +1014,8 @@ class _WhatsAppHubScreenState extends State<WhatsAppHubScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
             children: [
               _buildFilterChip(wp, 'all', 'All (${wp.threads.length})'),
+              if (wp.slaBreachedCount > 0)
+                _buildFilterChip(wp, 'sla', '🚨 SLA Breach (${wp.slaBreachedCount})', isAlert: true),
               _buildFilterChip(wp, 'whatsapp', '💬 WhatsApp (${wp.whatsappActiveCount})'),
               _buildFilterChip(wp, 'unread', '🟢 Unread (${wp.totalUnreadCount})'),
               _buildFilterChip(wp, 'new', '🔥 New'),
@@ -1025,6 +1027,53 @@ class _WhatsAppHubScreenState extends State<WhatsAppHubScreen> {
             ],
           ),
         ),
+
+        // 2b. High-Priority 5-Minute Lead SLA Emergency Banner
+        if (wp.slaBreachedCount > 0 && wp.filter != 'sla')
+          Container(
+            margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: Colors.red.withValues(alpha: 0.14),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: Colors.redAccent.withValues(alpha: 0.5), width: 1.2),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.alarm_on_rounded, color: Colors.redAccent, size: 18),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    '⚠️ ' + wp.slaBreachedCount.toString() + ' Travelers waiting > 5 minutes without reply!',
+                    style: const TextStyle(
+                      color: Colors.redAccent,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+                InkWell(
+                  onTap: () => wp.setFilter('sla'),
+                  borderRadius: BorderRadius.circular(6),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.redAccent,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: const Text(
+                      'View Now',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
 
         if (wp.isLoading)
           const LinearProgressIndicator(
@@ -1087,7 +1136,8 @@ class _WhatsAppHubScreenState extends State<WhatsAppHubScreen> {
     );
   }
 
-  Widget _buildFilterChip(WhatsAppProvider wp, String key, String label) {
+  Widget _buildFilterChip(WhatsAppProvider wp, String key, String label, {bool isAlert = false}) {
+    final alertColor = Colors.redAccent;
     final isSelected = wp.filter == key;
     final isLight = Theme.of(context).brightness == Brightness.light;
     return Padding(
@@ -1099,11 +1149,11 @@ class _WhatsAppHubScreenState extends State<WhatsAppHubScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 5),
           decoration: BoxDecoration(
             color: isSelected
-                ? AppColors.whatsappGreen.withValues(alpha: 0.22)
-                : AppColors.getCard(context),
+                ? (isAlert ? alertColor.withValues(alpha: 0.25) : AppColors.whatsappGreen.withValues(alpha: 0.22))
+                : (isAlert ? alertColor.withValues(alpha: 0.12) : AppColors.getCard(context)),
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: isSelected ? AppColors.whatsappGreen : AppColors.getBorder(context),
+              color: isSelected ? (isAlert ? alertColor : AppColors.whatsappGreen) : (isAlert ? alertColor.withValues(alpha: 0.6) : AppColors.getBorder(context)),
               width: isSelected ? 1.4 : 1.0,
             ),
           ),
@@ -1111,8 +1161,8 @@ class _WhatsAppHubScreenState extends State<WhatsAppHubScreen> {
             label,
             style: TextStyle(
               color: isSelected
-                  ? (isLight ? const Color(0xFF065F46) : Colors.white)
-                  : AppColors.getTextSecondary(context),
+                  ? (isAlert ? (isLight ? Colors.red.shade900 : Colors.redAccent) : (isLight ? const Color(0xFF065F46) : Colors.white))
+                  : (isAlert ? alertColor : AppColors.getTextSecondary(context)),
               fontSize: 11,
               fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
             ),
@@ -1229,15 +1279,47 @@ class _WhatsAppHubScreenState extends State<WhatsAppHubScreen> {
                       Row(
                         children: [
                           Expanded(
-                            child: Text(
-                              th.displayName,
-                              style: TextStyle(
-                                color: AppColors.getTextPrimary(context),
-                                fontSize: 14.5,
-                                fontWeight: th.unreadCount > 0 ? FontWeight.w800 : FontWeight.w700,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
+                            child: Row(
+                              children: [
+                                Flexible(
+                                  child: Text(
+                                    th.displayName,
+                                    style: TextStyle(
+                                      color: AppColors.getTextPrimary(context),
+                                      fontSize: 14.5,
+                                      fontWeight: th.unreadCount > 0 ? FontWeight.w800 : FontWeight.w700,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                if (th.slaBreached) ...[
+                                  const SizedBox(width: 6),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                                    decoration: BoxDecoration(
+                                      color: Colors.red.withValues(alpha: 0.2),
+                                      borderRadius: BorderRadius.circular(6),
+                                      border: Border.all(color: Colors.redAccent, width: 0.8),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        const Icon(Icons.alarm_on, size: 10, color: Colors.redAccent),
+                                        const SizedBox(width: 3),
+                                        Text(
+                                          '${th.slaWaitMinutes}m SLA',
+                                          style: const TextStyle(
+                                            color: Colors.redAccent,
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.w800,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ],
                             ),
                           ),
                           const SizedBox(width: 6),

@@ -593,6 +593,48 @@ class _QuotationDeskScreenState extends State<QuotationDeskScreen> {
     }
   }
 
+  void _sendInteractiveButtonsProposal() async {
+    final phone = _customerPhoneCtrl.text.trim();
+    if (phone.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter traveler phone number.')),
+      );
+      return;
+    }
+
+    final apiService = Provider.of<LeadProvider>(context, listen: false).apiService;
+    final guestName = _customerNameCtrl.text.trim().isNotEmpty ? _customerNameCtrl.text.trim() : 'Traveler';
+    final itinTitle = _selectedCircuit;
+    final grandTotal = _calculatedTotal.toInt();
+    final vehicle = _cabType;
+    final duration = '${_selectedDays}D/${_selectedNights}N';
+
+    final title = '🙏 *' + itinTitle + '*';
+    final description = 'Namaste ' + guestName + ' ji! Here is your custom quotation for ₹' + grandTotal.toString() + '.\n\n📅 ' + duration + ' • 🚗 ' + vehicle + '\n🏨 ' + _hotelCategory + '\n\nTap an instant action button below:';
+    final buttons = [
+      {'id': 'btn_confirm', 'text': '1️⃣ Confirm & Block Cab'},
+      {'id': 'btn_plan', 'text': '2️⃣ View Day-wise Plan'},
+      {'id': 'btn_pay', 'text': '💳 Pay Token ₹1,500'},
+    ];
+
+    final ok = await apiService.sendWhatsAppButtons(
+      phone: phone,
+      title: title,
+      description: description,
+      buttons: buttons,
+      footer: 'TripCosmos.co • Official Varanasi Desk (+91 93361 16210)',
+    );
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(ok ? '✓ Interactive proposal buttons sent to WhatsApp!' : 'Interactive proposal queued.'),
+          backgroundColor: AppColors.successGreen,
+        ),
+      );
+    }
+  }
+
   void _copyProposal() {
     Clipboard.setData(ClipboardData(text: _generateProposalText()));
     ScaffoldMessenger.of(context).showSnackBar(
@@ -1261,6 +1303,23 @@ class _QuotationDeskScreenState extends State<QuotationDeskScreen> {
                           onPressed: _copyProposal,
                         ),
                       ],
+                    ),
+                    const SizedBox(height: 10),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF4F46E5),
+                          padding: const EdgeInsets.symmetric(vertical: 13),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                        icon: const Icon(Icons.touch_app_rounded, size: 16, color: Colors.white),
+                        label: const Text(
+                          '⚡ Send 1-Tap Interactive Quick Buttons',
+                          style: TextStyle(fontWeight: FontWeight.w800, color: Colors.white, fontSize: 13),
+                        ),
+                        onPressed: _sendInteractiveButtonsProposal,
+                      ),
                     ),
                   ],
                 ),

@@ -91,9 +91,16 @@ TripCosmos.co — The Sacred Journey
 ''';
 
     final apiService = context.read<LeadProvider>().apiService;
-    final delivered = await apiService.sendWhatsAppMessage(
+    final delivered = await apiService.sendWhatsAppButtons(
       phone: widget.callLog.phone,
-      message: message,
+      title: '📍 *' + title + '*',
+      description: 'Namaste ' + widget.callLog.customerName + ' ji! 🙏\n\nConfirmed details for your trip:\n🏷️ Price: ' + price + '\n✨ Inclusions: ' + summary + '\n\nTap an instant action below:',
+      buttons: [
+        {'id': 'btn_book', 'text': '1️⃣ Confirm & Block Cab'},
+        {'id': 'btn_call', 'text': '2️⃣ Call Varanasi Desk'},
+        {'id': 'btn_pay', 'text': '💳 Pay Token ₹1,500'},
+      ],
+      footer: 'TripCosmos.co • Official Desk (+91 93361 16210)',
     );
 
     if (!mounted) return;
@@ -116,22 +123,17 @@ TripCosmos.co — The Sacred Journey
   }
 
   Future<void> _sendAdvancePaymentLink() async {
-    final message =
-        '''
-Namaste ${widget.callLog.customerName} ji! 🙏
-To block your confirmed Varanasi darshan dates & reserved AC cab:
-
-💳 Advance Booking Token: ₹1,500
-UPI ID: 9336116210@upi (Official TripCosmos Desk: +91 93361 16210)
-
-Balance payable directly upon arrival in Varanasi.
-Har Har Mahadev! 🙏
-''';
-
     final apiService = context.read<LeadProvider>().apiService;
-    final delivered = await apiService.sendWhatsAppMessage(
+    final delivered = await apiService.sendWhatsAppButtons(
       phone: widget.callLog.phone,
-      message: message,
+      title: '💳 *Block Cab & Confirm Dates (₹1,500 Token)*',
+      description: 'Namaste ' + widget.callLog.customerName + ' ji! 🙏\n\nTo block your confirmed Varanasi darshan dates & reserved AC cab:\n\n💳 Advance Booking Token: ₹1,500\nUPI ID: 9336116210@upi\n\nBalance payable upon arrival in Varanasi.',
+      buttons: [
+        {'id': 'btn_paid', 'text': '✅ I have Paid ₹1,500'},
+        {'id': 'btn_qr', 'text': '📲 Send UPI QR Code'},
+        {'id': 'btn_call', 'text': '📞 Call Varanasi Desk'},
+      ],
+      footer: 'TripCosmos.co • Official Desk (+91 93361 16210)',
     );
 
     if (!mounted) return;
@@ -139,7 +141,7 @@ Har Har Mahadev! 🙏
     if (delivered) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('✓ Advance payment link sent via WhatsApp (+91 93361 16210)'),
+          content: Text('✓ Advance payment link & buttons sent via WhatsApp (+91 93361 16210)'),
           backgroundColor: AppColors.successGreen,
         ),
       );

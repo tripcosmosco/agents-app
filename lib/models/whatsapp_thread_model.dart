@@ -82,6 +82,8 @@ class WhatsAppThread {
   final bool isB2b;
   final DateTime? nextFollowUpAt;
   final int callCount;
+  final bool slaBreached;
+  final int slaWaitMinutes;
   final List<WhatsAppMessage> messages;
 
   WhatsAppThread({
@@ -107,6 +109,8 @@ class WhatsAppThread {
     this.isB2b = false,
     this.nextFollowUpAt,
     this.callCount = 0,
+    this.slaBreached = false,
+    this.slaWaitMinutes = 0,
     this.messages = const [],
   });
 
@@ -146,6 +150,11 @@ class WhatsAppThread {
           ? DateTime.tryParse(json['next_follow_up_at'].toString())
           : null,
       callCount: int.tryParse(json['call_count']?.toString() ?? '0') ?? 0,
+      slaBreached: json['sla_breached'] == true ||
+          ((json['unread_count'] as int? ?? 0) > 0 &&
+              !(json['last_message_from_me'] == true) &&
+              (DateTime.now().difference(DateTime.tryParse(json['updated_at']?.toString() ?? json['last_message_time']?.toString() ?? '') ?? DateTime.now()).inMinutes >= 5)),
+      slaWaitMinutes: (json['sla_wait_minutes'] as num?)?.toInt() ?? 0,
       messages: parsedMsgs,
     );
   }
@@ -174,6 +183,8 @@ class WhatsAppThread {
       'is_b2b': isB2b,
       'next_follow_up_at': nextFollowUpAt?.toIso8601String(),
       'call_count': callCount,
+      'sla_breached': slaBreached,
+      'sla_wait_minutes': slaWaitMinutes,
       'messages': messages.map((m) => m.toJson()).toList(),
     };
   }
@@ -225,6 +236,8 @@ class WhatsAppThread {
     DateTime? nextFollowUpAt,
     bool clearFollowUp = false,
     int? callCount,
+    bool? slaBreached,
+    int? slaWaitMinutes,
     List<WhatsAppMessage>? messages,
   }) {
     return WhatsAppThread(
@@ -250,6 +263,8 @@ class WhatsAppThread {
       isB2b: isB2b ?? this.isB2b,
       nextFollowUpAt: clearFollowUp ? null : (nextFollowUpAt ?? this.nextFollowUpAt),
       callCount: callCount ?? this.callCount,
+      slaBreached: slaBreached ?? this.slaBreached,
+      slaWaitMinutes: slaWaitMinutes ?? this.slaWaitMinutes,
       messages: messages ?? this.messages,
     );
   }

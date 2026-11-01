@@ -714,6 +714,37 @@ class ApiService {
     return false;
   }
 
+  /// 11c. Send Interactive WhatsApp Action Buttons (Evolution API v2 native)
+  Future<bool> sendWhatsAppButtons({
+    required String phone,
+    required String title,
+    required String description,
+    required List<Map<String, String>> buttons,
+    String? footer,
+  }) async {
+    try {
+      final uri = Uri.parse('$baseUrl/mobile/send-whatsapp-buttons');
+      final body = json.encode({
+        'phone': phone,
+        'title': title,
+        'description': description,
+        'buttons': buttons,
+        'footer': footer ?? 'TripCosmos.co • Har Har Mahadev',
+      });
+      final response = await http
+          .post(uri, headers: _headers, body: body)
+          .timeout(const Duration(seconds: 10));
+
+      if (response.statusCode == 200) {
+        final data = _safeJsonDecode(response.body);
+        return data != null && (data['ok'] == true || data['success'] == true);
+      }
+    } catch (e) {
+      debugPrint('Error sending WhatsApp buttons via API: $e');
+    }
+    return false;
+  }
+
   /// 11b. Delete Sent WhatsApp Message For Everyone
   Future<bool> deleteWhatsAppMessage({
     required String messageId,

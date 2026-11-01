@@ -51,6 +51,7 @@ class WhatsAppProvider extends ChangeNotifier {
   int get whatsappActiveCount => _threads.where((th) => th.hasWhatsappChat || th.sourceChannel == 'whatsapp').length;
   int get followUpDueCount => _threads.where((th) => th.nextFollowUpAt != null).length;
   int get b2bThreadsCount => _threads.where((th) => isB2bThread(th)).length;
+  int get slaBreachedCount => _threads.where((th) => th.slaBreached || (th.unreadCount > 0 && !th.lastMessageFromMe && DateTime.now().difference(th.lastMessageTime).inMinutes >= 5)).length;
 
   WhatsAppProvider({required this.apiService}) {
     _initAgentName();
@@ -120,6 +121,7 @@ class WhatsAppProvider extends ChangeNotifier {
           th.lastMessage.toLowerCase().contains(_searchQuery.toLowerCase());
 
       final matchesFilter = _filter == 'all' ||
+          (_filter == 'sla' && (th.slaBreached || (th.unreadCount > 0 && !th.lastMessageFromMe && DateTime.now().difference(th.lastMessageTime).inMinutes >= 5))) ||
           (_filter == 'whatsapp' && (th.hasWhatsappChat || th.sourceChannel == 'whatsapp')) ||
           (_filter == 'unread' && th.unreadCount > 0) ||
           (_filter == 'new' && (th.stage == 'new' || th.stage.isEmpty)) ||
