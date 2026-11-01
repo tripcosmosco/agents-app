@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:provider/provider.dart';
 
 import '../core/theme/app_colors.dart';
@@ -61,6 +62,82 @@ class _MasterAiAssistantViewState extends State<MasterAiAssistantView> {
       provider.sendMasterAiQuery(text);
       _scrollToBottom();
     }
+  }
+
+  void _showVoiceCommandModal(BuildContext context, AiAgentProvider provider) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppColors.getCard(context),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 36,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: AppColors.getBorder(context),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppColors.accentGold.withValues(alpha: 0.18),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.mic_rounded, color: AppColors.accentGold, size: 22),
+                  ),
+                  const SizedBox(width: 12),
+                  const Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Voice Command Dictation',
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                      ),
+                      Text(
+                        'Tap an operations prompt to execute immediately',
+                        style: TextStyle(fontSize: 12, color: AppColors.textMuted),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              ...[
+                '🌅 Morning Operations & Pipeline Briefing',
+                '🔥 Show hot leads needing immediate callback',
+                '🚗 Calculate Innova Crysta rate: Kashi to Ayodhya',
+                '🤝 Draft B2B Wholesale pitch for Gujarat travel agents',
+                '💰 Check staff payroll & financial status',
+                '💬 Check unread WhatsApp chats & SLA alert breaches',
+              ].map((cmd) => ListTile(
+                    dense: true,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
+                    leading: const Icon(Icons.play_circle_outline_rounded, color: AppColors.accentGold, size: 20),
+                    title: Text(cmd, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                    onTap: () {
+                      Navigator.pop(ctx);
+                      _handleSend(provider, cmd);
+                    },
+                  )),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -314,13 +391,70 @@ class _MasterAiAssistantViewState extends State<MasterAiAssistantView> {
                                       ],
                                     ),
                                     const SizedBox(height: 8),
-                                    // AI Text
-                                    SelectableText(
-                                      msg.text,
-                                      style: TextStyle(
-                                        fontSize: 13,
-                                        color: AppColors.getTextPrimary(context),
-                                        height: 1.5,
+                                    // Rich Markdown AI Output
+                                    MarkdownBody(
+                                      data: msg.text,
+                                      selectable: true,
+                                      styleSheet: MarkdownStyleSheet(
+                                        p: TextStyle(
+                                          fontSize: 13,
+                                          color: AppColors.getTextPrimary(context),
+                                          height: 1.5,
+                                        ),
+                                        h1: const TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w800,
+                                          color: AppColors.accentGold,
+                                          letterSpacing: -0.2,
+                                          height: 1.4,
+                                        ),
+                                        h2: const TextStyle(
+                                          fontSize: 14.5,
+                                          fontWeight: FontWeight.w700,
+                                          color: AppColors.accentGold,
+                                          height: 1.35,
+                                        ),
+                                        h3: TextStyle(
+                                          fontSize: 13.5,
+                                          fontWeight: FontWeight.w700,
+                                          color: AppColors.getTextPrimary(context),
+                                          height: 1.3,
+                                        ),
+                                        strong: TextStyle(
+                                          fontWeight: FontWeight.w700,
+                                          color: AppColors.getTextPrimary(context),
+                                        ),
+                                        em: TextStyle(
+                                          fontStyle: FontStyle.italic,
+                                          color: AppColors.getTextSecondary(context),
+                                        ),
+                                        listBullet: const TextStyle(
+                                          color: AppColors.accentGold,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                        code: TextStyle(
+                                          backgroundColor: Theme.of(context).brightness == Brightness.light
+                                              ? const Color(0xFFF1F5F9)
+                                              : const Color(0xFF1E293B),
+                                          color: AppColors.accentGold,
+                                          fontSize: 11.5,
+                                          fontFamily: 'monospace',
+                                        ),
+                                        codeblockDecoration: BoxDecoration(
+                                          color: Theme.of(context).brightness == Brightness.light
+                                              ? const Color(0xFFF8FAFC)
+                                              : const Color(0xFF0F172A),
+                                          borderRadius: BorderRadius.circular(8),
+                                          border: Border.all(color: AppColors.getBorder(context)),
+                                        ),
+                                        horizontalRuleDecoration: BoxDecoration(
+                                          border: Border(
+                                            top: BorderSide(
+                                              color: AppColors.getBorder(context).withValues(alpha: 0.6),
+                                              width: 1,
+                                            ),
+                                          ),
+                                        ),
                                       ),
                                     ),
                                     // Dynamic Suggestions Chips if present
@@ -421,12 +555,10 @@ class _MasterAiAssistantViewState extends State<MasterAiAssistantView> {
                         ),
                         // Voice trigger simulation / quick dictation
                         IconButton(
-                          icon: const Icon(Icons.mic_none_rounded, size: 20),
+                          icon: const Icon(Icons.mic_rounded, size: 20),
                           color: AppColors.accentGold,
-                          tooltip: 'Voice Command',
-                          onPressed: () {
-                            _inputController.text = 'Give me a complete briefing of today\'s operations and hot leads';
-                          },
+                          tooltip: 'Voice Commands & Quick Dictation',
+                          onPressed: isQuerying ? null : () => _showVoiceCommandModal(context, aiProvider),
                         ),
                       ],
                     ),

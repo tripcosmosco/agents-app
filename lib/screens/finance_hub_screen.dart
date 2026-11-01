@@ -7,6 +7,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../core/theme/app_colors.dart';
 import '../models/financial_hub_model.dart';
 import '../models/lead_model.dart';
+import '../providers/auth_provider.dart';
 import '../providers/lead_provider.dart';
 import '../services/api_service.dart';
 import '../widgets/glass_card.dart';
@@ -73,7 +74,12 @@ class _FinanceHubScreenState extends State<FinanceHubScreen> with SingleTickerPr
       initialIndex: widget.initialTabIndex.clamp(0, 4),
     );
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _loadAll();
+      if (!mounted) return;
+      final auth = Provider.of<AuthProvider>(context, listen: false);
+      final hasAccess = auth.user == null || auth.isAdmin || auth.hasPermission('financial_hub');
+      if (hasAccess) {
+        _loadAll();
+      }
     });
   }
 
@@ -642,6 +648,61 @@ class _FinanceHubScreenState extends State<FinanceHubScreen> with SingleTickerPr
 
   @override
   Widget build(BuildContext context) {
+    final auth = Provider.of<AuthProvider>(context);
+    final hasAccess = auth.user == null || auth.isAdmin || auth.hasPermission('financial_hub');
+
+    if (!hasAccess) {
+      return Scaffold(
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        appBar: AppBar(
+          backgroundColor: AppColors.getCard(context),
+          elevation: 0,
+          title: Text(
+            'Finance Hub',
+            style: TextStyle(color: AppColors.getTextPrimary(context)),
+          ),
+        ),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(28.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(22),
+                  decoration: BoxDecoration(
+                    color: Colors.redAccent.withValues(alpha: 0.12),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.redAccent.withValues(alpha: 0.3), width: 1.5),
+                  ),
+                  child: const Icon(Icons.shield_outlined, size: 56, color: Colors.redAccent),
+                ),
+                const SizedBox(height: 22),
+                Text(
+                  'Access Restricted',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.getTextPrimary(context),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  'Confidential Financial Intelligence, Zoho Invoices, Customer Profit Margins, Bank Ledgers, and Payroll are restricted to Administrators and Finance Managers.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 13.5,
+                    color: AppColors.getTextSecondary(context),
+                    height: 1.45,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(

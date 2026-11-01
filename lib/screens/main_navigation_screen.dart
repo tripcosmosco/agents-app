@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../core/theme/app_colors.dart';
+import '../providers/auth_provider.dart';
 import '../providers/call_provider.dart';
 import '../providers/whatsapp_provider.dart';
 import 'ai_agents_screen.dart';
@@ -17,7 +18,6 @@ import 'whatsapp_hub_screen.dart';
 import '../services/api_service.dart';
 import '../widgets/active_call_hud.dart';
 import '../widgets/live_activity_banner.dart';
-import '../widgets/master_ai_assistant_view.dart';
 import '../widgets/post_call_action_sheet.dart';
 
 class MainNavigationScreen extends StatefulWidget {
@@ -34,33 +34,81 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   bool _isPostCallSheetOpen = false;
   final ScrollController _sliderNavScrollController = ScrollController();
 
-  void _openMasterAiModal(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => FractionallySizedBox(
-        heightFactor: 0.90,
-        child: MasterAiAssistantView(
-          isBottomSheet: true,
-          onClose: () => Navigator.pop(ctx),
-        ),
-      ),
-    );
-  }
-
-  // Audited & Well-Structured 9-Screen Super-App Menu
+  // Audited & Well-Structured Master Super-App Destinations (Dynamically RBAC Gated)
   // 1. Dialer, 2. Leads, 3. WhatsApp, 4. AI Agents, 5. B2B Hub, 6. Finance Hub, 7. Blog & SEO, 8. Social AI, 9. Reports
-  final List<Widget> _screens = const [
-    DialerScreen(),         // 0: 📞 Frontline Voice & Telephony
-    LeadsScreen(),          // 1: 👥 CRM Pipeline & Inbound Leads
-    WhatsAppHubScreen(),    // 2: 💬 Live WhatsApp Multi-Desk & Escalation
-    AiAgentsScreen(),       // 3: 🤖 AI Personas & Master Co-Pilot
-    B2bNetworkScreen(),     // 4: 🏢 B2B Hub (Wholesale DMC Partners - Pos 5)
-    FinanceHubScreen(),     // 5: 💳 Finance Hub (Zoho, Margins, SBI, Payroll - Pos 6)
-    BlogSeoScreen(),        // 6: 📝 Blog & VM SEO Brain Intelligence
-    SocialHubScreen(),      // 7: 📱 VM Social AI & Campaign Channels
-    ReportsScreen(),        // 8: 📊 CRM Analytics & Telephony ROI
+  static const List<_NavDestination> _allDestinations = [
+    _NavDestination(
+      key: 'dialer',
+      permission: 'dialer',
+      label: 'Dialer',
+      icon: Icons.phone_outlined,
+      activeIcon: Icons.phone_rounded,
+      screen: DialerScreen(),
+    ),
+    _NavDestination(
+      key: 'leads',
+      permission: 'leads_view',
+      label: 'Leads',
+      icon: Icons.people_outline_rounded,
+      activeIcon: Icons.people_alt_rounded,
+      screen: LeadsScreen(),
+    ),
+    _NavDestination(
+      key: 'whatsapp',
+      permission: 'whatsapp',
+      label: 'WhatsApp',
+      icon: Icons.chat_outlined,
+      activeIcon: Icons.chat_rounded,
+      screen: WhatsAppHubScreen(),
+    ),
+    _NavDestination(
+      key: 'ai_agents',
+      permission: 'ai_agents',
+      label: 'AI Agents',
+      icon: Icons.smart_toy_outlined,
+      activeIcon: Icons.smart_toy_rounded,
+      screen: AiAgentsScreen(),
+    ),
+    _NavDestination(
+      key: 'b2b_hub',
+      permission: 'b2b_hub',
+      label: 'B2B Hub',
+      icon: Icons.hub_outlined,
+      activeIcon: Icons.hub_rounded,
+      screen: B2bNetworkScreen(),
+    ),
+    _NavDestination(
+      key: 'financial_hub',
+      permission: 'financial_hub',
+      label: 'Finance Hub',
+      icon: Icons.account_balance_wallet_outlined,
+      activeIcon: Icons.account_balance_wallet_rounded,
+      screen: FinanceHubScreen(),
+    ),
+    _NavDestination(
+      key: 'blog_seo',
+      permission: 'blog_seo',
+      label: 'Blog & SEO',
+      icon: Icons.article_outlined,
+      activeIcon: Icons.article_rounded,
+      screen: BlogSeoScreen(),
+    ),
+    _NavDestination(
+      key: 'social_ai',
+      permission: 'social_ai',
+      label: 'Social AI',
+      icon: Icons.share_outlined,
+      activeIcon: Icons.share_rounded,
+      screen: SocialHubScreen(),
+    ),
+    _NavDestination(
+      key: 'reports',
+      permission: 'reports',
+      label: 'Reports',
+      icon: Icons.insert_chart_outlined_rounded,
+      activeIcon: Icons.insert_chart_rounded,
+      screen: ReportsScreen(),
+    ),
   ];
 
   @override
@@ -127,9 +175,25 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       });
     }
 
+    final authProvider = Provider.of<AuthProvider>(context);
+    final visibleDestinations = _allDestinations.where((d) {
+      if (authProvider.user == null) {
+        return true;
+      }
+      return authProvider.hasPermission(d.permission);
+    }).toList();
+
+    final safeIndex = _currentIndex.clamp(
+      0,
+      visibleDestinations.isEmpty ? 0 : visibleDestinations.length - 1,
+    );
+
     final mainContent = Stack(
       children: [
-        IndexedStack(index: _currentIndex, children: _screens),
+        IndexedStack(
+          index: safeIndex,
+          children: visibleDestinations.map((d) => d.screen).toList(),
+        ),
         Positioned(
           top: 0,
           left: 0,
@@ -223,23 +287,6 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
             ],
           ),
         ),
-        Positioned(
-          right: 20,
-          bottom: 20,
-          child: GestureDetector(
-            onLongPress: () => _openMasterAiModal(context),
-            child: FloatingActionButton(
-              heroTag: 'fab_add_lead_global',
-              backgroundColor: AppColors.accentGold,
-              foregroundColor: Colors.black,
-              elevation: 6,
-              shape: const CircleBorder(),
-              tooltip: 'Add Lead (Tap) | Master AI (Hold)',
-              onPressed: () => LeadsScreen.showAddLeadDialog(context),
-              child: const Icon(Icons.add_rounded, size: 32, color: Colors.black),
-            ),
-          ),
-        ),
       ],
     );
 
@@ -247,6 +294,8 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       body: mainContent,
       bottomNavigationBar: _buildFooterSliderBar(
         context,
+        destinations: visibleDestinations,
+        currentIndex: safeIndex,
         pendingCount: pendingCount,
         wpUnread: wpUnread,
         slaBreached: slaBreached,
@@ -257,64 +306,39 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   /// Modern Horizontal Footer Slider Navigation Bar
   Widget _buildFooterSliderBar(
     BuildContext context, {
+    required List<_NavDestination> destinations,
+    required int currentIndex,
     required int pendingCount,
     required int wpUnread,
     required int slaBreached,
   }) {
     final isLight = Theme.of(context).brightness == Brightness.light;
 
-    final navItems = [
-      _NavItem(
-        label: 'Dialer',
-        icon: Icons.phone_outlined,
-        activeIcon: Icons.phone_rounded,
-        badgeCount: pendingCount > 0 ? pendingCount : null,
-        badgeColor: AppColors.errorRed,
-      ),
-      const _NavItem(
-        label: 'Leads',
-        icon: Icons.people_outline_rounded,
-        activeIcon: Icons.people_alt_rounded,
-      ),
-      _NavItem(
-        label: 'WhatsApp',
-        icon: Icons.chat_outlined,
-        activeIcon: Icons.chat_rounded,
-        badgeCount: wpUnread > 0 ? wpUnread : null,
-        badgeColor: slaBreached > 0 ? Colors.redAccent : AppColors.whatsappGreen,
-        isAlertBadge: slaBreached > 0,
-      ),
-      const _NavItem(
-        label: 'AI Agents',
-        icon: Icons.smart_toy_outlined,
-        activeIcon: Icons.smart_toy_rounded,
-      ),
-      const _NavItem(
-        label: 'B2B Hub',
-        icon: Icons.hub_outlined,
-        activeIcon: Icons.hub_rounded,
-      ),
-      const _NavItem(
-        label: 'Finance Hub',
-        icon: Icons.account_balance_wallet_outlined,
-        activeIcon: Icons.account_balance_wallet_rounded,
-      ),
-      const _NavItem(
-        label: 'Blog & SEO',
-        icon: Icons.article_outlined,
-        activeIcon: Icons.article_rounded,
-      ),
-      const _NavItem(
-        label: 'Social AI',
-        icon: Icons.share_outlined,
-        activeIcon: Icons.share_rounded,
-      ),
-      const _NavItem(
-        label: 'Reports',
-        icon: Icons.insert_chart_outlined_rounded,
-        activeIcon: Icons.insert_chart_rounded,
-      ),
-    ];
+    final navItems = destinations.map((d) {
+      int? badgeCount;
+      Color? badgeColor;
+      bool isAlertBadge = false;
+
+      if (d.key == 'dialer' && pendingCount > 0) {
+        badgeCount = pendingCount;
+        badgeColor = AppColors.errorRed;
+      } else if (d.key == 'whatsapp') {
+        if (wpUnread > 0) {
+          badgeCount = wpUnread;
+          badgeColor = slaBreached > 0 ? Colors.redAccent : AppColors.whatsappGreen;
+          isAlertBadge = slaBreached > 0;
+        }
+      }
+
+      return _NavItem(
+        label: d.label,
+        icon: d.icon,
+        activeIcon: d.activeIcon,
+        badgeCount: badgeCount,
+        badgeColor: badgeColor,
+        isAlertBadge: isAlertBadge,
+      );
+    }).toList();
 
     return Container(
       height: 66,
@@ -344,7 +368,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
           separatorBuilder: (_, _) => const SizedBox(width: 4),
           itemBuilder: (context, index) {
             final item = navItems[index];
-            final isSelected = _currentIndex == index;
+            final isSelected = currentIndex == index;
 
             return InkWell(
               onTap: () => _onTabSelected(index),
@@ -444,5 +468,23 @@ class _NavItem {
     this.badgeCount,
     this.badgeColor,
     this.isAlertBadge = false,
+  });
+}
+
+class _NavDestination {
+  final String key;
+  final String permission;
+  final String label;
+  final IconData icon;
+  final IconData activeIcon;
+  final Widget screen;
+
+  const _NavDestination({
+    required this.key,
+    required this.permission,
+    required this.label,
+    required this.icon,
+    required this.activeIcon,
+    required this.screen,
   });
 }

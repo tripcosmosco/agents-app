@@ -446,7 +446,18 @@ class _LeadsScreenState extends State<LeadsScreen> {
                 ],
               ),
       ),
-      floatingActionButton: null,
+      floatingActionButton: FloatingActionButton.extended(
+        heroTag: 'fab_add_lead_screen',
+        onPressed: () => LeadsScreen.showAddLeadDialog(context),
+        backgroundColor: AppColors.accentGold,
+        foregroundColor: Colors.black,
+        elevation: 4,
+        icon: const Icon(Icons.person_add_rounded, size: 20, color: Colors.black),
+        label: const Text(
+          'New Lead',
+          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: Colors.black),
+        ),
+      ),
     );
   }
 
