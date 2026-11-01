@@ -945,11 +945,13 @@ class ApiService {
     String search = '',
     String city = '',
     String status = '',
-    int limit = 50,
+    int limit = 100,
+    int offset = 0,
   }) async {
     try {
       final queryParams = <String, String>{
         'limit': limit.toString(),
+        if (offset > 0) 'offset': offset.toString(),
         if (search.isNotEmpty) 'search': search,
         if (city.isNotEmpty && city != 'All') 'city': city,
         if (status.isNotEmpty && status != 'all') 'status': status,
