@@ -381,9 +381,10 @@ class AiAgentProvider extends ChangeNotifier {
           ),
         );
       } else {
+        final errorMsg = res?['error'] ?? res?['message'] ?? res?['reply'] ?? (res == null ? 'Network connection timeout. Please retry.' : 'Briefing temporarily unavailable.');
         _masterAssistantMessages.add(
           ChatMessage(
-            text: 'Could not generate briefing: ${res?["error"] ?? "Unknown error"}',
+            text: 'Could not generate briefing: $errorMsg',
             isUser: false,
             timestamp: DateTime.now(),
             provider: 'System Error',
