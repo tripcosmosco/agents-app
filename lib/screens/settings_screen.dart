@@ -1098,6 +1098,203 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
               const SizedBox(height: 20),
 
+              // Section: Automation & AI Reception Control
+              const Text(
+                'AUTOMATION & AI RECEPTION CONTROL',
+                style: TextStyle(
+                  color: AppColors.textMuted,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.5,
+                ),
+              ),
+              const SizedBox(height: 10),
+
+              Consumer<WhatsAppProvider>(
+                builder: (context, wp, _) {
+                  return GlassCard(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Master Kill Switch Row
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(
+                              child: Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(8),
+                                    decoration: BoxDecoration(
+                                      color: (wp.allAutomationsDisabled ? AppColors.errorRed : AppColors.successGreen).withValues(alpha: 0.15),
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: Icon(
+                                      wp.allAutomationsDisabled ? Icons.pause_circle_filled_rounded : Icons.bolt_rounded,
+                                      color: wp.allAutomationsDisabled ? AppColors.errorRed : AppColors.successGreen,
+                                      size: 22,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'Master Automation Kill Switch',
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w800,
+                                            color: wp.allAutomationsDisabled ? AppColors.errorRed : AppColors.getTextPrimary(context),
+                                          ),
+                                        ),
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          wp.allAutomationsDisabled
+                                              ? '🛑 100% Human-Only Mode (All automated replies paused)'
+                                              : '⚡ Automations Active (Auto-Greeting & Responders ready)',
+                                          style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Switch.adaptive(
+                              value: wp.allAutomationsDisabled,
+                              activeColor: AppColors.errorRed,
+                              activeTrackColor: AppColors.errorRed.withValues(alpha: 0.5),
+                              inactiveThumbColor: AppColors.successGreen,
+                              inactiveTrackColor: AppColors.successGreen.withValues(alpha: 0.3),
+                              onChanged: (val) async {
+                                final ok = await wp.setAllAutomationsDisabled(val);
+                                if (context.mounted && ok) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(val
+                                          ? '🛑 Master Kill Switch ENGAGED: 100% Human-Only Mode'
+                                          : '✓ Master Kill Switch DISENGAGED: Automations resumed'),
+                                      backgroundColor: val ? AppColors.errorRed : AppColors.successGreen,
+                                    ),
+                                  );
+                                }
+                              },
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 10),
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).brightness == Brightness.light
+                                ? Colors.black.withValues(alpha: 0.04)
+                                : Colors.white.withValues(alpha: 0.04),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Text(
+                            'When enabled, no automated bot greeting, continuous AI reply, or missed-call text will be sent to travelers. Human telecallers retain full 100% manual control.',
+                            style: TextStyle(fontSize: 11, color: AppColors.textMuted),
+                          ),
+                        ),
+
+                        // Sub-Automation Toggles (visible when Master Kill Switch is OFF)
+                        if (!wp.allAutomationsDisabled) ...[
+                          const SizedBox(height: 14),
+                          const Divider(height: 1, color: AppColors.borderSubtle),
+                          const SizedBox(height: 12),
+
+                          // First Touch Deterministic Greeting
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'First Touch Auto-Greeting',
+                                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                                    ),
+                                    Text(
+                                      'Sends 1️⃣-4️⃣ intake package options on first customer inquiry',
+                                      style: TextStyle(fontSize: 10.5, color: AppColors.textMuted),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Switch.adaptive(
+                                value: wp.firstGreetingEnabled,
+                                activeColor: AppColors.whatsappGreen,
+                                onChanged: (val) => wp.setFirstGreetingEnabled(val),
+                              ),
+                            ],
+                          ),
+
+                          const SizedBox(height: 10),
+                          // Continuous LLM Auto-Reply Bot
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Continuous AI Chatbot Auto-Reply',
+                                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                                    ),
+                                    Text(
+                                      'AI agent automatically answers all ongoing thread questions (OFF by default)',
+                                      style: TextStyle(fontSize: 10.5, color: AppColors.textMuted),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Switch.adaptive(
+                                value: wp.autoReplyEnabled,
+                                activeColor: AppColors.whatsappGreen,
+                                onChanged: (val) => wp.setAutoReplyEnabled(val),
+                              ),
+                            ],
+                          ),
+
+                          const SizedBox(height: 10),
+                          // Missed Call Recovery
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Missed-Call WhatsApp Recovery',
+                                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                                    ),
+                                    Text(
+                                      'Sends instant apology & callback link when an incoming ring is missed',
+                                      style: TextStyle(fontSize: 10.5, color: AppColors.textMuted),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Switch.adaptive(
+                                value: wp.missedCallReplyEnabled,
+                                activeColor: AppColors.whatsappGreen,
+                                onChanged: (val) => wp.setMissedCallReplyEnabled(val),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ],
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(height: 20),
+
               // Section: WhatsApp Gateway & Device Link
               const Text(
                 'WHATSAPP GATEWAY & LIVE QR PAIRING',

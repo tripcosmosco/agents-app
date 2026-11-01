@@ -633,6 +633,44 @@ class ApiService {
     return null;
   }
 
+  /// 10d. Master Automation Kill Switch & Sub-Automation Toggles (100% Human-Only Mode)
+  Future<Map<String, dynamic>?> fetchAutomationSettings() async {
+    try {
+      final uri = Uri.parse('$baseUrl/mobile/automation-settings');
+      final response = await http.get(uri, headers: _headers).timeout(const Duration(seconds: 8));
+      if (response.statusCode == 200) {
+        return _safeJsonDecode(response.body);
+      }
+    } catch (e) {
+      debugPrint('Error fetching automation settings: $e');
+    }
+    return null;
+  }
+
+  Future<Map<String, dynamic>?> updateAutomationSettings({
+    bool? disableAllAutomations,
+    bool? firstGreetingEnabled,
+    bool? autoReplyEnabled,
+    bool? missedCallReplyEnabled,
+  }) async {
+    try {
+      final uri = Uri.parse('$baseUrl/mobile/automation-settings');
+      final body = json.encode({
+        if (disableAllAutomations != null) 'disable_all_automations': disableAllAutomations ? '1' : '0',
+        if (firstGreetingEnabled != null) 'whatsapp_first_greeting_enabled': firstGreetingEnabled ? '1' : '0',
+        if (autoReplyEnabled != null) 'whatsapp_auto_reply': autoReplyEnabled ? '1' : '0',
+        if (missedCallReplyEnabled != null) 'missed_call_auto_reply': missedCallReplyEnabled ? '1' : '0',
+      });
+      final response = await http.post(uri, headers: _headers, body: body).timeout(const Duration(seconds: 8));
+      if (response.statusCode == 200) {
+        return _safeJsonDecode(response.body);
+      }
+    } catch (e) {
+      debugPrint('Error updating automation settings: $e');
+    }
+    return null;
+  }
+
   /// Fetch Authenticated Agent Profile & Dedicated AI Sales Co-Pilot (Aditi AI)
   Future<Map<String, dynamic>?> fetchAgentProfile() async {
     try {

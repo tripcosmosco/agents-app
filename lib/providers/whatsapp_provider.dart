@@ -28,6 +28,22 @@ class WhatsAppProvider extends ChangeNotifier {
   bool _evolutionOnline = true;
   bool get evolutionOnline => _evolutionOnline;
 
+  // Master Automation Kill Switch & Sub-Toggles (100% Human-Only Mode)
+  bool _allAutomationsDisabled = false;
+  bool get allAutomationsDisabled => _allAutomationsDisabled;
+
+  bool _firstGreetingEnabled = true;
+  bool get firstGreetingEnabled => _firstGreetingEnabled;
+
+  bool _autoReplyEnabled = false;
+  bool get autoReplyEnabled => _autoReplyEnabled;
+
+  bool _missedCallReplyEnabled = true;
+  bool get missedCallReplyEnabled => _missedCallReplyEnabled;
+
+  bool _isUpdatingAutomation = false;
+  bool get isUpdatingAutomation => _isUpdatingAutomation;
+
   String _currentAgentName = 'Nishkarsh';
   String get currentAgentName => _currentAgentName;
 
@@ -40,6 +56,7 @@ class WhatsAppProvider extends ChangeNotifier {
     _initAgentName();
     _loadCachedThreads();
     fetchThreadsFromServer();
+    fetchAutomationSettings();
   }
 
   Future<void> _loadCachedThreads() async {
@@ -657,5 +674,86 @@ class WhatsAppProvider extends ChangeNotifier {
     notifyListeners();
     loadThreadMessages(newThread.id);
     return newThread;
+  }
+
+  /// Fetch Automation Settings & Master Kill Switch state from server
+  Future<void> fetchAutomationSettings() async {
+    try {
+      final res = await apiService.fetchAutomationSettings();
+      if (res != null && (res['success'] == true || res['ok'] == true)) {
+        _allAutomationsDisabled = res['disable_all_automations'] == true || res['all_automations_disabled'] == true;
+        _firstGreetingEnabled = res['whatsapp_first_greeting_enabled'] != false;
+        _autoReplyEnabled = res['whatsapp_auto_reply'] == true || res['whatsapp_auto_reply_enabled'] == true;
+        _missedCallReplyEnabled = res['missed_call_auto_reply'] != false && res['missed_call_auto_reply_enabled'] != false;
+        notifyListeners();
+      }
+    } catch (e) {
+      debugPrint('Error loading automation settings: $e');
+    }
+  }
+
+  /// Master Kill Switch: Disables/Enables ALL automations (100% Human-Only Mode)
+  Future<bool> setAllAutomationsDisabled(bool disable) async {
+    _isUpdatingAutomation = true;
+    notifyListeners();
+    try {
+      final res = await apiService.updateAutomationSettings(disableAllAutomations: disable);
+      if (res != null && (res['success'] == true || res['ok'] == true)) {
+        _allAutomationsDisabled = disable;
+        _isUpdatingAutomation = false;
+        notifyListeners();
+        return true;
+      }
+    } catch (e) {
+      debugPrint('Error updating master automation switch: $e');
+    }
+    _isUpdatingAutomation = false;
+    notifyListeners();
+    return false;
+  }
+
+  /// Toggle First Touch Deterministic Intake Greeting
+  Future<bool> setFirstGreetingEnabled(bool enabled) async {
+    try {
+      final res = await apiService.updateAutomationSettings(firstGreetingEnabled: enabled);
+      if (res != null && (res['success'] == true || res['ok'] == true)) {
+        _firstGreetingEnabled = enabled;
+        notifyListeners();
+        return true;
+      }
+    } catch (e) {
+      debugPrint('Error updating first greeting switch: $e');
+    }
+    return false;
+  }
+
+  /// Toggle Continuous LLM Auto Reply
+  Future<bool> setAutoReplyEnabled(bool enabled) async {
+    try {
+      final res = await apiService.updateAutomationSettings(autoReplyEnabled: enabled);
+      if (res != null && (res['success'] == true || res['ok'] == true)) {
+        _autoReplyEnabled = enabled;
+        notifyListeners();
+        return true;
+      }
+    } catch (e) {
+      debugPrint('Error updating auto reply switch: $e');
+    }
+    return false;
+  }
+
+  /// Toggle Missed Call WhatsApp Recovery
+  Future<bool> setMissedCallReplyEnabled(bool enabled) async {
+    try {
+      final res = await apiService.updateAutomationSettings(missedCallReplyEnabled: enabled);
+      if (res != null && (res['success'] == true || res['ok'] == true)) {
+        _missedCallReplyEnabled = enabled;
+        notifyListeners();
+        return true;
+      }
+    } catch (e) {
+      debugPrint('Error updating missed call reply switch: $e');
+    }
+    return false;
   }
 }

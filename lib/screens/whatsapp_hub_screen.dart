@@ -1,4 +1,4 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -383,6 +383,195 @@ class _WhatsAppHubScreenState extends State<WhatsAppHubScreen> {
     );
   }
 
+  void _showMasterAutomationSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppColors.getCard(context),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => Consumer<WhatsAppProvider>(
+        builder: (context, provider, _) {
+          return SafeArea(
+            child: SingleChildScrollView(
+              padding: EdgeInsets.fromLTRB(20, 20, 20, 20 + MediaQuery.of(ctx).padding.bottom),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: (provider.allAutomationsDisabled ? AppColors.errorRed : AppColors.successGreen).withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Icon(
+                          provider.allAutomationsDisabled ? Icons.pause_circle_filled_rounded : Icons.bolt_rounded,
+                          color: provider.allAutomationsDisabled ? AppColors.errorRed : AppColors.successGreen,
+                          size: 22,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Automation & Bot Controls',
+                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+                            ),
+                            Text(
+                              provider.allAutomationsDisabled
+                                  ? 'ðŸ›‘ 100% Human-Only Mode (All bots paused)'
+                                  : 'âš¡ Automations Active',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: provider.allAutomationsDisabled ? AppColors.errorRed : AppColors.whatsappGreen,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () => Navigator.pop(ctx),
+                        icon: const Icon(Icons.close, size: 20),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Master Kill Switch Tile
+                  Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: provider.allAutomationsDisabled
+                          ? AppColors.errorRed.withValues(alpha: 0.12)
+                          : AppColors.getElevated(context),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: provider.allAutomationsDisabled
+                            ? AppColors.errorRed.withValues(alpha: 0.6)
+                            : AppColors.getBorder(context),
+                        width: 1.2,
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Master Kill Switch',
+                                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                                  ),
+                                  SizedBox(height: 2),
+                                  Text(
+                                    'Pause all automated greetings, AI bot replies, and missed-call texts',
+                                    style: TextStyle(fontSize: 11, color: AppColors.textMuted),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Switch.adaptive(
+                              value: provider.allAutomationsDisabled,
+                              activeColor: AppColors.errorRed,
+                              activeTrackColor: AppColors.errorRed.withValues(alpha: 0.5),
+                              inactiveThumbColor: AppColors.successGreen,
+                              inactiveTrackColor: AppColors.successGreen.withValues(alpha: 0.3),
+                              onChanged: (val) async {
+                                final ok = await provider.setAllAutomationsDisabled(val);
+                                if (ctx.mounted && ok) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(val
+                                          ? 'ðŸ›‘ Master Kill Switch ENGAGED: 100% Human-Only Mode'
+                                          : 'âœ“ Master Kill Switch DISENGAGED: Automations resumed'),
+                                      backgroundColor: val ? AppColors.errorRed : AppColors.successGreen,
+                                    ),
+                                  );
+                                }
+                              },
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  if (!provider.allAutomationsDisabled) ...[
+                    const SizedBox(height: 16),
+                    const Text(
+                      'ACTIVE SUB-AUTOMATIONS',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textMuted,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+
+                    // First Touch Greeting Toggle
+                    SwitchListTile.adaptive(
+                      contentPadding: EdgeInsets.zero,
+                      value: provider.firstGreetingEnabled,
+                      activeColor: AppColors.whatsappGreen,
+                      title: const Text('First Touch Auto-Greeting', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                      subtitle: const Text('1ï¸âƒ£-4ï¸âƒ£ intake package options sent on first inquiry', style: TextStyle(fontSize: 11, color: AppColors.textMuted)),
+                      onChanged: (val) => provider.setFirstGreetingEnabled(val),
+                    ),
+
+                    // Continuous LLM Auto Reply Toggle
+                    SwitchListTile.adaptive(
+                      contentPadding: EdgeInsets.zero,
+                      value: provider.autoReplyEnabled,
+                      activeColor: AppColors.whatsappGreen,
+                      title: const Text('Continuous AI Auto-Reply Bot', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                      subtitle: const Text('AI bot replies to all customer chat turns (OFF by default)', style: TextStyle(fontSize: 11, color: AppColors.textMuted)),
+                      onChanged: (val) => provider.setAutoReplyEnabled(val),
+                    ),
+
+                    // Missed Call Recovery Toggle
+                    SwitchListTile.adaptive(
+                      contentPadding: EdgeInsets.zero,
+                      value: provider.missedCallReplyEnabled,
+                      activeColor: AppColors.whatsappGreen,
+                      title: const Text('Missed Call WhatsApp Responder', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                      subtitle: const Text('Instant message sent when a call to office SIM is missed', style: TextStyle(fontSize: 11, color: AppColors.textMuted)),
+                      onChanged: (val) => provider.setMissedCallReplyEnabled(val),
+                    ),
+                  ],
+
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.pop(ctx),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF334155),
+                        foregroundColor: Colors.white,
+                      ),
+                      child: const Text('Done'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final wp = Provider.of<WhatsAppProvider>(context);
@@ -467,6 +656,49 @@ class _WhatsAppHubScreenState extends State<WhatsAppHubScreen> {
             icon: const Icon(Icons.refresh, color: AppColors.accentGold),
             tooltip: 'Sync Evolution WhatsApp & CRM',
           ),
+          // Master Automation Kill Switch Pill
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
+            child: InkWell(
+              onTap: () => _showMasterAutomationSheet(context),
+              borderRadius: BorderRadius.circular(16),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 250),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: wp.allAutomationsDisabled
+                      ? AppColors.errorRed.withValues(alpha: 0.18)
+                      : AppColors.whatsappGreen.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: wp.allAutomationsDisabled
+                        ? AppColors.errorRed.withValues(alpha: 0.8)
+                        : AppColors.whatsappGreen.withValues(alpha: 0.5),
+                    width: 1,
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      wp.allAutomationsDisabled ? Icons.pause_circle_filled : Icons.bolt_rounded,
+                      size: 14,
+                      color: wp.allAutomationsDisabled ? AppColors.errorRed : AppColors.whatsappGreen,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      wp.allAutomationsDisabled ? 'Human Only' : 'Automations ON',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: wp.allAutomationsDisabled ? AppColors.errorRed : AppColors.whatsappGreen,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
           IconButton(
             onPressed: () {
               Navigator.push(
@@ -496,6 +728,68 @@ class _WhatsAppHubScreenState extends State<WhatsAppHubScreen> {
       body: SafeArea(
         child: Column(
           children: [
+            if (wp.allAutomationsDisabled)
+              Container(
+                margin: const EdgeInsets.fromLTRB(14, 6, 14, 4),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                decoration: BoxDecoration(
+                  color: AppColors.errorRed.withValues(alpha: 0.14),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppColors.errorRed.withValues(alpha: 0.5)),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.shield_outlined, color: AppColors.errorRed, size: 22),
+                    const SizedBox(width: 10),
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'ðŸ›‘ 100% Human-Only Mode Active',
+                            style: TextStyle(
+                              color: AppColors.errorRed,
+                              fontWeight: FontWeight.w800,
+                              fontSize: 12.5,
+                            ),
+                          ),
+                          SizedBox(height: 2),
+                          Text(
+                            'All automated bot greetings & AI auto-replies are paused. Only manual human messages will be sent.',
+                            style: TextStyle(color: Colors.white70, fontSize: 11),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    TextButton(
+                      style: TextButton.styleFrom(
+                        backgroundColor: AppColors.errorRed.withValues(alpha: 0.25),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          side: const BorderSide(color: AppColors.errorRed, width: 0.8),
+                        ),
+                      ),
+                      onPressed: () async {
+                        final ok = await wp.setAllAutomationsDisabled(false);
+                        if (mounted && ok) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('âœ“ Automations Resumed (Auto-Greeting active)'),
+                              backgroundColor: AppColors.successGreen,
+                            ),
+                          );
+                        }
+                      },
+                      child: const Text('Resume', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                    ),
+                  ],
+                ),
+              ),
             if (!wp.evolutionOnline)
               Container(
                 margin: const EdgeInsets.fromLTRB(14, 8, 14, 4),
