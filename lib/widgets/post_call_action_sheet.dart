@@ -4,8 +4,10 @@ import 'package:provider/provider.dart';
 import '../core/constants/app_constants.dart';
 import '../core/theme/app_colors.dart';
 import '../models/call_log_model.dart';
+import '../models/lead_model.dart';
 import '../providers/call_provider.dart';
 import '../providers/lead_provider.dart';
+import '../screens/quotation_desk_screen.dart';
 import '../services/telephony_service.dart';
 import 'glass_card.dart';
 
@@ -353,6 +355,66 @@ I am your dedicated tour coordinator from our Varanasi desk (+91 93361 16210). L
                 ),
               );
             }),
+
+            // ⚡ Open High-Quality Quotation Builder (2D/3D/4D/5D)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8.0),
+              child: GlassCard(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                backgroundColor: AppColors.accentBlue.withValues(alpha: 0.15),
+                borderColor: AppColors.accentBlue.withValues(alpha: 0.4),
+                onTap: () {
+                  widget.onDismiss();
+                  QuotationDeskScreen.open(
+                    context,
+                    LeadModel(
+                      id: 'call_${widget.callLog.phone}',
+                      name: widget.callLog.customerName,
+                      phone: widget.callLog.phone,
+                      destination: widget.callLog.tourInterest ?? 'Varanasi',
+                      pax: 2,
+                      source: 'telephony',
+                      stage: _selectedStage,
+                      createdAt: DateTime.now(),
+                      notes: _noteController.text.trim().isNotEmpty ? [_noteController.text.trim()] : [],
+                    ),
+                  );
+                },
+                child: Row(
+                  children: [
+                    const Icon(Icons.request_quote_rounded, color: AppColors.accentBlue, size: 20),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            '⚡ Open Full Quotation Builder',
+                            style: TextStyle(
+                              color: AppColors.accentBlue,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          Text(
+                            'Customize 2D, 3D, 4D, 5D day-wise itinerary, fleet & send quote',
+                            style: TextStyle(
+                              color: AppColors.getTextSecondary(context),
+                              fontSize: 11,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Icon(
+                      Icons.arrow_forward_ios_rounded,
+                      color: AppColors.accentBlue,
+                      size: 14,
+                    ),
+                  ],
+                ),
+              ),
+            ),
 
             // 1-Tap UPI Token Request
             GlassCard(

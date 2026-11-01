@@ -729,7 +729,21 @@ class _LeadsScreenState extends State<LeadsScreen> {
                     ),
                   ),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: 8),
+                IconButton(
+                  tooltip: 'Build Quote for ${lead.name}',
+                  style: IconButton.styleFrom(
+                    backgroundColor: AppColors.accentGold.withValues(alpha: 0.15),
+                    padding: const EdgeInsets.all(8),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      side: BorderSide(color: AppColors.accentGold.withValues(alpha: 0.4)),
+                    ),
+                  ),
+                  icon: const Icon(Icons.request_quote_rounded, color: AppColors.accentGold, size: 18),
+                  onPressed: () => QuotationDeskScreen.open(context, lead),
+                ),
+                const SizedBox(width: 8),
                 Expanded(
                   child: ElevatedButton.icon(
                     onPressed: () {
