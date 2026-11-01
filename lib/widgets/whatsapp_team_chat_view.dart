@@ -1645,7 +1645,7 @@ class _WhatsAppTeamChatViewState extends State<WhatsAppTeamChatView> {
           ],
 
           // Message Text
-          Text(
+          SelectableText(
             msg.text,
             style: const TextStyle(color: Colors.white, fontSize: 13, height: 1.35),
           ),
