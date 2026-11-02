@@ -1629,7 +1629,9 @@ class _FinanceHubScreenState extends State<FinanceHubScreen> with SingleTickerPr
                               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5, color: AppColors.getTextPrimary(context)),
                             ),
                             Text(
-                              _zohoConnected ? 'Connected & Token Active' : 'Not Connected • Tap to Link',
+                              _zohoConnected
+                                  ? 'Connected & Active (Org 60029674536 • zoho.in)'
+                                  : (_isLoadingZoho ? 'Checking Server Connection...' : 'Server Auth Pending • Central WP'),
                               style: TextStyle(
                                 fontSize: 11,
                                 color: _zohoConnected ? Colors.green : Colors.orange,
@@ -1641,7 +1643,7 @@ class _FinanceHubScreenState extends State<FinanceHubScreen> with SingleTickerPr
                       if (_zohoConnected) ...[
                         IconButton(
                           icon: const Icon(Icons.settings_outlined, size: 20),
-                          tooltip: 'Zoho Settings',
+                          tooltip: 'Zoho Server Config',
                           color: AppColors.getTextSecondary(context),
                           onPressed: _showZohoConnectSheet,
                         ),
@@ -1663,9 +1665,9 @@ class _FinanceHubScreenState extends State<FinanceHubScreen> with SingleTickerPr
                             foregroundColor: AppColors.primaryDark,
                             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                           ),
-                          icon: const Icon(Icons.link_rounded, size: 16),
-                          label: const Text('Connect Zoho', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
-                          onPressed: _showZohoConnectSheet,
+                          icon: const Icon(Icons.refresh_rounded, size: 16),
+                          label: Text(_isLoadingZoho ? 'Checking...' : 'Check Status', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+                          onPressed: _isLoadingZoho ? null : _loadZohoData,
                         ),
                       ],
                     ],

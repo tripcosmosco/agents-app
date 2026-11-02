@@ -1604,7 +1604,8 @@ class _WhatsAppTeamChatViewState extends State<WhatsAppTeamChatView> {
                 msg.mediaUrl!.toLowerCase().contains('.jpeg') ||
                 msg.mediaUrl!.toLowerCase().contains('/tc-media/') ||
                 msg.mediaUrl!.toLowerCase().contains('whatsapp.net'))) ||
-        msg.text.startsWith('[Photo]');
+        msg.text.trim().toLowerCase().startsWith('[photo]') ||
+        msg.text.trim().toLowerCase() == '[photo]';
 
     final hasVideo = (msg.mediaType == 'video') ||
         (msg.mediaUrl != null &&
@@ -1612,7 +1613,8 @@ class _WhatsAppTeamChatViewState extends State<WhatsAppTeamChatView> {
                 msg.mediaUrl!.toLowerCase().contains('.mov') ||
                 msg.mediaUrl!.toLowerCase().contains('.mkv') ||
                 msg.mediaUrl!.toLowerCase().contains('.webm'))) ||
-        msg.text.startsWith('[Video]');
+        msg.text.trim().toLowerCase().startsWith('[video]') ||
+        msg.text.trim().toLowerCase() == '[video]';
 
     final hasDocument = (msg.mediaType == 'document' || msg.mediaType == 'pdf') ||
         (msg.mediaUrl != null &&
@@ -1620,11 +1622,11 @@ class _WhatsAppTeamChatViewState extends State<WhatsAppTeamChatView> {
                 msg.mediaUrl!.toLowerCase().contains('.doc') ||
                 msg.mediaUrl!.toLowerCase().contains('.docx') ||
                 msg.mediaUrl!.toLowerCase().contains('.xls'))) ||
-        msg.text.contains('[Document:');
+        msg.text.toLowerCase().contains('[document:');
 
     final cleanText = msg.text
-        .replaceFirst(RegExp(r'^\[Photo\]\s*'), '')
-        .replaceFirst(RegExp(r'^\[Video\]\s*'), '')
+        .replaceFirst(RegExp(r'^\s*\[Photo\]\s*', caseSensitive: false), '')
+        .replaceFirst(RegExp(r'^\s*\[Video\]\s*', caseSensitive: false), '')
         .trim();
     final shouldShowText = cleanText.isNotEmpty || (!hasImage && !hasVideo && !hasDocument);
 
@@ -1936,9 +1938,9 @@ class _WhatsAppTeamChatViewState extends State<WhatsAppTeamChatView> {
 
           // Message Text
           if (shouldShowText) ...[
-            SelectableText(
+            _buildFormattedMessageText(
               cleanText.isNotEmpty ? cleanText : msg.text,
-              style: TextStyle(
+              TextStyle(
                 color: Theme.of(context).brightness == Brightness.light ? const Color(0xFF111B21) : Colors.white,
                 fontSize: 13,
                 height: 1.35,
@@ -2002,6 +2004,34 @@ class _WhatsAppTeamChatViewState extends State<WhatsAppTeamChatView> {
         borderRadius: BorderRadius.circular(16),
         child: bubble,
       ),
+    );
+  }
+
+  Widget _buildFormattedMessageText(String text, TextStyle baseStyle) {
+    final pattern = RegExp(r'\*([^*]+)\*');
+    final matches = pattern.allMatches(text);
+    if (matches.isEmpty) {
+      return SelectableText(text, style: baseStyle);
+    }
+
+    final spans = <InlineSpan>[];
+    int currentIndex = 0;
+    for (final match in matches) {
+      if (match.start > currentIndex) {
+        spans.add(TextSpan(text: text.substring(currentIndex, match.start)));
+      }
+      spans.add(TextSpan(
+        text: match.group(1),
+        style: const TextStyle(fontWeight: FontWeight.w700),
+      ));
+      currentIndex = match.end;
+    }
+    if (currentIndex < text.length) {
+      spans.add(TextSpan(text: text.substring(currentIndex)));
+    }
+
+    return SelectableText.rich(
+      TextSpan(children: spans, style: baseStyle),
     );
   }
 
