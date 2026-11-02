@@ -1,3 +1,4 @@
+import '../services/notification_service.dart';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import '../models/whatsapp_thread_model.dart';
@@ -6,6 +7,7 @@ import '../services/storage_service.dart';
 
 class WhatsAppProvider extends ChangeNotifier {
   final ApiService apiService;
+  int _lastKnownUnreadCount = 0;
 
   List<WhatsAppThread> _threads = [];
   List<WhatsAppThread> get threads => _threads;
@@ -632,6 +634,13 @@ class WhatsAppProvider extends ChangeNotifier {
             _selectedThreadId = _threads.first.id;
           }
           _saveThreadsToCache();
+
+          // Audio Notification: chime when new unread customer messages arrive
+          final currentUnread = _threads.fold(0, (sum, t) => sum + t.unreadCount);
+          if (currentUnread > _lastKnownUnreadCount) {
+            NotificationService().playAlertChime();
+          }
+          _lastKnownUnreadCount = currentUnread;
         }
       }
     } catch (e) {

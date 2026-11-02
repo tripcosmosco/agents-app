@@ -1,4 +1,4 @@
-﻿import 'dart:convert';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -714,16 +714,15 @@ class _WhatsAppHubScreenState extends State<WhatsAppHubScreen> {
         ],
       ),
       floatingActionButton: _selectedTab == 0
-          ? FloatingActionButton.extended(
+          ? FloatingActionButton(
               heroTag: 'fab_whatsapp_hub_new_chat',
               onPressed: () => _showNewWhatsAppLeadDialog(context),
               backgroundColor: AppColors.whatsappGreen,
               foregroundColor: Colors.white,
-              icon: const Icon(Icons.add_comment_rounded, size: 18),
-              label: const Text(
-                'New Chat / Lead',
-                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5),
-              ),
+              elevation: 4,
+              shape: const CircleBorder(),
+              tooltip: 'New WhatsApp Chat / Lead',
+              child: const Icon(Icons.add, size: 28),
             )
           : null,
       body: SafeArea(

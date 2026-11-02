@@ -1,3 +1,4 @@
+import 'audio_web_helper.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
@@ -93,7 +94,8 @@ class NotificationService {
     String? tourInterest,
   }) async {
     if (kIsWeb) {
-      debugPrint('Incoming Call: $callerName ($phoneNumber)');
+      debugPrint('📞 Incoming Call: $callerName ($phoneNumber)');
+      playRingtone();
       return;
     }
     await init();
@@ -146,7 +148,8 @@ class NotificationService {
     String? source,
   }) async {
     if (kIsWeb) {
-      debugPrint('New Lead: $leadName ($destination)');
+      debugPrint('🔥 New Lead: $leadName ($destination)');
+      playAlertChime();
       return;
     }
     await init();
@@ -192,7 +195,10 @@ class NotificationService {
     try {
       HapticFeedback.heavyImpact();
       SystemSound.play(SystemSoundType.alert);
-      if (kIsWeb) return;
+      if (kIsWeb) {
+        triggerWebSound('ringtone');
+        return;
+      }
       await _audioPlayer.setReleaseMode(ReleaseMode.loop);
       await _audioPlayer.play(
         UrlSource('https://cdn.freesound.org/previews/219/219110_40828-lq.mp3'),
@@ -216,7 +222,10 @@ class NotificationService {
     try {
       SystemSound.play(SystemSoundType.click);
       HapticFeedback.lightImpact();
-      if (kIsWeb) return;
+      if (kIsWeb) {
+        triggerWebSound('chime');
+        return;
+      }
       await _audioPlayer.setReleaseMode(ReleaseMode.release);
       await _audioPlayer.play(
         UrlSource('https://cdn.freesound.org/previews/536/536108_11529188-lq.mp3'),
@@ -231,7 +240,10 @@ class NotificationService {
     try {
       HapticFeedback.mediumImpact();
       SystemSound.play(SystemSoundType.click);
-      if (kIsWeb) return;
+      if (kIsWeb) {
+        triggerWebSound('success');
+        return;
+      }
       await _audioPlayer.setReleaseMode(ReleaseMode.release);
       await _audioPlayer.play(
         UrlSource('https://cdn.freesound.org/previews/320/320655_5260872-lq.mp3'),
