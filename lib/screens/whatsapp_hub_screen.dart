@@ -715,6 +715,7 @@ class _WhatsAppHubScreenState extends State<WhatsAppHubScreen> {
       ),
       floatingActionButton: _selectedTab == 0
           ? FloatingActionButton.extended(
+              heroTag: 'fab_whatsapp_hub_new_chat',
               onPressed: () => _showNewWhatsAppLeadDialog(context),
               backgroundColor: AppColors.whatsappGreen,
               foregroundColor: Colors.white,
