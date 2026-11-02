@@ -575,7 +575,7 @@ class _TravelQuoteDialogState extends State<TravelQuoteDialog> {
                             ),
                             child: Center(
                               child: Text(
-                                '👤 Direct Pilgrim (B2C)',
+                                'Direct Pilgrim (B2C)',
                                 style: TextStyle(
                                   fontSize: 11.5,
                                   fontWeight: FontWeight.w700,
@@ -603,7 +603,7 @@ class _TravelQuoteDialogState extends State<TravelQuoteDialog> {
                             ),
                             child: Center(
                               child: Text(
-                                '🏢 Travel Agent (B2B DMC)',
+                                'B2B Travel Agent',
                                 style: TextStyle(
                                   fontSize: 11.5,
                                   fontWeight: FontWeight.w700,
@@ -907,7 +907,7 @@ class _TravelQuoteDialogState extends State<TravelQuoteDialog> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      'ACTIVITIES & VIP ADD-ONS (TAP RATE TO EDIT)',
+                      'ACTIVITIES & VIP ADD-ONS',
                       style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: AppColors.getTextMuted(context)),
                     ),
                     Row(
@@ -980,7 +980,7 @@ class _TravelQuoteDialogState extends State<TravelQuoteDialog> {
                               Icon(Icons.add_circle_outline_rounded, size: 14, color: AppColors.getAccentGold(context)),
                               const SizedBox(width: 6),
                               Text(
-                                '+ Add Custom Activity / Service (Custom ₹)',
+                                '+ Add Custom Activity / Service',
                                 style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.getAccentGold(context)),
                               ),
                             ],
@@ -1432,11 +1432,15 @@ class _TravelQuoteDialogState extends State<TravelQuoteDialog> {
                     fontWeight: item.isIncluded ? FontWeight.w700 : FontWeight.w500,
                     color: AppColors.getTextPrimary(context),
                   ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
                 if (item.subtitle.isNotEmpty)
                   Text(
                     item.subtitle,
                     style: TextStyle(fontSize: 9.5, color: AppColors.getTextMuted(context)),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
               ],
             ),
@@ -1561,7 +1565,7 @@ class _TravelQuoteDialogState extends State<TravelQuoteDialog> {
                           ),
                           child: Center(
                             child: Text(
-                              'Flat (Per Cab/Boat)',
+                              'Flat Rate (Total Group)',
                               style: TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w700,
@@ -1587,8 +1591,7 @@ class _TravelQuoteDialogState extends State<TravelQuoteDialog> {
                             border: Border.all(color: tempPerPax ? AppColors.accentBlue : AppColors.getBorder(context)),
                           ),
                           child: Center(
-                            child: Text(
-                              'Per Pax (x )',
+                            child: Text('Per Person (₹/pax)',
                               style: TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w700,
