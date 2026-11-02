@@ -1536,7 +1536,17 @@ class _WhatsAppTeamChatViewState extends State<WhatsAppTeamChatView> {
                 msg.mediaUrl!.toLowerCase().contains('.jpg') ||
                 msg.mediaUrl!.toLowerCase().contains('.png') ||
                 msg.mediaUrl!.toLowerCase().contains('.jpeg') ||
-                msg.mediaUrl!.toLowerCase().contains('whatsapp.net')));
+                msg.mediaUrl!.toLowerCase().contains('/tc-media/') ||
+                msg.mediaUrl!.toLowerCase().contains('whatsapp.net'))) ||
+        msg.text.startsWith('[Photo]');
+
+    final hasVideo = (msg.mediaType == 'video') ||
+        (msg.mediaUrl != null &&
+            (msg.mediaUrl!.toLowerCase().contains('.mp4') ||
+                msg.mediaUrl!.toLowerCase().contains('.mov') ||
+                msg.mediaUrl!.toLowerCase().contains('.mkv') ||
+                msg.mediaUrl!.toLowerCase().contains('.webm'))) ||
+        msg.text.startsWith('[Video]');
 
     final hasDocument = (msg.mediaType == 'document' || msg.mediaType == 'pdf') ||
         (msg.mediaUrl != null &&
@@ -1545,6 +1555,12 @@ class _WhatsAppTeamChatViewState extends State<WhatsAppTeamChatView> {
                 msg.mediaUrl!.toLowerCase().contains('.docx') ||
                 msg.mediaUrl!.toLowerCase().contains('.xls'))) ||
         msg.text.contains('[Document:');
+
+    final cleanText = msg.text
+        .replaceFirst(RegExp(r'^\[Photo\]\s*'), '')
+        .replaceFirst(RegExp(r'^\[Video\]\s*'), '')
+        .trim();
+    final shouldShowText = cleanText.isNotEmpty || (!hasImage && !hasVideo && !hasDocument);
 
     final bubble = Container(
       margin: const EdgeInsets.only(bottom: 8),
@@ -1596,47 +1612,188 @@ class _WhatsAppTeamChatViewState extends State<WhatsAppTeamChatView> {
             ),
 
           // Visual Photo Rendering
-          if (hasImage && msg.mediaUrl != null && msg.mediaUrl!.isNotEmpty) ...[
-            GestureDetector(
-              onTap: () => _showFullScreenImage(context, msg.mediaUrl!),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(10),
-                child: msg.mediaUrl!.startsWith('data:image')
-                    ? Image.memory(
-                        base64Decode(msg.mediaUrl!.split(',').last),
-                        fit: BoxFit.cover,
-                        height: 180,
-                        width: double.infinity,
-                      )
-                    : Image.network(
-                        msg.mediaUrl!,
-                        fit: BoxFit.cover,
-                        height: 180,
-                        width: double.infinity,
-                        loadingBuilder: (ctx, child, progress) => progress == null
-                            ? child
-                            : Container(
-                                height: 180,
-                                color: Colors.white10,
-                                child: const Center(
-                                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+          if (hasImage) ...[
+            if (msg.mediaUrl != null && msg.mediaUrl!.isNotEmpty) ...[
+              GestureDetector(
+                onTap: () => _showFullScreenImage(context, msg.mediaUrl!),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: msg.mediaUrl!.startsWith('data:image')
+                      ? Image.memory(
+                          base64Decode(msg.mediaUrl!.split(',').last),
+                          fit: BoxFit.cover,
+                          height: 190,
+                          width: double.infinity,
+                        )
+                      : Image.network(
+                          msg.mediaUrl!,
+                          fit: BoxFit.cover,
+                          height: 190,
+                          width: double.infinity,
+                          loadingBuilder: (ctx, child, progress) => progress == null
+                              ? child
+                              : Container(
+                                  height: 190,
+                                  color: Theme.of(context).brightness == Brightness.light
+                                      ? const Color(0xFFF1F5F9)
+                                      : Colors.white10,
+                                  child: const Center(
+                                    child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.accentGold),
+                                  ),
+                                ),
+                          errorBuilder: (context, error, stackTrace) => InkWell(
+                            onTap: () => TelephonyService.launchBrowser(msg.mediaUrl!),
+                            child: Container(
+                              height: 100,
+                              color: Theme.of(context).brightness == Brightness.light
+                                  ? const Color(0xFFF1F5F9)
+                                  : Colors.white10,
+                              child: Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    const Icon(Icons.photo_rounded, size: 28, color: AppColors.accentGold),
+                                    const SizedBox(height: 6),
+                                    Text(
+                                      'Photo Attachment (Tap to Open)',
+                                      style: TextStyle(
+                                        color: Theme.of(context).brightness == Brightness.light
+                                            ? AppColors.lightTextPrimary
+                                            : Colors.white,
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                        errorBuilder: (context, error, stackTrace) => Container(
-                          height: 80,
-                          color: Colors.white10,
-                          child: const Center(
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.photo_rounded, size: 20, color: Colors.white54),
-                                SizedBox(width: 6),
-                                Text('Photo attachment', style: TextStyle(color: Colors.white70, fontSize: 11)),
-                              ],
+                            ),
+                          ),
+                        ),
+                ),
+              ),
+            ] else ...[
+              Container(
+                height: 90,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: Theme.of(context).brightness == Brightness.light
+                      ? const Color(0xFFF8FAFC)
+                      : Colors.white10,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: Theme.of(context).brightness == Brightness.light
+                        ? AppColors.lightBorderSubtle
+                        : Colors.white12,
+                  ),
+                ),
+                child: Center(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.photo_library_rounded, size: 24, color: AppColors.accentGold),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Photo Received',
+                        style: TextStyle(
+                          color: Theme.of(context).brightness == Brightness.light
+                              ? AppColors.lightTextPrimary
+                              : Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+            const SizedBox(height: 6),
+          ],
+
+          // Visual Video Rendering
+          if (hasVideo) ...[
+            GestureDetector(
+              onTap: () {
+                if (msg.mediaUrl != null && msg.mediaUrl!.isNotEmpty) {
+                  TelephonyService.launchBrowser(msg.mediaUrl!);
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Video link is processing or syncing.')),
+                  );
+                }
+              },
+              child: Container(
+                margin: const EdgeInsets.only(bottom: 6),
+                height: 160,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF0F172A),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: Theme.of(context).brightness == Brightness.light
+                        ? AppColors.lightBorderSubtle
+                        : Colors.white24,
+                  ),
+                ),
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    Positioned.fill(
+                      child: Opacity(
+                        opacity: 0.4,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(10),
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFF0284C7), Color(0xFF0F172A)],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
                             ),
                           ),
                         ),
                       ),
+                    ),
+                    Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: AppColors.accentGold.withValues(alpha: 0.95),
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.35),
+                                blurRadius: 8,
+                              ),
+                            ],
+                          ),
+                          child: const Icon(Icons.play_arrow_rounded, color: Colors.black, size: 36),
+                        ),
+                        const SizedBox(height: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: Colors.black54,
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.videocam_rounded, color: Colors.white, size: 14),
+                              SizedBox(width: 5),
+                              Text(
+                                'Watch Video',
+                                style: TextStyle(color: Colors.white, fontSize: 11.5, fontWeight: FontWeight.bold),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
             const SizedBox(height: 6),
@@ -1654,9 +1811,15 @@ class _WhatsAppTeamChatViewState extends State<WhatsAppTeamChatView> {
                 margin: const EdgeInsets.only(bottom: 6),
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: Colors.black26,
+                  color: Theme.of(context).brightness == Brightness.light
+                      ? const Color(0xFFF1F5F9)
+                      : Colors.black26,
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: Colors.white12),
+                  border: Border.all(
+                    color: Theme.of(context).brightness == Brightness.light
+                        ? AppColors.lightBorderSubtle
+                        : Colors.white12,
+                  ),
                 ),
                 child: Row(
                   children: [
@@ -1670,15 +1833,35 @@ class _WhatsAppTeamChatViewState extends State<WhatsAppTeamChatView> {
                             msg.text.replaceAll('[Document: ', '').replaceAll(']', '').trim().isNotEmpty
                                 ? msg.text.replaceAll('[Document: ', '').replaceAll(']', '').trim()
                                 : 'PDF Document',
-                            style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                            style: TextStyle(
+                              color: Theme.of(context).brightness == Brightness.light
+                                  ? AppColors.lightTextPrimary
+                                  : Colors.white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
-                          const Text('Tap to open / download', style: TextStyle(color: Colors.white54, fontSize: 10)),
+                          Text(
+                            'Tap to open / download',
+                            style: TextStyle(
+                              color: Theme.of(context).brightness == Brightness.light
+                                  ? AppColors.lightTextMuted
+                                  : Colors.white54,
+                              fontSize: 10,
+                            ),
+                          ),
                         ],
                       ),
                     ),
-                    const Icon(Icons.open_in_new_rounded, color: Colors.white70, size: 16),
+                    Icon(
+                      Icons.open_in_new_rounded,
+                      color: Theme.of(context).brightness == Brightness.light
+                          ? AppColors.lightTextSecondary
+                          : Colors.white70,
+                      size: 16,
+                    ),
                   ],
                 ),
               ),
@@ -1686,15 +1869,17 @@ class _WhatsAppTeamChatViewState extends State<WhatsAppTeamChatView> {
           ],
 
           // Message Text
-          SelectableText(
-            msg.text,
-            style: TextStyle(
-              color: Theme.of(context).brightness == Brightness.light ? const Color(0xFF111B21) : Colors.white,
-              fontSize: 13,
-              height: 1.35,
+          if (shouldShowText) ...[
+            SelectableText(
+              cleanText.isNotEmpty ? cleanText : msg.text,
+              style: TextStyle(
+                color: Theme.of(context).brightness == Brightness.light ? const Color(0xFF111B21) : Colors.white,
+                fontSize: 13,
+                height: 1.35,
+              ),
             ),
-          ),
-          const SizedBox(height: 4),
+            const SizedBox(height: 4),
+          ],
 
           // Metadata Row (Timestamp & Delivery Receipts)
           Row(
@@ -1758,23 +1943,48 @@ class _WhatsAppTeamChatViewState extends State<WhatsAppTeamChatView> {
     showDialog(
       context: context,
       builder: (ctx) => Dialog(
-        backgroundColor: Colors.transparent,
+        backgroundColor: Colors.black87,
         insetPadding: const EdgeInsets.all(12),
         child: Stack(
           alignment: Alignment.topRight,
           children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(16),
-              child: imageUrl.startsWith('data:image')
-                  ? Image.memory(base64Decode(imageUrl.split(',').last), fit: BoxFit.contain)
-                  : Image.network(imageUrl, fit: BoxFit.contain),
-            ),
-            IconButton(
-              icon: const CircleAvatar(
-                backgroundColor: Colors.black54,
-                child: Icon(Icons.close, color: Colors.white, size: 20),
+            Center(
+              child: InteractiveViewer(
+                minScale: 0.8,
+                maxScale: 4.0,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: imageUrl.startsWith('data:image')
+                      ? Image.memory(base64Decode(imageUrl.split(',').last), fit: BoxFit.contain)
+                      : Image.network(imageUrl, fit: BoxFit.contain),
+                ),
               ),
-              onPressed: () => Navigator.pop(ctx),
+            ),
+            Positioned(
+              top: 10,
+              right: 10,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    tooltip: 'Open in Browser / Download',
+                    icon: const CircleAvatar(
+                      backgroundColor: Colors.black54,
+                      child: Icon(Icons.open_in_new_rounded, color: Colors.white, size: 18),
+                    ),
+                    onPressed: () => TelephonyService.launchBrowser(imageUrl),
+                  ),
+                  const SizedBox(width: 8),
+                  IconButton(
+                    tooltip: 'Close',
+                    icon: const CircleAvatar(
+                      backgroundColor: Colors.black54,
+                      child: Icon(Icons.close, color: Colors.white, size: 20),
+                    ),
+                    onPressed: () => Navigator.pop(ctx),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
