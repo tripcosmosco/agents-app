@@ -162,7 +162,24 @@ class CallProvider extends ChangeNotifier {
   Future<void> fetchCallLogsFromServer() async {
     final logs = await apiService.fetchCallLogs();
     if (logs.isNotEmpty) {
-      _callLogs = logs;
+      final deduped = <String, CallLogModel>{};
+      for (final log in logs) {
+        final cleanPhone = log.phone.replaceAll(RegExp(r'\D'), '');
+        final suffix = cleanPhone.length >= 10 ? cleanPhone.substring(cleanPhone.length - 10) : cleanPhone;
+        final timeKey = log.timestamp.toIso8601String().substring(0, 16);
+        final key = (log.id.isNotEmpty && !log.id.startsWith('cl_')) ? log.id : '${suffix}_$timeKey';
+        if (!deduped.containsKey(key)) {
+          deduped[key] = log;
+        } else {
+          final existing = deduped[key]!;
+          final bool preferNew = (log.status == 'completed' && existing.status != 'completed') ||
+              (log.durationSeconds > existing.durationSeconds);
+          if (preferNew) {
+            deduped[key] = log;
+          }
+        }
+      }
+      _callLogs = deduped.values.toList();
       _saveCallLogsToCache();
       notifyListeners();
     }

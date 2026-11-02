@@ -961,7 +961,7 @@ class ApiService {
         if (status.isNotEmpty && status != 'all') 'status': status,
       };
       final uri = Uri.parse('$baseUrl/mobile/b2b-agencies').replace(queryParameters: queryParams);
-      final response = await http.get(uri, headers: _headers).timeout(const Duration(seconds: 12));
+      final response = await http.get(uri, headers: _headers).timeout(const Duration(seconds: 30));
       if (response.statusCode == 200) {
         final data = _safeJsonDecode(response.body);
         if (data != null && data['success'] == true) {
@@ -1109,7 +1109,7 @@ class ApiService {
   Future<List<Map<String, dynamic>>> fetchCatalog() async {
     try {
       final uri = Uri.parse('$baseUrl/catalog');
-      final response = await http.get(uri, headers: _headers).timeout(const Duration(seconds: 12));
+      final response = await http.get(uri, headers: _headers).timeout(const Duration(seconds: 30));
       if (response.statusCode == 200) {
         final decoded = _safeJsonDecode(response.body);
         if (decoded is Map && decoded['items'] is List) {
@@ -1159,7 +1159,7 @@ class ApiService {
   Future<Map<String, dynamic>?> fetchFinancials() async {
     try {
       final uri = Uri.parse('$baseUrl/mobile/financials');
-      final response = await http.get(uri, headers: _headers).timeout(const Duration(seconds: 12));
+      final response = await http.get(uri, headers: _headers).timeout(const Duration(seconds: 30));
       if (response.statusCode == 200) {
         return _safeJsonDecode(response.body);
       }
@@ -1281,7 +1281,7 @@ class ApiService {
   Future<Map<String, dynamic>?> fetchGoogleAdsConversions() async {
     try {
       final uri = Uri.parse('$baseUrl/mobile/google-ads/conversions');
-      final response = await http.get(uri, headers: _headers).timeout(const Duration(seconds: 12));
+      final response = await http.get(uri, headers: _headers).timeout(const Duration(seconds: 30));
       if (response.statusCode == 200) {
         return _safeJsonDecode(response.body);
       }
@@ -1299,7 +1299,7 @@ class ApiService {
   }) async {
     try {
       final uri = Uri.parse('$baseUrl/mobile/bank-statement/transactions?type=$type&status=$status&limit=$limit');
-      final response = await http.get(uri, headers: _headers).timeout(const Duration(seconds: 12));
+      final response = await http.get(uri, headers: _headers).timeout(const Duration(seconds: 30));
       if (response.statusCode == 200) {
         return _safeJsonDecode(response.body);
       }
@@ -1549,7 +1549,7 @@ class ApiService {
   Future<Map<String, dynamic>?> fetchGoogleAdsConfig() async {
     try {
       final uri = Uri.parse('$baseUrl/mobile/google-ads/config');
-      final response = await http.get(uri, headers: _headers).timeout(const Duration(seconds: 12));
+      final response = await http.get(uri, headers: _headers).timeout(const Duration(seconds: 30));
       if (response.body.isNotEmpty) {
         return _safeJsonDecode(response.body);
       }

@@ -614,7 +614,20 @@ class WhatsAppProvider extends ChangeNotifier {
             );
           }).toList();
 
-          _threads = fetchedThreads;
+          final dedupedThreads = <WhatsAppThread>[];
+          final seenKeys = <String>{};
+          for (final t in fetchedThreads) {
+            final digits = t.customerPhone.replaceAll(RegExp(r'\D'), '');
+            final suffix = digits.length >= 10 ? digits.substring(digits.length - 10) : digits;
+            final key = suffix.isNotEmpty ? 'phone_$suffix' : (t.contactId > 0 ? 'cid_${t.contactId}' : 'id_${t.id}');
+            if (seenKeys.contains(key)) continue;
+            seenKeys.add(key);
+            if (t.contactId > 0) seenKeys.add('cid_${t.contactId}');
+            if (suffix.isNotEmpty) seenKeys.add('phone_$suffix');
+            dedupedThreads.add(t);
+          }
+
+          _threads = dedupedThreads;
           if (_selectedThreadId == null && _threads.isNotEmpty) {
             _selectedThreadId = _threads.first.id;
           }
