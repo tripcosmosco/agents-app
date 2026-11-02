@@ -1168,6 +1168,7 @@ If you have confirmed client enquiries or pending groups from $city, please let 
   @override
   Widget build(BuildContext context) {
     final callProvider = Provider.of<CallProvider>(context, listen: false);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Column(
       children: [
@@ -1364,16 +1365,26 @@ If you have confirmed client enquiries or pending groups from $city, please let 
           child: TextField(
             controller: _searchController,
             onChanged: _onSearchChanged,
-            style: const TextStyle(color: Colors.white, fontSize: 12.5),
+            style: TextStyle(color: isDark ? Colors.white : AppColors.lightTextPrimary, fontSize: 12.5),
             decoration: InputDecoration(
+              filled: true,
+              fillColor: isDark ? AppColors.surfaceCard : Colors.white,
               isDense: true,
               contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               hintText: 'Search agency by name, city, or phone...',
-              hintStyle: const TextStyle(color: Colors.white38, fontSize: 12),
-              prefixIcon: const Icon(Icons.search, color: AppColors.textMuted, size: 17),
+              hintStyle: TextStyle(color: isDark ? Colors.white38 : AppColors.lightTextMuted, fontSize: 12),
+              prefixIcon: Icon(Icons.search, color: isDark ? AppColors.textMuted : AppColors.lightTextSecondary, size: 17),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide(color: isDark ? Colors.white12 : AppColors.lightBorderSubtle),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide(color: AppColors.getAccentGold(context), width: 1.5),
+              ),
               suffixIcon: _searchController.text.isNotEmpty
                   ? IconButton(
-                      icon: const Icon(Icons.clear, color: Colors.white54, size: 15),
+                      icon: Icon(Icons.clear, color: isDark ? Colors.white54 : AppColors.lightTextSecondary, size: 15),
                       onPressed: () {
                         _searchController.clear();
                         _onSearchChanged('');
@@ -1401,12 +1412,15 @@ If you have confirmed client enquiries or pending groups from $city, please let 
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-                    color: isSelected ? Colors.black : Colors.white70,
+                    color: isSelected ? Colors.white : (isDark ? Colors.white70 : const Color(0xFF334155)),
                   ),
                 ),
                 selected: isSelected,
-                selectedColor: const Color(0xFFF59E0B),
-                backgroundColor: AppColors.surfaceCard,
+                selectedColor: isDark ? const Color(0xFFF59E0B) : const Color(0xFFB45309),
+                backgroundColor: isDark ? AppColors.surfaceCard : const Color(0xFFF1F5F9),
+                side: BorderSide(
+                  color: isSelected ? Colors.transparent : (isDark ? Colors.white12 : const Color(0xFFE2E8F0)),
+                ),
                 onSelected: (val) {
                   if (val) {
                     setState(() {
@@ -1530,9 +1544,17 @@ If you have confirmed client enquiries or pending groups from $city, please let 
                                 margin: const EdgeInsets.only(bottom: 10),
                                 padding: const EdgeInsets.all(12),
                                 decoration: BoxDecoration(
-                                  color: AppColors.surfaceCard,
+                                  color: isDark ? AppColors.surfaceCard : Colors.white,
                                   borderRadius: BorderRadius.circular(14),
-                                  border: Border.all(color: Colors.white12),
+                                  border: Border.all(color: isDark ? Colors.white12 : AppColors.lightBorderSubtle),
+                                  boxShadow: [
+                                    if (!isDark)
+                                      BoxShadow(
+                                        color: Colors.black.withValues(alpha: 0.04),
+                                        blurRadius: 6,
+                                        offset: const Offset(0, 2),
+                                      ),
+                                  ],
                                 ),
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -1555,10 +1577,10 @@ If you have confirmed client enquiries or pending groups from $city, please let 
                                                   Expanded(
                                                     child: Text(
                                                       name,
-                                                      style: const TextStyle(
+                                                      style: TextStyle(
                                                         fontSize: 14,
                                                         fontWeight: FontWeight.w800,
-                                                        color: Colors.white,
+                                                        color: isDark ? Colors.white : AppColors.lightTextPrimary,
                                                       ),
                                                       maxLines: 1,
                                                       overflow: TextOverflow.ellipsis,

@@ -68,6 +68,17 @@ class AppColors {
   static Color getBorder(BuildContext context) =>
       Theme.of(context).brightness == Brightness.light ? lightBorderSubtle : borderSubtle;
 
+  // High-contrast accent brand color resolver: Deep Saffron Amber in Light Mode (#B45309), Golden Amber in Dark Mode (#F59E0B)
+  static Color getAccentGold(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.light ? const Color(0xFFB45309) : accentGold;
+
+  // Theme-aware success pill colors (e.g. active WhatsApp, Won status)
+  static Color getSuccessPillBg(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.light ? const Color(0xFFDCFCE7) : successGreen.withValues(alpha: 0.2);
+
+  static Color getSuccessPillText(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.light ? const Color(0xFF15803D) : successGreen;
+
   // Gradients
   static const LinearGradient heroGradient = LinearGradient(
     colors: [Color(0xFF0B132B), Color(0xFF1C2541)],

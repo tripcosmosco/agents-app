@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../core/theme/app_colors.dart';
@@ -369,6 +369,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
           itemBuilder: (context, index) {
             final item = navItems[index];
             final isSelected = currentIndex == index;
+            final activeGold = AppColors.getAccentGold(context);
 
             return InkWell(
               onTap: () => _onTabSelected(index),
@@ -379,12 +380,12 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                 padding: const EdgeInsets.symmetric(vertical: 4),
                 decoration: BoxDecoration(
                   color: isSelected
-                      ? AppColors.accentGold.withValues(alpha: 0.16)
+                      ? activeGold.withValues(alpha: isLight ? 0.12 : 0.16)
                       : Colors.transparent,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
                     color: isSelected
-                        ? AppColors.accentGold.withValues(alpha: 0.45)
+                        ? activeGold.withValues(alpha: isLight ? 0.35 : 0.45)
                         : Colors.transparent,
                     width: 1.2,
                   ),
@@ -399,7 +400,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                         Icon(
                           isSelected ? item.activeIcon : item.icon,
                           color: isSelected
-                              ? AppColors.accentGold
+                              ? activeGold
                               : AppColors.getTextMuted(context),
                           size: isSelected ? 21 : 20,
                         ),

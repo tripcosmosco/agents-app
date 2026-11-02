@@ -498,11 +498,12 @@ class _QuotationDeskScreenState extends State<QuotationDeskScreen> {
       cabCost = _selectedDays == 2 ? 14000 : (_selectedDays == 3 ? 19500 : (_selectedDays == 4 ? 31000 : 39500));
     }
 
-    // VIP Spiritual Inclusions
+    // VIP Spiritual Inclusions & Ground Activities
     double vipPasses = 0;
-    if (_includeSugamDarshan) vipPasses += 350 * _pax;
-    if (_includeAartiBoat) vipPasses += 750 * _pax;
-    if (_includeSubahEBanaras) vipPasses += 400 * _pax;
+    if (_includeSugamDarshan) vipPasses += 600 * _pax;
+    if (_includeAartiBoat) vipPasses += (_pax <= 2 ? 1500 : 2800);
+    if (_includeAirportPickup) vipPasses += 1200;
+    if (_includeSubahEBanaras) vipPasses += 500 * _pax;
     if (_includePandaShastri) vipPasses += 1500;
 
     double subtotal = (basePerPax * _pax) + hotelCost + cabCost + vipPasses;
@@ -1076,14 +1077,14 @@ class _QuotationDeskScreenState extends State<QuotationDeskScreen> {
                       contentPadding: EdgeInsets.zero,
                       value: _includeSugamDarshan,
                       activeColor: AppColors.accentGold,
-                      title: const Text('Sugam Darshan VIP Passes (Gate 4 Zero Waiting)', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600)),
+                      title: const Text('Sugam Darshan VIP Passes (Gate 4 Zero Waiting) • ₹600/pax', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600)),
                       onChanged: (v) => setState(() => _includeSugamDarshan = v ?? false),
                     ),
                     CheckboxListTile(
                       contentPadding: EdgeInsets.zero,
                       value: _includeAartiBoat,
                       activeColor: AppColors.accentGold,
-                      title: const Text('Reserved Dashashwamedh Bajra Boat (Ganga Aarti)', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600)),
+                      title: const Text('Reserved Dashashwamedh Bajra Boat (Ganga Aarti) • ₹1,500', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600)),
                       onChanged: (v) => setState(() => _includeAartiBoat = v ?? false),
                     ),
                     CheckboxListTile(
@@ -1104,7 +1105,7 @@ class _QuotationDeskScreenState extends State<QuotationDeskScreen> {
                       contentPadding: EdgeInsets.zero,
                       value: _includeAirportPickup,
                       activeColor: AppColors.accentGold,
-                      title: const Text('Airport / Cantt Railway Station Placard Meet & Greet', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600)),
+                      title: const Text('Airport / Cantt Railway Station Placard Meet & Greet • ₹1,200', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600)),
                       onChanged: (v) => setState(() => _includeAirportPickup = v ?? false),
                     ),
                   ],

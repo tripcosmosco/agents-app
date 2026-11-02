@@ -1,12 +1,60 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../core/theme/app_colors.dart';
 import '../models/lead_model.dart';
 import '../providers/lead_provider.dart';
 import '../screens/quotation_desk_screen.dart';
+
+/// Customizable Dynamic Activity & VIP Add-on Model
+class ActivityTariffItem {
+  final String id;
+  String title;
+  String subtitle;
+  int price;
+  bool isPerPax;
+  bool isIncluded;
+  bool isCustom;
+
+  ActivityTariffItem({
+    required this.id,
+    required this.title,
+    this.subtitle = '',
+    required this.price,
+    this.isPerPax = false,
+    this.isIncluded = true,
+    this.isCustom = false,
+  });
+
+  int calculateTotal(int pax) {
+    if (!isIncluded) return 0;
+    return isPerPax ? (price * pax) : price;
+  }
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'title': title,
+    'subtitle': subtitle,
+    'price': price,
+    'isPerPax': isPerPax,
+    'isIncluded': isIncluded,
+    'isCustom': isCustom,
+  };
+
+  factory ActivityTariffItem.fromJson(Map<String, dynamic> json) => ActivityTariffItem(
+    id: json['id']?.toString() ?? '',
+    title: json['title']?.toString() ?? '',
+    subtitle: json['subtitle']?.toString() ?? '',
+    price: (json['price'] as num?)?.toInt() ?? 0,
+    isPerPax: json['isPerPax'] == true,
+    isIncluded: json['isIncluded'] != false,
+    isCustom: json['isCustom'] == true,
+  );
+}
 
 class TravelQuoteDialog extends StatefulWidget {
   final LeadModel lead;
@@ -36,10 +84,99 @@ class _TravelQuoteDialogState extends State<TravelQuoteDialog> {
   late bool _isB2bMode;
   String _hotelCategory = '4-Star Deluxe';
   String _cabType = 'Innova Crysta';
-  bool _includeSugamDarshan = true;
-  bool _includeAartiBoat = true;
-  bool _includeAirportPickup = true;
-  bool _includeSubahEBanaras = false;
+  List<ActivityTariffItem> _activities = [];
+
+  void _initDefaultActivities() {
+    _activities = [
+      ActivityTariffItem(
+        id: 'sugam_darshan',
+        title: 'Kashi Vishwanath VIP Sugam Darshan Pass',
+        subtitle: 'Gate 4 Priority â€¢ Direct corridor access',
+        price: 600,
+        isPerPax: true,
+        isIncluded: true,
+      ),
+      ActivityTariffItem(
+        id: 'aarti_boat',
+        title: 'Dashashwamedh Aarti Reserved Bajra Boat',
+        subtitle: 'Prime Maha Aarti river deck viewing',
+        price: _pax <= 2 ? 1500 : 2800,
+        isPerPax: false,
+        isIncluded: true,
+      ),
+      ActivityTariffItem(
+        id: 'airport_pickup',
+        title: 'Varanasi Airport / Station Pickup & Drop',
+        subtitle: 'Dedicated AC cab with placard chauffeur',
+        price: 1200,
+        isPerPax: false,
+        isIncluded: true,
+      ),
+      ActivityTariffItem(
+        id: 'subah_e_banaras',
+        title: 'Subah-e-Banaras Morning Boat Ride',
+        subtitle: 'Assi to Manikarnika sunrise ghat cruise',
+        price: 500,
+        isPerPax: true,
+        isIncluded: false,
+      ),
+      ActivityTariffItem(
+        id: 'panda_shastri',
+        title: 'Vedic Teerth Purohit / Panda Assistance',
+        subtitle: 'Ganga Sankalp & temple protocol guidance',
+        price: 1500,
+        isPerPax: false,
+        isIncluded: false,
+      ),
+    ];
+  }
+
+  Future<void> _loadSavedTariffs() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final savedStr = prefs.getString('tc_custom_activity_tariffs');
+      if (savedStr != null && savedStr.isNotEmpty) {
+        final decoded = jsonDecode(savedStr) as List<dynamic>?;
+        if (decoded != null && mounted) {
+          final savedItems = decoded.map((e) => ActivityTariffItem.fromJson(Map<String, dynamic>.from(e as Map))).toList();
+          setState(() {
+            for (final saved in savedItems) {
+              final idx = _activities.indexWhere((a) => a.id == saved.id);
+              if (idx != -1) {
+                _activities[idx].price = saved.price;
+                _activities[idx].isPerPax = saved.isPerPax;
+                _activities[idx].isIncluded = saved.isIncluded;
+              } else if (saved.isCustom) {
+                _activities.add(saved);
+              }
+            }
+            _syncPriceControllers();
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint('Error loading saved tariffs: ');
+    }
+  }
+
+  Future<void> _saveCustomTariffs() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final jsonStr = jsonEncode(_activities.map((a) => a.toJson()).toList());
+      await prefs.setString('tc_custom_activity_tariffs', jsonStr);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('âœ“ Custom activity prices saved as personal defaults!'),
+            backgroundColor: Color(0xFF10B981),
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('Error saving custom tariffs: ');
+    }
+  }
 
   // Customizable Itinerary & Rate Controls
   DateTime? _travelDate;
@@ -87,9 +224,11 @@ class _TravelQuoteDialogState extends State<TravelQuoteDialog> {
       _cabType = 'Innova Crysta';
     }
 
+    _initDefaultActivities();
     _advanceTokenController.text = _isB2bMode ? '2000' : '3000';
     _syncPriceControllers();
     _quoteMessageController.text = _generateQuotationText();
+    _loadSavedTariffs();
 
     // Dynamically load live catalog tours from WordPress /catalog
     final apiService = Provider.of<LeadProvider>(context, listen: false).apiService;
@@ -141,11 +280,10 @@ class _TravelQuoteDialogState extends State<TravelQuoteDialog> {
     if (_cabType == 'Innova Crysta') total += 3500;
     if (_cabType == '12S Force Tempo Traveller') total += 8000;
 
-    // Addons
-    if (_includeSugamDarshan) total += (600 * _pax);
-    if (_includeAartiBoat) total += (_pax <= 2 ? 1500 : 2800);
-    if (_includeAirportPickup) total += 1200;
-    if (_includeSubahEBanaras) total += (500 * _pax);
+    // Dynamic Activity Addons
+    for (final act in _activities) {
+      total += act.calculateTotal(_pax);
+    }
 
     return total;
   }
@@ -216,10 +354,9 @@ class _TravelQuoteDialogState extends State<TravelQuoteDialog> {
       buffer.writeln('🚗 *Private Transport:* $_cabType (AC, Verified Chauffeur)');
       buffer.writeln('');
       buffer.writeln('✨ *CONFIRMED VIP INCLUSIONS:*');
-      if (_includeSugamDarshan) buffer.writeln('  • ✅ Kashi Vishwanath VIP Sugam Darshan (Priority Entry)');
-      if (_includeAartiBoat) buffer.writeln('  • ✅ Reserved Evening Dashashwamedh Ganga Aarti Boat');
-      if (_includeAirportPickup) buffer.writeln('  • ✅ Varanasi Airport / Station Private Pickup & Drop');
-      if (_includeSubahEBanaras) buffer.writeln('  • ✅ Morning Ghat Boat Ride & Subah-e-Banaras');
+      for (final act in _activities) {
+        if (act.isIncluded) buffer.writeln('  • ✅ ${act.title}');
+      }
       if (_customInclusionsController.text.trim().isNotEmpty) {
         for (final line in _customInclusionsController.text.trim().split('\n')) {
           if (line.trim().isNotEmpty) buffer.writeln('  • ✅ ${line.trim()}');
@@ -245,10 +382,12 @@ class _TravelQuoteDialogState extends State<TravelQuoteDialog> {
       buffer.writeln('🚗 *Dedicated Fleet:* $_cabType (White-Label Placard)');
       buffer.writeln('');
       buffer.writeln('✨ *GROUND DMC INCLUSIONS:*');
-      if (_includeSugamDarshan) buffer.writeln('  • ✅ Kashi Vishwanath VIP Sugam Darshan Passes');
-      if (_includeAartiBoat) buffer.writeln('  • ✅ Pre-Allocated Ganga Aarti Bajra Boat Seats');
-      if (_includeAirportPickup) buffer.writeln('  • ✅ Airport/Station Welcome with YOUR Agency Placard');
-      if (_includeSubahEBanaras) buffer.writeln('  • ✅ Morning Subah-e-Banaras Boat Ride');
+      for (final act in _activities) {
+        if (act.isIncluded) {
+          final priceTag = act.isPerPax ? ' (₹${act.price}/pax)' : ' (₹${act.price})';
+          buffer.writeln('  • ✅ ${act.title}$priceTag');
+        }
+      }
       if (_customInclusionsController.text.trim().isNotEmpty) {
         for (final line in _customInclusionsController.text.trim().split('\n')) {
           if (line.trim().isNotEmpty) buffer.writeln('  • ✅ ${line.trim()}');
@@ -275,10 +414,9 @@ class _TravelQuoteDialogState extends State<TravelQuoteDialog> {
     buffer.writeln('🚗 *Dedicated Transport:* $_cabType (UP65 Tourist Permit, AC, Sanitized)');
     buffer.writeln('');
     buffer.writeln('✨ *SPECIAL VIP INCLUSIONS:*');
-    if (_includeSugamDarshan) buffer.writeln('  • ✅ Kashi Vishwanath VIP Sugam Darshan (No Queue Direct Entry)');
-    if (_includeAartiBoat) buffer.writeln('  • ✅ Reserved Evening Dashashwamedh Ganga Aarti Bajra Boat');
-    if (_includeAirportPickup) buffer.writeln('  • ✅ Lal Bahadur Shastri Airport (VNS) Pickup & Drop');
-    if (_includeSubahEBanaras) buffer.writeln('  • ✅ Morning Boat Ride & Subah-e-Banaras Cultural Protocol');
+    for (final act in _activities) {
+      if (act.isIncluded) buffer.writeln('  • ✅ ${act.title}');
+    }
     if (_customInclusionsController.text.trim().isNotEmpty) {
       for (final line in _customInclusionsController.text.trim().split('\n')) {
         if (line.trim().isNotEmpty) buffer.writeln('  • ✅ ${line.trim()}');
@@ -677,11 +815,36 @@ class _TravelQuoteDialogState extends State<TravelQuoteDialog> {
                 ),
                 const SizedBox(height: 12),
 
-                // 4. Inclusions & Custom Line Items
-                Text('PILGRIMAGE VIP INCLUSIONS & NOTES', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: AppColors.getTextMuted(context))),
+                // 4. Dynamic Inclusions & Customizable Activity Pricing
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'ACTIVITIES & VIP ADD-ONS (TAP RATE TO EDIT)',
+                      style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: AppColors.getTextMuted(context)),
+                    ),
+                    InkWell(
+                      onTap: _saveCustomTariffs,
+                      borderRadius: BorderRadius.circular(6),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.save_rounded, size: 12, color: AppColors.accentGold),
+                            const SizedBox(width: 4),
+                            Text(
+                              'Save Defaults',
+                              style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.getAccentGold(context)),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
                 const SizedBox(height: 5),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
                   decoration: BoxDecoration(
                     color: AppColors.getElevated(context),
                     borderRadius: BorderRadius.circular(10),
@@ -689,30 +852,31 @@ class _TravelQuoteDialogState extends State<TravelQuoteDialog> {
                   ),
                   child: Column(
                     children: [
-                      _buildInclusionCheckbox('Kashi Vishwanath VIP Sugam Darshan Pass', _includeSugamDarshan, (val) {
-                        setState(() {
-                          _includeSugamDarshan = val ?? false;
-                          _syncPriceControllers();
-                        });
-                      }),
-                      _buildInclusionCheckbox('Dashashwamedh Aarti Reserved Bajra Boat', _includeAartiBoat, (val) {
-                        setState(() {
-                          _includeAartiBoat = val ?? false;
-                          _syncPriceControllers();
-                        });
-                      }),
-                      _buildInclusionCheckbox('Varanasi Airport / Station Pickup & Drop', _includeAirportPickup, (val) {
-                        setState(() {
-                          _includeAirportPickup = val ?? false;
-                          _syncPriceControllers();
-                        });
-                      }),
-                      _buildInclusionCheckbox('Subah-e-Banaras Morning Boat Ride', _includeSubahEBanaras, (val) {
-                        setState(() {
-                          _includeSubahEBanaras = val ?? false;
-                          _syncPriceControllers();
-                        });
-                      }),
+                      ..._activities.map((act) => _buildActivityRow(act)),
+                      const SizedBox(height: 4),
+                      InkWell(
+                        onTap: () => _showAddCustomActivityModal(context),
+                        borderRadius: BorderRadius.circular(8),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
+                          decoration: BoxDecoration(
+                            color: Colors.transparent,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: AppColors.getBorder(context), style: BorderStyle.solid),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.add_circle_outline_rounded, size: 14, color: AppColors.getAccentGold(context)),
+                              const SizedBox(width: 6),
+                              Text(
+                                '+ Add Custom Activity / Service (Custom â‚¹)',
+                                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.getAccentGold(context)),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -1113,31 +1277,402 @@ class _TravelQuoteDialogState extends State<TravelQuoteDialog> {
     );
   }
 
-  Widget _buildInclusionCheckbox(String title, bool value, ValueChanged<bool?> onChanged) {
-    return InkWell(
-      onTap: () => onChanged(!value),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 3),
-        child: Row(
-          children: [
-            SizedBox(
-              width: 22,
-              height: 22,
-              child: Checkbox(
-                value: value,
-                activeColor: const Color(0xFFF59E0B),
-                onChanged: onChanged,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                title,
-                style: TextStyle(fontSize: 11.5, color: AppColors.getTextPrimary(context)),
-              ),
-            ),
-          ],
+  Widget _buildActivityRow(ActivityTariffItem item) {
+    final isLight = Theme.of(context).brightness == Brightness.light;
+
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 2.5),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+      decoration: BoxDecoration(
+        color: item.isIncluded
+            ? (isLight ? const Color(0xFFEFF6FF) : const Color(0xFF1E2D52).withValues(alpha: 0.5))
+            : Colors.transparent,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: item.isIncluded
+              ? (isLight ? const Color(0xFFBFDBFE) : const Color(0xFF38BDF8).withValues(alpha: 0.25))
+              : Colors.transparent,
         ),
+      ),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 22,
+            height: 22,
+            child: Checkbox(
+              value: item.isIncluded,
+              activeColor: isLight ? const Color(0xFF2563EB) : const Color(0xFFF59E0B),
+              onChanged: (val) {
+                setState(() {
+                  item.isIncluded = val ?? false;
+                  _syncPriceControllers();
+                });
+              },
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  item.title,
+                  style: TextStyle(
+                    fontSize: 11.5,
+                    fontWeight: item.isIncluded ? FontWeight.w700 : FontWeight.w500,
+                    color: AppColors.getTextPrimary(context),
+                  ),
+                ),
+                if (item.subtitle.isNotEmpty)
+                  Text(
+                    item.subtitle,
+                    style: TextStyle(fontSize: 9.5, color: AppColors.getTextMuted(context)),
+                  ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 6),
+          // Interactive Price Tag with 1-Tap Edit
+          InkWell(
+            onTap: () => _showEditActivityPriceModal(context, item),
+            borderRadius: BorderRadius.circular(6),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+              decoration: BoxDecoration(
+                color: item.isIncluded
+                    ? (isLight ? const Color(0xFFDBEAFE) : const Color(0xFF0284C7).withValues(alpha: 0.25))
+                    : (isLight ? const Color(0xFFF1F5F9) : Colors.white.withValues(alpha: 0.05)),
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(
+                  color: item.isIncluded
+                      ? (isLight ? const Color(0xFF60A5FA) : const Color(0xFF38BDF8).withValues(alpha: 0.4))
+                      : AppColors.getBorder(context),
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    item.isPerPax
+                        ? 'â‚¹/pax'
+                        : 'â‚¹',
+                    style: TextStyle(
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w800,
+                      color: item.isIncluded
+                          ? (isLight ? const Color(0xFF1D4ED8) : const Color(0xFF38BDF8))
+                          : AppColors.getTextMuted(context),
+                    ),
+                  ),
+                  const SizedBox(width: 3),
+                  Icon(
+                    Icons.edit_rounded,
+                    size: 10.5,
+                    color: item.isIncluded
+                        ? (isLight ? const Color(0xFF1D4ED8) : const Color(0xFF38BDF8))
+                        : AppColors.getTextMuted(context),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showEditActivityPriceModal(BuildContext context, ActivityTariffItem item) {
+    final priceCtrl = TextEditingController(text: item.price.toString());
+    bool tempPerPax = item.isPerPax;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setModalState) {
+          final isLight = Theme.of(context).brightness == Brightness.light;
+          return AlertDialog(
+            backgroundColor: AppColors.getCard(context),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: BorderSide(color: AppColors.getBorder(context)),
+            ),
+            title: Row(
+              children: [
+                Icon(Icons.tune_rounded, color: AppColors.getAccentGold(context), size: 20),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Customize Rate',
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: AppColors.getTextPrimary(context)),
+                  ),
+                ),
+              ],
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  item.title,
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.getTextPrimary(context)),
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: priceCtrl,
+                  keyboardType: TextInputType.number,
+                  autofocus: true,
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.getTextPrimary(context)),
+                  decoration: InputDecoration(
+                    prefixText: 'â‚¹ ',
+                    labelText: 'Tariff Rate Amount',
+                    fillColor: AppColors.getElevated(context),
+                    filled: true,
+                    isDense: true,
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text('Billing Method:', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.getTextMuted(context))),
+                const SizedBox(height: 6),
+                Row(
+                  children: [
+                    Expanded(
+                      child: InkWell(
+                        onTap: () => setModalState(() => tempPerPax = false),
+                        borderRadius: BorderRadius.circular(8),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          decoration: BoxDecoration(
+                            color: !tempPerPax
+                                ? (isLight ? const Color(0xFFDBEAFE) : const Color(0xFF2563EB).withValues(alpha: 0.3))
+                                : AppColors.getElevated(context),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: !tempPerPax ? AppColors.accentBlue : AppColors.getBorder(context)),
+                          ),
+                          child: Center(
+                            child: Text(
+                              'Flat (Per Cab/Boat)',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: !tempPerPax ? AppColors.accentBlue : AppColors.getTextSecondary(context),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: InkWell(
+                        onTap: () => setModalState(() => tempPerPax = true),
+                        borderRadius: BorderRadius.circular(8),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          decoration: BoxDecoration(
+                            color: tempPerPax
+                                ? (isLight ? const Color(0xFFDBEAFE) : const Color(0xFF2563EB).withValues(alpha: 0.3))
+                                : AppColors.getElevated(context),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: tempPerPax ? AppColors.accentBlue : AppColors.getBorder(context)),
+                          ),
+                          child: Center(
+                            child: Text(
+                              'Per Pax (x )',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: tempPerPax ? AppColors.accentBlue : AppColors.getTextSecondary(context),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: Text('Cancel', style: TextStyle(color: AppColors.getTextMuted(context))),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  final newPrice = int.tryParse(priceCtrl.text.replaceAll(RegExp(r'[^0-9]'), '')) ?? item.price;
+                  setState(() {
+                    item.price = newPrice;
+                    item.isPerPax = tempPerPax;
+                    item.isIncluded = true;
+                    _syncPriceControllers();
+                  });
+                  Navigator.pop(ctx);
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.accentBlue,
+                  foregroundColor: Colors.white,
+                ),
+                child: const Text('Update Rate'),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  void _showAddCustomActivityModal(BuildContext context) {
+    final titleCtrl = TextEditingController();
+    final priceCtrl = TextEditingController(text: '1200');
+    bool tempPerPax = false;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setModalState) {
+          final isLight = Theme.of(context).brightness == Brightness.light;
+          return AlertDialog(
+            backgroundColor: AppColors.getCard(context),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: BorderSide(color: AppColors.getBorder(context)),
+            ),
+            title: Row(
+              children: [
+                const Icon(Icons.add_circle_outline_rounded, color: Color(0xFF10B981), size: 20),
+                const SizedBox(width: 8),
+                Text(
+                  'Add Custom Activity / Service',
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: AppColors.getTextPrimary(context)),
+                ),
+              ],
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                TextField(
+                  controller: titleCtrl,
+                  autofocus: true,
+                  style: TextStyle(fontSize: 13, color: AppColors.getTextPrimary(context)),
+                  decoration: InputDecoration(
+                    labelText: 'Activity Name',
+                    hintText: 'e.g. Sarnath Buddhist Tour, Rudrabhishek Puja...',
+                    fillColor: AppColors.getElevated(context),
+                    filled: true,
+                    isDense: true,
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: priceCtrl,
+                  keyboardType: TextInputType.number,
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.getTextPrimary(context)),
+                  decoration: InputDecoration(
+                    prefixText: 'â‚¹ ',
+                    labelText: 'Tariff Rate (â‚¹)',
+                    fillColor: AppColors.getElevated(context),
+                    filled: true,
+                    isDense: true,
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Expanded(
+                      child: InkWell(
+                        onTap: () => setModalState(() => tempPerPax = false),
+                        borderRadius: BorderRadius.circular(8),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          decoration: BoxDecoration(
+                            color: !tempPerPax
+                                ? (isLight ? const Color(0xFFDBEAFE) : const Color(0xFF2563EB).withValues(alpha: 0.3))
+                                : AppColors.getElevated(context),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: !tempPerPax ? AppColors.accentBlue : AppColors.getBorder(context)),
+                          ),
+                          child: Center(
+                            child: Text(
+                              'Flat Rate',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: !tempPerPax ? AppColors.accentBlue : AppColors.getTextSecondary(context),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: InkWell(
+                        onTap: () => setModalState(() => tempPerPax = true),
+                        borderRadius: BorderRadius.circular(8),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          decoration: BoxDecoration(
+                            color: tempPerPax
+                                ? (isLight ? const Color(0xFFDBEAFE) : const Color(0xFF2563EB).withValues(alpha: 0.3))
+                                : AppColors.getElevated(context),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: tempPerPax ? AppColors.accentBlue : AppColors.getBorder(context)),
+                          ),
+                          child: Center(
+                            child: Text(
+                              'Per Pax (x )',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: tempPerPax ? AppColors.accentBlue : AppColors.getTextSecondary(context),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: Text('Cancel', style: TextStyle(color: AppColors.getTextMuted(context))),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  final title = titleCtrl.text.trim();
+                  if (title.isEmpty) return;
+                  final p = int.tryParse(priceCtrl.text.replaceAll(RegExp(r'[^0-9]'), '')) ?? 1000;
+                  setState(() {
+                    _activities.add(
+                      ActivityTariffItem(
+                        id: 'custom_',
+                        title: title,
+                        price: p,
+                        isPerPax: tempPerPax,
+                        isIncluded: true,
+                        isCustom: true,
+                      ),
+                    );
+                    _syncPriceControllers();
+                  });
+                  Navigator.pop(ctx);
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF10B981),
+                  foregroundColor: Colors.white,
+                ),
+                child: const Text('Add to Quote'),
+              ),
+            ],
+          );
+        },
       ),
     );
   }

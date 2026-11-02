@@ -140,7 +140,7 @@ class CallProvider extends ChangeNotifier {
               .map((item) => CallLogModel.fromJson(Map<String, dynamic>.from(item as Map)))
               .toList();
           if (list.isNotEmpty) {
-            _callLogs = list;
+            _callLogs = _deduplicateLogs(list);
             notifyListeners();
           }
         }
@@ -159,27 +159,45 @@ class CallProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> fetchCallLogsFromServer() async {
-    final logs = await apiService.fetchCallLogs();
-    if (logs.isNotEmpty) {
-      final deduped = <String, CallLogModel>{};
-      for (final log in logs) {
-        final cleanPhone = log.phone.replaceAll(RegExp(r'\D'), '');
-        final suffix = cleanPhone.length >= 10 ? cleanPhone.substring(cleanPhone.length - 10) : cleanPhone;
-        final timeKey = log.timestamp.toIso8601String().substring(0, 16);
-        final key = (log.id.isNotEmpty && !log.id.startsWith('cl_')) ? log.id : '${suffix}_$timeKey';
-        if (!deduped.containsKey(key)) {
-          deduped[key] = log;
-        } else {
-          final existing = deduped[key]!;
-          final bool preferNew = (log.status == 'completed' && existing.status != 'completed') ||
-              (log.durationSeconds > existing.durationSeconds);
-          if (preferNew) {
-            deduped[key] = log;
+  List<CallLogModel> _deduplicateLogs(List<CallLogModel> raw) {
+    final sorted = List<CallLogModel>.from(raw)
+      ..sort((a, b) => b.timestamp.compareTo(a.timestamp));
+    final result = <CallLogModel>[];
+
+    for (final log in sorted) {
+      final cleanPhone = log.phone.replaceAll(RegExp(r'\D'), '');
+      final suffix = cleanPhone.length >= 10 ? cleanPhone.substring(cleanPhone.length - 10) : cleanPhone;
+
+      bool isDuplicate = false;
+      for (int i = 0; i < result.length; i++) {
+        final existing = result[i];
+        final exClean = existing.phone.replaceAll(RegExp(r'\D'), '');
+        final exSuffix = exClean.length >= 10 ? exClean.substring(exClean.length - 10) : exClean;
+
+        if (suffix.isNotEmpty && exSuffix.isNotEmpty && suffix == exSuffix) {
+          final diffSecs = (log.timestamp.difference(existing.timestamp).inSeconds).abs();
+          if (diffSecs <= 180) {
+            isDuplicate = true;
+            if ((log.status == 'completed' && existing.status != 'completed') ||
+                (log.durationSeconds > existing.durationSeconds) ||
+                (log.customerName != 'Traveler' && existing.customerName == 'Traveler')) {
+              result[i] = log;
+            }
+            break;
           }
         }
       }
-      _callLogs = deduped.values.toList();
+      if (!isDuplicate) {
+        result.add(log);
+      }
+    }
+    return result;
+  }
+
+  Future<void> fetchCallLogsFromServer() async {
+    final logs = await apiService.fetchCallLogs();
+    if (logs.isNotEmpty) {
+      _callLogs = _deduplicateLogs(logs);
       _saveCallLogsToCache();
       notifyListeners();
     }

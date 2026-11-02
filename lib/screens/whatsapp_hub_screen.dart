@@ -1,4 +1,4 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -1824,6 +1824,24 @@ class _WhatsAppHubScreenState extends State<WhatsAppHubScreen> {
     required IconData icon,
   }) {
     final isSelected = _selectedTab == index;
+    final isLight = Theme.of(context).brightness == Brightness.light;
+
+    final pillBg = isSelected
+        ? (isLight ? const Color(0xFFDCFCE7) : AppColors.whatsappGreen.withValues(alpha: 0.2))
+        : (isLight ? const Color(0xFFF1F5F9) : AppColors.surfaceCard);
+
+    final pillBorder = isSelected
+        ? (isLight ? const Color(0xFF16A34A) : AppColors.whatsappGreen)
+        : AppColors.getBorder(context);
+
+    final iconColor = isSelected
+        ? (isLight ? const Color(0xFF15803D) : AppColors.whatsappGreen)
+        : AppColors.getTextSecondary(context);
+
+    final textColor = isSelected
+        ? (isLight ? const Color(0xFF15803D) : Colors.white)
+        : AppColors.getTextSecondary(context);
+
     return InkWell(
       onTap: () {
         setState(() {
@@ -1834,12 +1852,10 @@ class _WhatsAppHubScreenState extends State<WhatsAppHubScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 9, horizontal: 10),
         decoration: BoxDecoration(
-          color: isSelected
-              ? AppColors.whatsappGreen.withValues(alpha: 0.2)
-              : AppColors.surfaceCard,
+          color: pillBg,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected ? AppColors.whatsappGreen : AppColors.borderSubtle,
+            color: pillBorder,
             width: isSelected ? 1.5 : 1,
           ),
         ),
@@ -1852,15 +1868,15 @@ class _WhatsAppHubScreenState extends State<WhatsAppHubScreen> {
               Icon(
                 icon,
                 size: 14,
-                color: isSelected ? AppColors.whatsappGreen : AppColors.textMuted,
+                color: iconColor,
               ),
               const SizedBox(width: 5),
               Text(
                 label,
                 style: TextStyle(
-                  color: isSelected ? Colors.white : AppColors.textMuted,
+                  color: textColor,
                   fontSize: 11.5,
-                  fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
+                  fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
                 ),
               ),
               if (badge != null && badge != '0') ...[
@@ -1868,13 +1884,17 @@ class _WhatsAppHubScreenState extends State<WhatsAppHubScreen> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
                   decoration: BoxDecoration(
-                    color: isSelected ? AppColors.whatsappGreen : AppColors.borderSubtle,
+                    color: isSelected
+                        ? (isLight ? const Color(0xFF16A34A) : AppColors.whatsappGreen)
+                        : (isLight ? const Color(0xFFCBD5E1) : AppColors.borderSubtle),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
                     badge,
                     style: TextStyle(
-                      color: isSelected ? Colors.black : Colors.white,
+                      color: isSelected
+                          ? Colors.white
+                          : AppColors.getTextSecondary(context),
                       fontSize: 9.5,
                       fontWeight: FontWeight.w900,
                     ),
