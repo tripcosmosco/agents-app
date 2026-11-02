@@ -1,3 +1,4 @@
+import 'tariff_pricing_manager_sheet.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -318,29 +319,36 @@ If you have confirmed client enquiries or pending groups from $city, please let 
                 ),
               ),
 
-              // Pitch Editor & Preview
+              // Pitch Editor & Preview (Guaranteed High Contrast in Light & Dark Mode)
               Expanded(
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   child: Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF020617),
+                      color: const Color(0xFF0B132B),
                       borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: Colors.white12),
+                      border: Border.all(color: const Color(0xFFF59E0B).withValues(alpha: 0.35)),
                     ),
                     child: TextField(
                       controller: pitchTextCtrl,
                       maxLines: null,
                       expands: true,
+                      cursorColor: const Color(0xFFF59E0B),
                       style: const TextStyle(
-                        color: Colors.white,
+                        color: Color(0xFFF8FAFC),
                         fontSize: 12.5,
-                        height: 1.45,
+                        height: 1.5,
+                        fontWeight: FontWeight.w500,
                         fontFamily: 'monospace',
                       ),
                       decoration: const InputDecoration(
+                        isDense: true,
+                        filled: false,
+                        fillColor: Colors.transparent,
                         border: InputBorder.none,
+                        enabledBorder: InputBorder.none,
+                        focusedBorder: InputBorder.none,
                         hintText: 'Edit WhatsApp pitch message...',
                         hintStyle: TextStyle(color: Colors.white38),
                       ),
@@ -1105,38 +1113,6 @@ If you have confirmed client enquiries or pending groups from $city, please let 
     );
   }
 
-  void _copyMasterTariffSheet(BuildContext context) {
-    const masterSheet = '''
-🏢 *TRIPCOSMOS VARANASI — B2B DMC NET TARIFF SHEET (2026)*
-──────────────────────────────────────
-🤝 *100% White-Label Ground Handling (Your Agency Placard)*
-
-1️⃣ *Varanasi 3D/2N Spiritual Essence:*
-   • 3★ Standard: ₹7,100 / pax net
-   • 4★ Deluxe: ₹12,100 / pax net
-   • Includes: AC Stay, Airport Transfers, VIP Sugam Darshan, Reserved Aarti Boat
-
-2️⃣ *Kashi - Ayodhya - Prayagraj (4D/3N Circuit):*
-   • 3★ Standard: ₹10,500 / pax net
-   • 4★ Deluxe: ₹16,300 / pax net
-
-3️⃣ *Dev Deepawali 2026 Special Allocation:*
-   • Pre-booked Dashashwamedh Bajra Boat Slots & Hotel Room Blocks
-
-4️⃣ *Dedicated UP65 B2B Fleet Tariffs:*
-   • Swift Dzire AC: ₹12/km | Innova Crysta: ₹19/km | 12S Tempo: ₹25/km
-──────────────────────────────────────
-📞 *Varanasi B2B Partner Desk:* +91 93361 16210
-''';
-    Clipboard.setData(const ClipboardData(text: masterSheet));
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('✓ Master B2B DMC Net Tariff Sheet copied! Ready to paste in WhatsApp.'),
-        backgroundColor: Color(0xFF10B981),
-      ),
-    );
-  }
-
   void _openAgencyWhatsAppChat(BuildContext context, Map<String, dynamic> agency) {
     final name = (agency['name'] ?? 'Partner Agency').toString();
     final phone = (agency['phone'] ?? '').toString();
@@ -1227,7 +1203,7 @@ If you have confirmed client enquiries or pending groups from $city, please let 
                       ],
                     ),
                     InkWell(
-                      onTap: () => _copyMasterTariffSheet(context),
+                      onTap: () => TariffPricingManagerSheet.show(context),
                       borderRadius: BorderRadius.circular(6),
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),

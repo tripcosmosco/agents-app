@@ -944,6 +944,40 @@ class ApiService {
     return false;
   }
 
+  /// Ground Activity Tariffs & Net Pricing Sync
+  Future<List<Map<String, dynamic>>?> fetchGroundTariffs() async {
+    try {
+      final uri = Uri.parse('$baseUrl/mobile/tariffs');
+      final response = await http.get(uri, headers: _headers).timeout(const Duration(seconds: 15));
+      if (response.statusCode == 200) {
+        final data = _safeJsonDecode(response.body);
+        if (data != null && data['tariffs'] is List) {
+          return (data['tariffs'] as List)
+              .map((e) => Map<String, dynamic>.from(e as Map))
+              .toList();
+        }
+      }
+    } catch (e) {
+      debugPrint('Error fetching ground tariffs: $e');
+    }
+    return null;
+  }
+
+  Future<bool> saveGroundTariffs(List<Map<String, dynamic>> tariffs) async {
+    try {
+      final uri = Uri.parse('$baseUrl/mobile/tariffs');
+      final body = json.encode({'tariffs': tariffs});
+      final response = await http.post(uri, headers: _headers, body: body).timeout(const Duration(seconds: 15));
+      if (response.statusCode == 200) {
+        final data = _safeJsonDecode(response.body);
+        return data != null && data['success'] == true;
+      }
+    } catch (e) {
+      debugPrint('Error saving ground tariffs: $e');
+    }
+    return false;
+  }
+
   /// 18. Fetch B2B Travel Partner Agencies Directory
   Future<Map<String, dynamic>?> fetchB2bAgencies({
     String search = '',

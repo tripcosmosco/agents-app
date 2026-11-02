@@ -147,9 +147,9 @@ class _SocialHubScreenState extends State<SocialHubScreen> with SingleTickerProv
         ],
         bottom: TabBar(
           controller: _tabController,
-          labelColor: AppColors.accentGold,
+          labelColor: AppColors.getAccentGold(context),
           unselectedLabelColor: AppColors.getTextMuted(context),
-          indicatorColor: AppColors.accentGold,
+          indicatorColor: AppColors.getAccentGold(context),
           indicatorWeight: 2.5,
           tabs: const [
             Tab(icon: Icon(Icons.schedule_send_rounded, size: 18), text: 'Upcoming Queue'),
@@ -172,6 +172,7 @@ class _SocialHubScreenState extends State<SocialHubScreen> with SingleTickerProv
   }
 
   Widget _buildQueueTab(BuildContext context) {
+    final isLight = Theme.of(context).brightness == Brightness.light;
     return ListView(
       padding: const EdgeInsets.fromLTRB(14, 12, 14, 80),
       children: [
@@ -179,9 +180,9 @@ class _SocialHubScreenState extends State<SocialHubScreen> with SingleTickerProv
         Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: AppColors.surfaceElevated,
+            color: isLight ? const Color(0xFFF1F5F9) : AppColors.surfaceElevated,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AppColors.borderSubtle),
+            border: Border.all(color: isLight ? AppColors.lightBorderSubtle : AppColors.borderSubtle),
           ),
           child: Row(
             children: [
@@ -242,9 +243,17 @@ class _SocialHubScreenState extends State<SocialHubScreen> with SingleTickerProv
               margin: const EdgeInsets.only(bottom: 12),
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: AppColors.surfaceElevated,
+                color: isLight ? Colors.white : AppColors.surfaceElevated,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.borderSubtle),
+                border: Border.all(color: isLight ? AppColors.lightBorderSubtle : AppColors.borderSubtle),
+                boxShadow: [
+                  if (isLight)
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.04),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
+                    ),
+                ],
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -297,7 +306,11 @@ class _SocialHubScreenState extends State<SocialHubScreen> with SingleTickerProv
                   const SizedBox(height: 10),
                   Text(
                     item['title'] ?? '',
-                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: isLight ? AppColors.lightTextPrimary : Colors.white,
+                    ),
                   ),
                   const SizedBox(height: 6),
                   Text(

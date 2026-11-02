@@ -1,3 +1,4 @@
+import 'tariff_pricing_manager_sheet.dart';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -823,22 +824,45 @@ class _TravelQuoteDialogState extends State<TravelQuoteDialog> {
                       'ACTIVITIES & VIP ADD-ONS (TAP RATE TO EDIT)',
                       style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: AppColors.getTextMuted(context)),
                     ),
-                    InkWell(
-                      onTap: _saveCustomTariffs,
-                      borderRadius: BorderRadius.circular(6),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.save_rounded, size: 12, color: AppColors.accentGold),
-                            const SizedBox(width: 4),
-                            Text(
-                              'Save Defaults',
-                              style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.getAccentGold(context)),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        InkWell(
+                          onTap: () => TariffPricingManagerSheet.show(context, onTariffsUpdated: _loadSavedTariffs),
+                          borderRadius: BorderRadius.circular(6),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.tune_rounded, size: 12, color: AppColors.accentBlue),
+                                const SizedBox(width: 3),
+                                Text(
+                                  'Manage Tariffs',
+                                  style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.accentBlue),
+                                ),
+                              ],
                             ),
-                          ],
+                          ),
                         ),
-                      ),
+                        const SizedBox(width: 8),
+                        InkWell(
+                          onTap: _saveCustomTariffs,
+                          borderRadius: BorderRadius.circular(6),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.save_rounded, size: 12, color: AppColors.accentGold),
+                                const SizedBox(width: 3),
+                                Text(
+                                  'Save Defaults',
+                                  style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.getAccentGold(context)),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
