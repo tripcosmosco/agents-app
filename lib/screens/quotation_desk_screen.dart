@@ -56,7 +56,7 @@ class _QuotationDeskScreenState extends State<QuotationDeskScreen> {
   bool _includeSubahEBanaras = true;
   bool _includePandaShastri = false;
   bool _isB2bMode = false;
-  bool _isManualPrice = false;
+  final bool _isManualPrice = false;
   bool _showLivePreview = false;
 
   // Circuit catalog by duration
@@ -609,8 +609,8 @@ class _QuotationDeskScreenState extends State<QuotationDeskScreen> {
     final vehicle = _cabType;
     final duration = '${_selectedDays}D/${_selectedNights}N';
 
-    final title = '🙏 *' + itinTitle + '*';
-    final description = 'Namaste ' + guestName + ' ji! Here is your custom quotation for ₹' + grandTotal.toString() + '.\n\n📅 ' + duration + ' • 🚗 ' + vehicle + '\n🏨 ' + _hotelCategory + '\n\nTap an instant action button below:';
+    final title = '🙏 *$itinTitle*';
+    final description = 'Namaste $guestName ji! Here is your custom quotation for ₹$grandTotal.\n\n📅 $duration • 🚗 $vehicle\n🏨 $_hotelCategory\n\nTap an instant action button below:';
     final buttons = [
       {'id': 'btn_confirm', 'text': '1️⃣ Confirm & Block Cab'},
       {'id': 'btn_plan', 'text': '2️⃣ View Day-wise Plan'},
@@ -891,7 +891,7 @@ class _QuotationDeskScreenState extends State<QuotationDeskScreen> {
                             const SizedBox(width: 4),
                             Switch(
                               value: _isB2bMode,
-                              activeColor: AppColors.accentGold,
+                              activeThumbColor: AppColors.accentGold,
                               onChanged: (v) => setState(() => _isB2bMode = v),
                             ),
                           ],
@@ -932,7 +932,7 @@ class _QuotationDeskScreenState extends State<QuotationDeskScreen> {
                     const Text('3. CIRCUIT & DATES', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: AppColors.accentGold, letterSpacing: 0.5)),
                     const SizedBox(height: 10),
                     DropdownButtonFormField<String>(
-                      value: availableCircuits.contains(_selectedCircuit) ? _selectedCircuit : availableCircuits[0],
+                      initialValue: availableCircuits.contains(_selectedCircuit) ? _selectedCircuit : availableCircuits[0],
                       decoration: const InputDecoration(labelText: 'Pilgrimage Circuit', prefixIcon: Icon(Icons.temple_hindu_rounded, size: 18)),
                       isExpanded: true,
                       items: availableCircuits.map((c) => DropdownMenuItem(value: c, child: Text(c, style: const TextStyle(fontSize: 13)))).toList(),
@@ -1028,7 +1028,7 @@ class _QuotationDeskScreenState extends State<QuotationDeskScreen> {
                       children: [
                         Expanded(
                           child: DropdownButtonFormField<String>(
-                            value: _cabType,
+                            initialValue: _cabType,
                             decoration: const InputDecoration(labelText: 'AC Dedicated Fleet', prefixIcon: Icon(Icons.directions_car_rounded, size: 18)),
                             items: const [
                               DropdownMenuItem(value: 'Swift Dzire AC', child: Text('Swift Dzire (1-3 Pax)', style: TextStyle(fontSize: 12.5))),
@@ -1044,7 +1044,7 @@ class _QuotationDeskScreenState extends State<QuotationDeskScreen> {
                         const SizedBox(width: 12),
                         Expanded(
                           child: DropdownButtonFormField<String>(
-                            value: _hotelCategory,
+                            initialValue: _hotelCategory,
                             decoration: const InputDecoration(labelText: 'Hotel Category', prefixIcon: Icon(Icons.hotel_rounded, size: 18)),
                             items: const [
                               DropdownMenuItem(value: '3-Star Premium', child: Text('3-Star Premium', style: TextStyle(fontSize: 12.5))),
@@ -1131,7 +1131,7 @@ class _QuotationDeskScreenState extends State<QuotationDeskScreen> {
                             const SizedBox(width: 4),
                             Switch(
                               value: _includeDayWiseItinerary,
-                              activeColor: AppColors.accentGold,
+                              activeThumbColor: AppColors.accentGold,
                               onChanged: (v) => setState(() => _includeDayWiseItinerary = v),
                             ),
                           ],

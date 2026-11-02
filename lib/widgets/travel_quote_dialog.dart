@@ -1346,11 +1346,12 @@ class _TravelQuoteDialogState extends State<TravelQuoteDialog> {
                     label: const Text('Send WhatsApp', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 13)),
                     onPressed: () async {
                       final apiService = Provider.of<LeadProvider>(context, listen: false).apiService;
+                      final messenger = ScaffoldMessenger.of(context);
                       final txt = _generateQuotationText(forceWhiteLabel: _isB2bMode);
                       Navigator.pop(ctx);
                       Navigator.pop(context);
                       await apiService.sendWhatsAppMessage(phone: widget.lead.phone, message: txt);
-                      ScaffoldMessenger.of(context).showSnackBar(
+                      messenger.showSnackBar(
                         SnackBar(content: Text('✓ Proposal dispatched via WhatsApp to ${widget.lead.name}!'), backgroundColor: AppColors.successGreen),
                       );
                     },

@@ -10,7 +10,7 @@ import '../providers/event_provider.dart';
 import '../providers/lead_provider.dart';
 import '../widgets/glass_card.dart';
 import '../widgets/live_activity_sheet.dart';
-import 'finance_hub_screen.dart';
+
 import 'settings_screen.dart';
 
 class ReportsScreen extends StatefulWidget {
@@ -154,6 +154,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                if (canViewFinance) ...[
                 // 1. FINANCIAL REVENUE & CASHFLOW AUDIT (Featured Card)
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -360,6 +361,8 @@ class _ReportsScreenState extends State<ReportsScreen> {
                     ),
                   ),
                   const SizedBox(height: 20),
+                ],
+
                 ],
 
                 // 4. TELEPHONY & ZERO-COST KPI GRID

@@ -1164,7 +1164,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             ),
                             Switch.adaptive(
                               value: wp.allAutomationsDisabled,
-                              activeColor: AppColors.errorRed,
+                              activeThumbColor: AppColors.errorRed,
                               activeTrackColor: AppColors.errorRed.withValues(alpha: 0.5),
                               inactiveThumbColor: AppColors.successGreen,
                               inactiveTrackColor: AppColors.successGreen.withValues(alpha: 0.3),
@@ -1226,7 +1226,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               ),
                               Switch.adaptive(
                                 value: wp.firstGreetingEnabled,
-                                activeColor: AppColors.whatsappGreen,
+                                activeThumbColor: AppColors.whatsappGreen,
                                 onChanged: (val) => wp.setFirstGreetingEnabled(val),
                               ),
                             ],
@@ -1254,7 +1254,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               ),
                               Switch.adaptive(
                                 value: wp.autoReplyEnabled,
-                                activeColor: AppColors.whatsappGreen,
+                                activeThumbColor: AppColors.whatsappGreen,
                                 onChanged: (val) => wp.setAutoReplyEnabled(val),
                               ),
                             ],
@@ -1282,7 +1282,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               ),
                               Switch.adaptive(
                                 value: wp.missedCallReplyEnabled,
-                                activeColor: AppColors.whatsappGreen,
+                                activeThumbColor: AppColors.whatsappGreen,
                                 onChanged: (val) => wp.setMissedCallReplyEnabled(val),
                               ),
                             ],

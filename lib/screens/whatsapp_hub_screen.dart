@@ -483,7 +483,7 @@ class _WhatsAppHubScreenState extends State<WhatsAppHubScreen> {
                             ),
                             Switch.adaptive(
                               value: provider.allAutomationsDisabled,
-                              activeColor: AppColors.errorRed,
+                              activeThumbColor: AppColors.errorRed,
                               activeTrackColor: AppColors.errorRed.withValues(alpha: 0.5),
                               inactiveThumbColor: AppColors.successGreen,
                               inactiveTrackColor: AppColors.successGreen.withValues(alpha: 0.3),
@@ -524,7 +524,7 @@ class _WhatsAppHubScreenState extends State<WhatsAppHubScreen> {
                     SwitchListTile.adaptive(
                       contentPadding: EdgeInsets.zero,
                       value: provider.firstGreetingEnabled,
-                      activeColor: AppColors.whatsappGreen,
+                      activeThumbColor: AppColors.whatsappGreen,
                       title: const Text('First Touch Auto-Greeting', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
                       subtitle: const Text('1ï¸âƒ£-4ï¸âƒ£ intake package options sent on first inquiry', style: TextStyle(fontSize: 11, color: AppColors.textMuted)),
                       onChanged: (val) => provider.setFirstGreetingEnabled(val),
@@ -534,7 +534,7 @@ class _WhatsAppHubScreenState extends State<WhatsAppHubScreen> {
                     SwitchListTile.adaptive(
                       contentPadding: EdgeInsets.zero,
                       value: provider.autoReplyEnabled,
-                      activeColor: AppColors.whatsappGreen,
+                      activeThumbColor: AppColors.whatsappGreen,
                       title: const Text('Continuous AI Auto-Reply Bot', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
                       subtitle: const Text('AI bot replies to all customer chat turns (OFF by default)', style: TextStyle(fontSize: 11, color: AppColors.textMuted)),
                       onChanged: (val) => provider.setAutoReplyEnabled(val),
@@ -544,7 +544,7 @@ class _WhatsAppHubScreenState extends State<WhatsAppHubScreen> {
                     SwitchListTile.adaptive(
                       contentPadding: EdgeInsets.zero,
                       value: provider.missedCallReplyEnabled,
-                      activeColor: AppColors.whatsappGreen,
+                      activeThumbColor: AppColors.whatsappGreen,
                       title: const Text('Missed Call WhatsApp Responder', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
                       subtitle: const Text('Instant message sent when a call to office SIM is missed', style: TextStyle(fontSize: 11, color: AppColors.textMuted)),
                       onChanged: (val) => provider.setMissedCallReplyEnabled(val),
@@ -776,7 +776,7 @@ class _WhatsAppHubScreenState extends State<WhatsAppHubScreen> {
                       ),
                       onPressed: () async {
                         final ok = await wp.setAllAutomationsDisabled(false);
-                        if (mounted && ok) {
+                        if (context.mounted && ok) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
                               content: Text('âœ“ Automations Resumed (Auto-Greeting active)'),
@@ -1044,7 +1044,7 @@ class _WhatsAppHubScreenState extends State<WhatsAppHubScreen> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    '⚠️ ' + wp.slaBreachedCount.toString() + ' Travelers waiting > 5 minutes without reply!',
+                    '⚠️ ${wp.slaBreachedCount} Travelers waiting > 5 minutes without reply!',
                     style: const TextStyle(
                       color: Colors.redAccent,
                       fontSize: 12,

@@ -60,7 +60,7 @@ class _FinanceHubScreenState extends State<FinanceHubScreen> with SingleTickerPr
 
   List<Map<String, dynamic>> _payrollEmployees = [];
   Map<String, dynamic>? _payrollRunSummary;
-  String _selectedPayrollMonth = DateFormat('yyyy-MM').format(DateTime.now());
+  final String _selectedPayrollMonth = DateFormat('yyyy-MM').format(DateTime.now());
   final Map<String, Map<String, dynamic>> _attendanceOverrides = {};
 
   final currencyFormatter = NumberFormat.currency(locale: 'en_IN', symbol: '₹', decimalDigits: 0);
@@ -932,9 +932,9 @@ class _FinanceHubScreenState extends State<FinanceHubScreen> with SingleTickerPr
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: marginColor.withOpacity(0.15),
+                      color: marginColor.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: marginColor.withOpacity(0.5)),
+                      border: Border.all(color: marginColor.withValues(alpha: 0.5)),
                     ),
                     child: Text(
                       '${item.marginPct.toStringAsFixed(1)}% Margin',
@@ -949,7 +949,7 @@ class _FinanceHubScreenState extends State<FinanceHubScreen> with SingleTickerPr
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                 decoration: BoxDecoration(
-                  color: AppColors.getSurface(context).withOpacity(0.5),
+                  color: AppColors.getSurface(context).withValues(alpha: 0.5),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Row(
@@ -1019,9 +1019,9 @@ class _FinanceHubScreenState extends State<FinanceHubScreen> with SingleTickerPr
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
       decoration: BoxDecoration(
-        color: Colors.red.withOpacity(0.08),
+        color: Colors.red.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: Colors.red.withOpacity(0.2)),
+        border: Border.all(color: Colors.red.withValues(alpha: 0.2)),
       ),
       child: Text(
         '$label: ${currencyFormatter.format(amount)}',
@@ -1070,7 +1070,7 @@ class _FinanceHubScreenState extends State<FinanceHubScreen> with SingleTickerPr
 
                 // Invoice Dropdown
                 DropdownButtonFormField<String>(
-                  value: selectedInvoice.isNotEmpty ? selectedInvoice : null,
+                  initialValue: selectedInvoice.isNotEmpty ? selectedInvoice : null,
                   decoration: const InputDecoration(labelText: 'Customer / Invoice *', border: OutlineInputBorder()),
                   items: _customerMargins.map((c) => DropdownMenuItem(
                     value: c.invoiceNumber,
@@ -1082,7 +1082,7 @@ class _FinanceHubScreenState extends State<FinanceHubScreen> with SingleTickerPr
 
                 // Category Dropdown
                 DropdownButtonFormField<String>(
-                  value: selectedCategory,
+                  initialValue: selectedCategory,
                   decoration: const InputDecoration(labelText: 'Cost Category *', border: OutlineInputBorder()),
                   items: const [
                     DropdownMenuItem(value: 'hotel', child: Text('🏨 Hotel & Stay')),
@@ -1142,14 +1142,15 @@ class _FinanceHubScreenState extends State<FinanceHubScreen> with SingleTickerPr
                         vendorName: vendorController.text.trim(),
                         notes: notesController.text.trim(),
                       );
-                      if (mounted) {
+                      if (!mounted) return;
+                      if (ctx.mounted) {
                         Navigator.pop(ctx);
-                        if (res != null && (res['ok'] == true || res['success'] == true)) {
-                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(backgroundColor: Colors.green, content: Text('✓ Expense recorded & margin recalculated!')));
-                          _loadCustomerMargins();
-                        } else {
-                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(res?['error'] ?? 'Could not add expense.')));
-                        }
+                      }
+                      if (res != null && (res['ok'] == true || res['success'] == true)) {
+                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(backgroundColor: Colors.green, content: Text('✓ Expense recorded & margin recalculated!')));
+                        _loadCustomerMargins();
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(res?['error'] ?? 'Could not add expense.')));
                       }
                     },
                     child: isSaving ? const CircularProgressIndicator() : const Text('Save Cost & Deduct Margin', style: TextStyle(fontWeight: FontWeight.bold)),
@@ -2563,18 +2564,19 @@ class _FinanceHubScreenState extends State<FinanceHubScreen> with SingleTickerPr
                               'upi_id': upiCtrl.text.trim(),
                               'pan': panCtrl.text.trim(),
                             });
-                            if (mounted) {
+                            if (!mounted) return;
+                            if (ctx.mounted) {
                               Navigator.pop(ctx);
-                              if (res != null && res['success'] == true) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(backgroundColor: Colors.green, content: Text('Employee saved successfully!')),
-                                );
-                                _loadPayrollData();
-                              } else {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(backgroundColor: Colors.red, content: Text(res?['error'] ?? 'Save failed')),
-                                );
-                              }
+                            }
+                            if (res != null && res['success'] == true) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(backgroundColor: Colors.green, content: Text('Employee saved successfully!')),
+                              );
+                              _loadPayrollData();
+                            } else {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(backgroundColor: Colors.red, content: Text(res?['error'] ?? 'Save failed')),
+                              );
                             }
                           },
                     child: isSubmitting
@@ -2762,9 +2764,9 @@ class _FinanceHubScreenState extends State<FinanceHubScreen> with SingleTickerPr
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             decoration: BoxDecoration(
-              color: Colors.teal.withOpacity(0.08),
+              color: Colors.teal.withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.teal.withOpacity(0.25)),
+              border: Border.all(color: Colors.teal.withValues(alpha: 0.25)),
             ),
             child: Row(
               children: [
@@ -2832,7 +2834,7 @@ class _FinanceHubScreenState extends State<FinanceHubScreen> with SingleTickerPr
                         children: [
                           CircleAvatar(
                             radius: 18,
-                            backgroundColor: AppColors.accentGold.withOpacity(0.15),
+                            backgroundColor: AppColors.accentGold.withValues(alpha: 0.15),
                             child: Text(
                               empName.isNotEmpty ? empName[0].toUpperCase() : 'E',
                               style: const TextStyle(color: AppColors.accentGold, fontWeight: FontWeight.bold, fontSize: 14),
@@ -2856,7 +2858,7 @@ class _FinanceHubScreenState extends State<FinanceHubScreen> with SingleTickerPr
                                     Container(
                                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                       decoration: BoxDecoration(
-                                        color: AppColors.accentGold.withOpacity(0.12),
+                                        color: AppColors.accentGold.withValues(alpha: 0.12),
                                         borderRadius: BorderRadius.circular(6),
                                       ),
                                       child: Text(dept, style: const TextStyle(fontSize: 9, color: AppColors.accentGold, fontWeight: FontWeight.bold)),
@@ -2991,7 +2993,7 @@ class _FinanceHubScreenState extends State<FinanceHubScreen> with SingleTickerPr
                               child: Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                 decoration: BoxDecoration(
-                                  color: Colors.blue.withOpacity(0.12),
+                                  color: Colors.blue.withValues(alpha: 0.12),
                                   borderRadius: BorderRadius.circular(4),
                                 ),
                                 child: Row(

@@ -94,8 +94,8 @@ TripCosmos.co — The Sacred Journey
     final apiService = context.read<LeadProvider>().apiService;
     final delivered = await apiService.sendWhatsAppButtons(
       phone: widget.callLog.phone,
-      title: '📍 *' + title + '*',
-      description: 'Namaste ' + widget.callLog.customerName + ' ji! 🙏\n\nConfirmed details for your trip:\n🏷️ Price: ' + price + '\n✨ Inclusions: ' + summary + '\n\nTap an instant action below:',
+      title: '📍 *$title*',
+      description: 'Namaste ${widget.callLog.customerName} ji! 🙏\n\nConfirmed details for your trip:\n🏷️ Price: $price\n✨ Inclusions: $summary\n\nTap an instant action below:',
       buttons: [
         {'id': 'btn_book', 'text': '1️⃣ Confirm & Block Cab'},
         {'id': 'btn_call', 'text': '2️⃣ Call Varanasi Desk'},
@@ -128,7 +128,7 @@ TripCosmos.co — The Sacred Journey
     final delivered = await apiService.sendWhatsAppButtons(
       phone: widget.callLog.phone,
       title: '💳 *Block Cab & Confirm Dates (₹1,500 Token)*',
-      description: 'Namaste ' + widget.callLog.customerName + ' ji! 🙏\n\nTo block your confirmed Varanasi darshan dates & reserved AC cab:\n\n💳 Advance Booking Token: ₹1,500\nUPI ID: 9336116210@upi\n\nBalance payable upon arrival in Varanasi.',
+      description: 'Namaste ${widget.callLog.customerName} ji! 🙏\n\nTo block your confirmed Varanasi darshan dates & reserved AC cab:\n\n💳 Advance Booking Token: ₹1,500\nUPI ID: 9336116210@upi\n\nBalance payable upon arrival in Varanasi.',
       buttons: [
         {'id': 'btn_paid', 'text': '✅ I have Paid ₹1,500'},
         {'id': 'btn_qr', 'text': '📲 Send UPI QR Code'},

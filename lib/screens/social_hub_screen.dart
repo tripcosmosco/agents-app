@@ -457,7 +457,7 @@ class _SocialHubScreenState extends State<SocialHubScreen> with SingleTickerProv
               ),
               const SizedBox(height: 6),
               Text(
-                '$_modelsAvailable models synced across Gemini 2.0, OpenRouter Nemotron, Pollinations FLUX & AIPKit.',
+                '$_aiEngine • $_modelsAvailable models synced across Gemini 2.0, OpenRouter Nemotron, Pollinations FLUX & AIPKit.',
                 style: const TextStyle(color: Colors.white70, fontSize: 11, height: 1.3),
               ),
             ],

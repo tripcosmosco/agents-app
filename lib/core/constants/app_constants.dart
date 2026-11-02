@@ -9,7 +9,7 @@ class AppConstants {
   static const String defaultApiBaseUrl =
       'https://tripcosmos.co/wp-json/tc-agents/v1';
   // Default Master Token for seamless workspace authentication
-  static const String? defaultMobileToken = '3dfdf76d9d1a98b1fd4da8382d970a6e';
+  static const String defaultMobileToken = '3dfdf76d9d1a98b1fd4da8382d970a6e';
 
   // Primary Free Hardware Bridge
   static const String officeJioPhone = '+919336116210';

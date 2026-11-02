@@ -67,8 +67,8 @@ class ApiService {
       if (savedToken != null && savedToken.trim().isNotEmpty) {
         _apiToken = savedToken.trim();
       } else {
-        _apiToken = (AppConstants.defaultMobileToken != null && AppConstants.defaultMobileToken!.isNotEmpty)
-            ? AppConstants.defaultMobileToken!.trim()
+        _apiToken = AppConstants.defaultMobileToken.trim().isNotEmpty
+            ? AppConstants.defaultMobileToken.trim()
             : null;
       }
     } catch (e) {
@@ -96,8 +96,8 @@ class ApiService {
     try {
       final clean = (token ?? '').trim();
       if (clean.isEmpty) {
-        _apiToken = (AppConstants.defaultMobileToken != null && AppConstants.defaultMobileToken!.isNotEmpty)
-            ? AppConstants.defaultMobileToken!.trim()
+        _apiToken = AppConstants.defaultMobileToken.trim().isNotEmpty
+            ? AppConstants.defaultMobileToken.trim()
             : null;
         await StorageService.clearToken();
       } else {
@@ -1471,14 +1471,14 @@ class ApiService {
       final uri = Uri.parse('$baseUrl/mobile/customer-expenses/add');
       final payload = {
         'invoice_number': invoiceNo,
-        if (customerName != null) 'customer_name': customerName,
+        'customer_name': ?customerName,
         'category': category,
         'amount': amount,
-        if (vendorName != null) 'vendor_name': vendorName,
-        if (expenseDate != null) 'expense_date': expenseDate,
+        'vendor_name': ?vendorName,
+        'expense_date': ?expenseDate,
         'payment_method': paymentMethod,
-        if (bankTxnId != null) 'bank_txn_id': bankTxnId,
-        if (notes != null) 'notes': notes,
+        'bank_txn_id': ?bankTxnId,
+        'notes': ?notes,
       };
       final response = await http.post(
         uri,
@@ -1508,10 +1508,10 @@ class ApiService {
       final payload = {
         'transaction_id': transactionId,
         'invoice_number': invoiceNo,
-        if (customerName != null) 'customer_name': customerName,
+        'customer_name': ?customerName,
         'category': category,
-        if (vendorName != null) 'vendor_name': vendorName,
-        if (notes != null) 'notes': notes,
+        'vendor_name': ?vendorName,
+        'notes': ?notes,
       };
       final response = await http.post(
         uri,
@@ -1701,8 +1701,8 @@ class ApiService {
     try {
       final uri = Uri.parse('$baseUrl/mobile/payroll/calculate');
       final payload = {
-        if (month != null) 'month': month,
-        if (attendance != null) 'attendance': attendance,
+        'month': ?month,
+        'attendance': ?attendance,
       };
       final response = await http.post(
         uri,
@@ -1727,7 +1727,7 @@ class ApiService {
       final uri = Uri.parse('$baseUrl/mobile/payroll/dispatch-payslip');
       final payload = {
         'employee_id': employeeId,
-        if (month != null) 'month': month,
+        'month': ?month,
       };
       final response = await http.post(
         uri,
@@ -1748,7 +1748,7 @@ class ApiService {
     try {
       final uri = Uri.parse('$baseUrl/mobile/payroll/sync-zoho');
       final payload = {
-        if (month != null) 'month': month,
+        'month': ?month,
       };
       final response = await http.post(
         uri,
@@ -1774,8 +1774,8 @@ class ApiService {
       final uri = Uri.parse('$baseUrl/mobile/master-assistant/chat');
       final payload = {
         'message': message.trim(),
-        if (history != null) 'history': history,
-        if (context != null) 'context': context,
+        'history': ?history,
+        'context': ?context,
       };
       final response = await http
           .post(uri, headers: _headers, body: jsonEncode(payload))
