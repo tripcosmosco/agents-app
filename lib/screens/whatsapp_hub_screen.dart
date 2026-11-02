@@ -425,8 +425,8 @@ class _WhatsAppHubScreenState extends State<WhatsAppHubScreen> {
                             ),
                             Text(
                               provider.allAutomationsDisabled
-                                  ? 'ðŸ›‘ 100% Human-Only Mode (All bots paused)'
-                                  : 'âš¡ Automations Active',
+                                  ? '🛑 100% Human-Only Mode (All bots paused)'
+                                  : '⚡ Automations Active',
                               style: TextStyle(
                                 fontSize: 11,
                                 color: provider.allAutomationsDisabled ? AppColors.errorRed : AppColors.whatsappGreen,
@@ -493,8 +493,8 @@ class _WhatsAppHubScreenState extends State<WhatsAppHubScreen> {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
                                       content: Text(val
-                                          ? 'ðŸ›‘ Master Kill Switch ENGAGED: 100% Human-Only Mode'
-                                          : 'âœ“ Master Kill Switch DISENGAGED: Automations resumed'),
+                                          ? '🛑 Master Kill Switch ENGAGED: 100% Human-Only Mode'
+                                          : '✓ Master Kill Switch DISENGAGED: Automations resumed'),
                                       backgroundColor: val ? AppColors.errorRed : AppColors.successGreen,
                                     ),
                                   );
@@ -526,7 +526,7 @@ class _WhatsAppHubScreenState extends State<WhatsAppHubScreen> {
                       value: provider.firstGreetingEnabled,
                       activeThumbColor: AppColors.whatsappGreen,
                       title: const Text('First Touch Auto-Greeting', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-                      subtitle: const Text('1ï¸âƒ£-4ï¸âƒ£ intake package options sent on first inquiry', style: TextStyle(fontSize: 11, color: AppColors.textMuted)),
+                      subtitle: const Text('1 to 4 intake package options sent on first inquiry', style: TextStyle(fontSize: 11, color: AppColors.textMuted)),
                       onChanged: (val) => provider.setFirstGreetingEnabled(val),
                     ),
 
@@ -729,66 +729,83 @@ class _WhatsAppHubScreenState extends State<WhatsAppHubScreen> {
         child: Column(
           children: [
             if (wp.allAutomationsDisabled)
-              Container(
-                margin: const EdgeInsets.fromLTRB(14, 6, 14, 4),
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                decoration: BoxDecoration(
-                  color: AppColors.errorRed.withValues(alpha: 0.14),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.errorRed.withValues(alpha: 0.5)),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.shield_outlined, color: AppColors.errorRed, size: 22),
-                    const SizedBox(width: 10),
-                    const Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'ðŸ›‘ 100% Human-Only Mode Active',
-                            style: TextStyle(
-                              color: AppColors.errorRed,
-                              fontWeight: FontWeight.w800,
-                              fontSize: 12.5,
-                            ),
-                          ),
-                          SizedBox(height: 2),
-                          Text(
-                            'All automated bot greetings & AI auto-replies are paused. Only manual human messages will be sent.',
-                            style: TextStyle(color: Colors.white70, fontSize: 11),
-                          ),
-                        ],
+              Builder(
+                builder: (context) {
+                  final isLight = Theme.of(context).brightness == Brightness.light;
+                  return Container(
+                    margin: const EdgeInsets.fromLTRB(14, 6, 14, 4),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: isLight ? const Color(0xFFFEF2F2) : const Color(0xFF2D1517),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: isLight ? const Color(0xFFFECACA) : const Color(0xFF7F1D1D),
+                        width: 1.2,
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    TextButton(
-                      style: TextButton.styleFrom(
-                        backgroundColor: AppColors.errorRed.withValues(alpha: 0.25),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                        minimumSize: Size.zero,
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          side: const BorderSide(color: AppColors.errorRed, width: 0.8),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.pan_tool_rounded,
+                          color: isLight ? const Color(0xFFDC2626) : const Color(0xFFEF4444),
+                          size: 20,
                         ),
-                      ),
-                      onPressed: () async {
-                        final ok = await wp.setAllAutomationsDisabled(false);
-                        if (context.mounted && ok) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('âœ“ Automations Resumed (Auto-Greeting active)'),
-                              backgroundColor: AppColors.successGreen,
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                '100% Human-Only Mode Active',
+                                style: TextStyle(
+                                  color: isLight ? const Color(0xFF991B1B) : const Color(0xFFFCA5A5),
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 12.5,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                'All automated bot greetings & AI auto-replies are paused. Only manual human messages will be sent.',
+                                style: TextStyle(
+                                  color: isLight ? const Color(0xFF7F1D1D) : const Color(0xFFCBD5E1),
+                                  fontSize: 11,
+                                  fontWeight: isLight ? FontWeight.w500 : FontWeight.w400,
+                                  height: 1.3,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: isLight ? const Color(0xFFDC2626) : const Color(0xFFEF4444),
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            minimumSize: Size.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
                             ),
-                          );
-                        }
-                      },
-                      child: const Text('Resume', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                          ),
+                          onPressed: () async {
+                            final ok = await wp.setAllAutomationsDisabled(false);
+                            if (context.mounted && ok) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('✓ Automations Resumed (Auto-Greeting active)'),
+                                  backgroundColor: AppColors.successGreen,
+                                ),
+                              );
+                            }
+                          },
+                          child: const Text('Resume', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800)),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
+                  );
+                },
               ),
             if (!wp.evolutionOnline)
               Container(
@@ -1352,7 +1369,7 @@ class _WhatsAppHubScreenState extends State<WhatsAppHubScreen> {
                               Icons.done_all,
                               size: 13,
                               color: th.lastMessageStatus == 'read'
-                                  ? Colors.cyanAccent
+                                  ? (Theme.of(context).brightness == Brightness.light ? const Color(0xFF0284C7) : Colors.cyanAccent)
                                   : AppColors.getTextMuted(context),
                             ),
                             const SizedBox(width: 4),

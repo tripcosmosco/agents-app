@@ -209,153 +209,177 @@ If you have confirmed client enquiries or pending groups from $city, please let 
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (ctx) => StatefulBuilder(
-        builder: (modalContext, setModalState) => Container(
-          height: MediaQuery.of(context).size.height * 0.88,
-          decoration: const BoxDecoration(
-            color: Color(0xFF0F172A),
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-            border: Border(top: BorderSide(color: Color(0xFFF59E0B), width: 1.5)),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Modal Header
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 16, 16, 12),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF59E0B).withValues(alpha: 0.2),
-                        borderRadius: BorderRadius.circular(10),
+        builder: (modalContext, setModalState) {
+          final isLight = Theme.of(context).brightness == Brightness.light;
+          return Container(
+            height: MediaQuery.of(context).size.height * 0.88,
+            decoration: BoxDecoration(
+              color: isLight ? Colors.white : const Color(0xFF0F172A),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+              border: Border(top: BorderSide(color: const Color(0xFFF59E0B), width: isLight ? 2 : 1.5)),
+              boxShadow: [
+                if (isLight)
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.12),
+                    blurRadius: 20,
+                    offset: const Offset(0, -4),
+                  ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Modal Header
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 16, 16, 12),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF59E0B).withValues(alpha: 0.2),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(Icons.auto_awesome_rounded, color: Color(0xFFFBBF24), size: 22),
                       ),
-                      child: const Icon(Icons.auto_awesome_rounded, color: Color(0xFFFBBF24), size: 22),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'AI B2B Pitch Assistant • $name',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 15,
-                              fontWeight: FontWeight.w800,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          Text(
-                            'Location: $city • Phone: $phone',
-                            style: const TextStyle(
-                              color: Color(0xFF94A3B8),
-                              fontSize: 11.5,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.close, color: Colors.white70),
-                      onPressed: () => Navigator.pop(modalContext),
-                    ),
-                  ],
-                ),
-              ),
-              const Divider(color: Colors.white12, height: 1),
-
-              // Pitch Archetype Selector
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 6),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'SELECT AI PITCH ARCHETYPE:',
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 0.5,
-                        color: Color(0xFFFBBF24),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    SizedBox(
-                      height: 38,
-                      child: ListView.separated(
-                        scrollDirection: Axis.horizontal,
-                        itemCount: pitchArchetypes.length,
-                        separatorBuilder: (_, _) => const SizedBox(width: 8),
-                        itemBuilder: (context, idx) {
-                          final isSel = selectedArchetype == idx;
-                          return ChoiceChip(
-                            label: Text(
-                              pitchArchetypes[idx]['title']!,
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'AI B2B Pitch Assistant • $name',
                               style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: isSel ? FontWeight.w800 : FontWeight.w600,
-                                color: isSel ? Colors.black : Colors.white,
+                                color: isLight ? AppColors.lightTextPrimary : Colors.white,
+                                fontSize: 15,
+                                fontWeight: FontWeight.w800,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            Text(
+                              'Location: $city • Phone: $phone',
+                              style: TextStyle(
+                                color: isLight ? AppColors.lightTextSecondary : const Color(0xFF94A3B8),
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.w500,
                               ),
                             ),
-                            selected: isSel,
-                            selectedColor: const Color(0xFFF59E0B),
-                            backgroundColor: const Color(0xFF1E293B),
-                            onSelected: (val) {
-                              if (val) {
-                                setModalState(() {
-                                  selectedArchetype = idx;
-                                  pitchTextCtrl.text = pitchArchetypes[idx]['template']!;
-                                });
-                              }
-                            },
-                          );
-                        },
+                          ],
+                        ),
                       ),
-                    ),
-                  ],
+                      IconButton(
+                        icon: Icon(Icons.close, color: isLight ? AppColors.lightTextSecondary : Colors.white70),
+                        onPressed: () => Navigator.pop(modalContext),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
+                Divider(color: isLight ? AppColors.lightBorderSubtle : Colors.white12, height: 1),
 
-              // Pitch Editor & Preview (Guaranteed High Contrast in Light & Dark Mode)
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  child: Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF0B132B),
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: const Color(0xFFF59E0B).withValues(alpha: 0.35)),
-                    ),
-                    child: TextField(
-                      controller: pitchTextCtrl,
-                      maxLines: null,
-                      expands: true,
-                      cursorColor: const Color(0xFFF59E0B),
-                      style: const TextStyle(
-                        color: Color(0xFFF8FAFC),
-                        fontSize: 12.5,
-                        height: 1.5,
-                        fontWeight: FontWeight.w500,
-                        fontFamily: 'monospace',
+                // Pitch Archetype Selector
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 6),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'SELECT AI PITCH ARCHETYPE:',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 0.5,
+                          color: isLight ? const Color(0xFFB45309) : const Color(0xFFFBBF24),
+                        ),
                       ),
-                      decoration: const InputDecoration(
-                        isDense: true,
-                        filled: false,
-                        fillColor: Colors.transparent,
-                        border: InputBorder.none,
-                        enabledBorder: InputBorder.none,
-                        focusedBorder: InputBorder.none,
-                        hintText: 'Edit WhatsApp pitch message...',
-                        hintStyle: TextStyle(color: Colors.white38),
+                      const SizedBox(height: 8),
+                      SizedBox(
+                        height: 38,
+                        child: ListView.separated(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: pitchArchetypes.length,
+                          separatorBuilder: (_, _) => const SizedBox(width: 8),
+                          itemBuilder: (context, idx) {
+                            final isSel = selectedArchetype == idx;
+                            return ChoiceChip(
+                              label: Text(
+                                pitchArchetypes[idx]['title']!,
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: isSel ? FontWeight.w800 : FontWeight.w600,
+                                  color: isSel
+                                      ? Colors.white
+                                      : (isLight ? const Color(0xFF334155) : Colors.white),
+                                ),
+                              ),
+                              selected: isSel,
+                              selectedColor: isLight ? const Color(0xFFB45309) : const Color(0xFFF59E0B),
+                              backgroundColor: isLight ? const Color(0xFFF1F5F9) : const Color(0xFF1E293B),
+                              side: BorderSide(
+                                color: isSel
+                                    ? Colors.transparent
+                                    : (isLight ? const Color(0xFFCBD5E1) : Colors.transparent),
+                              ),
+                              onSelected: (val) {
+                                if (val) {
+                                  setModalState(() {
+                                    selectedArchetype = idx;
+                                    pitchTextCtrl.text = pitchArchetypes[idx]['template']!;
+                                  });
+                                }
+                              },
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Pitch Editor & Preview (Guaranteed High Contrast in Light & Dark Mode)
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    child: Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: isLight ? const Color(0xFFF8FAFC) : const Color(0xFF0B132B),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: isLight
+                              ? const Color(0xFFE2E8F0)
+                              : const Color(0xFFF59E0B).withValues(alpha: 0.35),
+                          width: 1.2,
+                        ),
+                      ),
+                      child: TextField(
+                        controller: pitchTextCtrl,
+                        maxLines: null,
+                        expands: true,
+                        cursorColor: const Color(0xFFF59E0B),
+                        style: TextStyle(
+                          color: isLight ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+                          fontSize: 12.5,
+                          height: 1.5,
+                          fontWeight: FontWeight.w500,
+                          fontFamily: 'monospace',
+                        ),
+                        decoration: InputDecoration(
+                          isDense: true,
+                          filled: false,
+                          fillColor: Colors.transparent,
+                          border: InputBorder.none,
+                          enabledBorder: InputBorder.none,
+                          focusedBorder: InputBorder.none,
+                          hintText: 'Edit WhatsApp pitch message...',
+                          hintStyle: TextStyle(
+                            color: isLight ? AppColors.lightTextMuted : Colors.white38,
+                          ),
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ),
 
               // Action Toolbar
               Padding(
@@ -429,10 +453,11 @@ If you have confirmed client enquiries or pending groups from $city, please let 
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
+        );
+      },
+    ),
+  );
+}
 
   // ==========================================
   // 2. DYNAMIC B2B NET RATE CALCULATOR

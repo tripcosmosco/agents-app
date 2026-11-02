@@ -171,6 +171,17 @@ class CallProvider extends ChangeNotifier {
       bool isDuplicate = false;
       for (int i = 0; i < result.length; i++) {
         final existing = result[i];
+
+        // Exact ID match check
+        if (log.id.isNotEmpty && existing.id == log.id) {
+          isDuplicate = true;
+          if (log.durationSeconds > existing.durationSeconds ||
+              (log.customerName != 'Traveler' && existing.customerName == 'Traveler')) {
+            result[i] = log;
+          }
+          break;
+        }
+
         final exClean = existing.phone.replaceAll(RegExp(r'\D'), '');
         final exSuffix = exClean.length >= 10 ? exClean.substring(exClean.length - 10) : exClean;
 

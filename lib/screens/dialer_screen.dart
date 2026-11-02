@@ -829,7 +829,23 @@ class _DialerScreenState extends State<DialerScreen> {
         break;
     }
 
-    final timeStr = DateFormat('h:mm a').format(log.timestamp);
+    final now = DateTime.now();
+    final isToday = log.timestamp.year == now.year &&
+        log.timestamp.month == now.month &&
+        log.timestamp.day == now.day;
+    final isYesterday = log.timestamp.year == now.year &&
+        log.timestamp.month == now.month &&
+        log.timestamp.day == now.day - 1;
+
+    String datePrefix = '';
+    if (isToday) {
+      datePrefix = 'Today, ';
+    } else if (isYesterday) {
+      datePrefix = 'Yesterday, ';
+    } else {
+      datePrefix = DateFormat('d MMM, ').format(log.timestamp);
+    }
+    final timeStr = '$datePrefix${DateFormat('h:mm a').format(log.timestamp)}';
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 8.0),

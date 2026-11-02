@@ -92,7 +92,7 @@ class _TravelQuoteDialogState extends State<TravelQuoteDialog> {
       ActivityTariffItem(
         id: 'sugam_darshan',
         title: 'Kashi Vishwanath VIP Sugam Darshan Pass',
-        subtitle: 'Gate 4 Priority â€¢ Direct corridor access',
+        subtitle: 'Gate 4 Priority • Direct corridor access',
         price: 600,
         isPerPax: true,
         isIncluded: true,
@@ -168,7 +168,7 @@ class _TravelQuoteDialogState extends State<TravelQuoteDialog> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('âœ“ Custom activity prices saved as personal defaults!'),
+            content: Text('✓ Custom activity prices saved as personal defaults!'),
             backgroundColor: Color(0xFF10B981),
             duration: Duration(seconds: 3),
           ),
@@ -894,7 +894,7 @@ class _TravelQuoteDialogState extends State<TravelQuoteDialog> {
                               Icon(Icons.add_circle_outline_rounded, size: 14, color: AppColors.getAccentGold(context)),
                               const SizedBox(width: 6),
                               Text(
-                                '+ Add Custom Activity / Service (Custom â‚¹)',
+                                '+ Add Custom Activity / Service (Custom ₹)',
                                 style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.getAccentGold(context)),
                               ),
                             ],
@@ -1378,8 +1378,8 @@ class _TravelQuoteDialogState extends State<TravelQuoteDialog> {
                 children: [
                   Text(
                     item.isPerPax
-                        ? 'â‚¹/pax'
-                        : 'â‚¹',
+                        ? '₹${NumberFormat('#,##,###').format(item.price)}/pax'
+                        : '₹${NumberFormat('#,##,###').format(item.price)}',
                     style: TextStyle(
                       fontSize: 10.5,
                       fontWeight: FontWeight.w800,
@@ -1447,7 +1447,7 @@ class _TravelQuoteDialogState extends State<TravelQuoteDialog> {
                   autofocus: true,
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.getTextPrimary(context)),
                   decoration: InputDecoration(
-                    prefixText: 'â‚¹ ',
+                    prefixText: '₹ ',
                     labelText: 'Tariff Rate Amount',
                     fillColor: AppColors.getElevated(context),
                     filled: true,
@@ -1595,8 +1595,8 @@ class _TravelQuoteDialogState extends State<TravelQuoteDialog> {
                   keyboardType: TextInputType.number,
                   style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.getTextPrimary(context)),
                   decoration: InputDecoration(
-                    prefixText: 'â‚¹ ',
-                    labelText: 'Tariff Rate (â‚¹)',
+                    prefixText: '₹ ',
+                    labelText: 'Tariff Rate (₹)',
                     fillColor: AppColors.getElevated(context),
                     filled: true,
                     isDense: true,
