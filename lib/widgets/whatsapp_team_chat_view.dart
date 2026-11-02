@@ -127,14 +127,17 @@ class _WhatsAppTeamChatViewState extends State<WhatsAppTeamChatView> {
     } else {
       final ok = await provider.sendMessage(widget.thread.id, text);
       if (mounted && !ok) {
+        final isGatewayDown = !provider.evolutionOnline;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             behavior: SnackBarBehavior.floating,
             margin: const EdgeInsets.only(bottom: 80, left: 14, right: 14),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            content: const Text(
-              '⚠️ Gateway offline (HTTP 500). Send directly via WhatsApp App?',
-              style: TextStyle(fontSize: 12, color: Colors.white),
+            content: Text(
+              isGatewayDown
+                  ? '⚠️ Central WhatsApp Gateway disconnected (+91 9336116210). Send directly via WhatsApp App?'
+                  : '⚠️ Message delivery failed for this recipient. Send directly via WhatsApp App?',
+              style: const TextStyle(fontSize: 12, color: Colors.white),
             ),
             backgroundColor: const Color(0xFF1E293B),
             duration: const Duration(seconds: 8),
@@ -455,7 +458,9 @@ class _WhatsAppTeamChatViewState extends State<WhatsAppTeamChatView> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'Evolution WhatsApp Gateway returned: "HTTP 500 Connection Closed". The central WhatsApp session (+91 9336116210) is currently disconnected.',
+                    provider.evolutionOnline
+                        ? 'The central WhatsApp Gateway (+91 9336116210) is connected and online. However, WhatsApp was unable to deliver this message to the recipient (the phone number may be inactive, incorrect, or unreachable on WhatsApp).'
+                        : 'Evolution WhatsApp Gateway is disconnected. The central WhatsApp session (+91 9336116210) must be re-linked.',
                     style: TextStyle(color: isLight ? AppColors.lightTextPrimary : Colors.white70, fontSize: 12),
                   ),
                   const SizedBox(height: 8),
@@ -1228,24 +1233,28 @@ class _WhatsAppTeamChatViewState extends State<WhatsAppTeamChatView> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Live Evolution Status Warning Banner
-                  if (!provider.evolutionOnline || currentThread.lastMessageStatus == 'failed') ...[
+                  // Live Gateway Status & Individual Delivery Warning Banners
+                  if (!provider.evolutionOnline) ...[
                     Container(
                       margin: const EdgeInsets.only(bottom: 6),
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                       decoration: BoxDecoration(
-                        color: AppColors.errorRed.withValues(alpha: 0.15),
+                        color: isLight ? const Color(0xFFFEF2F2) : AppColors.errorRed.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: AppColors.errorRed.withValues(alpha: 0.4)),
+                        border: Border.all(color: isLight ? const Color(0xFFF87171) : AppColors.errorRed.withValues(alpha: 0.4)),
                       ),
                       child: Row(
                         children: [
-                          const Icon(Icons.warning_amber_rounded, size: 14, color: AppColors.errorRed),
+                          Icon(Icons.cloud_off_rounded, size: 14, color: isLight ? const Color(0xFFDC2626) : AppColors.errorRed),
                           const SizedBox(width: 6),
-                          const Expanded(
+                          Expanded(
                             child: Text(
-                              'WhatsApp Gateway offline (+91 9336116210)',
-                              style: TextStyle(color: Colors.white70, fontSize: 10.5),
+                              'WhatsApp Gateway session disconnected (+91 9336116210)',
+                              style: TextStyle(
+                                color: isLight ? const Color(0xFF991B1B) : Colors.white70,
+                                fontSize: 10.5,
+                                fontWeight: isLight ? FontWeight.w600 : FontWeight.w400,
+                              ),
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
@@ -1277,9 +1286,66 @@ class _WhatsAppTeamChatViewState extends State<WhatsAppTeamChatView> {
                           ),
                           InkWell(
                             onTap: () => _showEvolutionQrSheet(context, provider),
-                            child: const Text(
+                            child: Text(
                               'QR / Status',
-                              style: TextStyle(color: AppColors.accentGold, fontSize: 10.5, fontWeight: FontWeight.bold),
+                              style: TextStyle(
+                                color: isLight ? const Color(0xFFB45309) : AppColors.accentGold,
+                                fontSize: 10.5,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ] else if (currentThread.lastMessageStatus == 'failed') ...[
+                    Container(
+                      margin: const EdgeInsets.only(bottom: 6),
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: isLight ? const Color(0xFFFFFBEB) : const Color(0xFFF59E0B).withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: isLight ? const Color(0xFFFCD34D) : const Color(0xFFF59E0B).withValues(alpha: 0.4)),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.info_outline_rounded, size: 14, color: isLight ? const Color(0xFFD97706) : const Color(0xFFFBBF24)),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              'Message delivery failed for this recipient (Central Gateway online)',
+                              style: TextStyle(
+                                color: isLight ? const Color(0xFF92400E) : Colors.white70,
+                                fontSize: 10.5,
+                                fontWeight: isLight ? FontWeight.w600 : FontWeight.w400,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          InkWell(
+                            onTap: () => TelephonyService.openWhatsApp(
+                              phoneNumber: currentThread.customerPhone,
+                              message: _textController.text.trim(),
+                            ),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              margin: const EdgeInsets.only(right: 6),
+                              decoration: BoxDecoration(
+                                color: AppColors.whatsappGreen.withValues(alpha: 0.25),
+                                borderRadius: BorderRadius.circular(4),
+                                border: Border.all(color: AppColors.whatsappGreen.withValues(alpha: 0.5)),
+                              ),
+                              child: const Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.open_in_new_rounded, size: 10, color: AppColors.whatsappGreen),
+                                  SizedBox(width: 3),
+                                  Text(
+                                    'Open App ↗',
+                                    style: TextStyle(color: AppColors.whatsappGreen, fontSize: 10, fontWeight: FontWeight.bold),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ],
