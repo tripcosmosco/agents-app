@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../models/user_model.dart';
 import '../services/api_service.dart';
@@ -24,7 +25,7 @@ class AuthProvider extends ChangeNotifier {
   bool hasPermission(String perm) => _user?.hasPermission(perm) ?? false;
 
   final GoogleSignIn _googleSignIn = GoogleSignIn(
-    scopes: ['email', 'profile'],
+    scopes: ['email'],
     clientId: kIsWeb ? '77399722057-6o97tf20jmhjaaid60gks1ajn5k1029s.apps.googleusercontent.com' : null,
     serverClientId: kIsWeb ? null : '77399722057-6o97tf20jmhjaaid60gks1ajn5k1029s.apps.googleusercontent.com',
   );
@@ -38,7 +39,7 @@ class AuthProvider extends ChangeNotifier {
     final userJson = prefs.getString('tc_auth_user');
     final savedToken = await StorageService.getToken();
 
-    // Only restore session if both user profile and token were explicitly saved
+    // 1. Restore cached session if present
     if (userJson != null && userJson.isNotEmpty && savedToken != null && savedToken.trim().isNotEmpty) {
       try {
         _user = UserModel.fromJson(json.decode(userJson));
@@ -47,18 +48,32 @@ class AuthProvider extends ChangeNotifier {
         debugPrint('Error decoding cached user: $e');
       }
 
-      // Refresh profile from server if token exists
+      // Refresh profile and role permissions from server
       if (apiService.apiToken != null && apiService.apiToken!.isNotEmpty) {
         final res = await apiService.fetchMe();
         if (res != null && res['user'] != null) {
           _user = UserModel.fromJson(Map<String, dynamic>.from(res['user'] as Map));
           await _saveUserLocally(_user!);
           notifyListeners();
-        } else if (res != null && res['ok'] == false) {
+        } else if (res != null && res['authenticated'] == false) {
           await logout();
         }
       }
     } else {
+      // 2. On Web: Check if browser already has an active WordPress session (e.g. signed in via Google Site Kit One-Click on wp-login.php)
+      if (kIsWeb) {
+        try {
+          final res = await apiService.fetchMe();
+          if (res != null && res['authenticated'] == true && res['user'] != null) {
+            _user = UserModel.fromJson(Map<String, dynamic>.from(res['user'] as Map));
+            await _saveUserLocally(_user!);
+            notifyListeners();
+            return;
+          }
+        } catch (e) {
+          debugPrint('Error checking active WordPress session: $e');
+        }
+      }
       _user = null;
       notifyListeners();
     }
@@ -69,17 +84,36 @@ class AuthProvider extends ChangeNotifier {
     _errorMessage = null;
     notifyListeners();
 
+    // On Web: Always use the WordPress Site Kit 1-click Google flow.
+    // This connects directly to the WordPress user account and maps exact role permissions without hitting the Google People API!
+    if (kIsWeb) {
+      try {
+        final redirectUrl = '${Uri.base.origin}/agents/';
+        final wpLoginUrl = Uri.parse(
+          'https://tripcosmos.co/wp-login.php?redirect_to=${Uri.encodeComponent(redirectUrl)}',
+        );
+        await launchUrl(wpLoginUrl, webOnlyWindowName: '_self');
+        return true;
+      } catch (e) {
+        _errorMessage = 'Failed to redirect to WordPress Google login: $e';
+        _isLoading = false;
+        notifyListeners();
+        return false;
+      }
+    }
+
+    // On Native Mobile (Android/iOS)
     try {
       final account = await _googleSignIn.signIn();
       if (account == null) {
         _isLoading = false;
         notifyListeners();
-        return false; // User cancelled
+        return false;
       }
 
       final auth = await account.authentication;
       if (auth.idToken == null || auth.idToken!.isEmpty) {
-        _errorMessage = 'Google authentication did not provide an ID token. Check Google Play Services.';
+        _errorMessage = 'Google authentication did not provide an ID token.';
         _isLoading = false;
         notifyListeners();
         return false;
@@ -102,15 +136,8 @@ class AuthProvider extends ChangeNotifier {
         _errorMessage = res?['error'] ?? 'Google sign-in verification failed.';
       }
     } catch (e) {
-      final errStr = e.toString();
-      if (errStr.contains('10') || errStr.contains('DEVELOPER_ERROR') || errStr.contains('sign_in_failed')) {
-        _errorMessage = 'Google OAuth SHA-1 not registered in Google Cloud. Please use "Sign in with WordPress Username / Password" below.';
-      } else if (errStr.toLowerCase().contains('authentication code') || errStr.toLowerCase().contains('invalid_grant')) {
-        _errorMessage = 'Google authentication code invalid on web. Please use "Sign in with WordPress Username / Password" below.';
-      } else {
-        _errorMessage = 'Google sign-in error: $e';
-      }
-      debugPrint('Google sign in exception: $e');
+      debugPrint('Google sign in error: $e');
+      _errorMessage = 'Google sign-in failed: $e';
     }
 
     _isLoading = false;

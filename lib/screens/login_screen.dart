@@ -21,7 +21,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
-  bool _showWpCredentials = false;
+  bool _showWpCredentials = true;
 
   @override
   void dispose() {
@@ -39,13 +39,18 @@ class _LoginScreenState extends State<LoginScreen> {
       if (auth.errorMessage != null) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
             backgroundColor: const Color(0xFFDC2626),
-            content: Text(auth.errorMessage!),
-            duration: const Duration(seconds: 4),
+            content: Text(
+              auth.errorMessage!,
+              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+            ),
+            duration: const Duration(seconds: 5),
           ),
         );
       }
-      // Auto-expand WordPress credentials fields for immediate alternative login
       setState(() {
         _showWpCredentials = true;
       });
@@ -58,7 +63,10 @@ class _LoginScreenState extends State<LoginScreen> {
 
     if (user.isEmpty || pass.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter username and password.')),
+        const SnackBar(
+          behavior: SnackBarBehavior.floating,
+          content: Text('Please enter username and password.'),
+        ),
       );
       return;
     }
@@ -69,7 +77,13 @@ class _LoginScreenState extends State<LoginScreen> {
       widget.onLoginSuccess();
     } else if (mounted && auth.errorMessage != null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(backgroundColor: Colors.redAccent, content: Text(auth.errorMessage!)),
+        SnackBar(
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          backgroundColor: Colors.redAccent,
+          content: Text(auth.errorMessage!),
+        ),
       );
     }
   }
@@ -173,7 +187,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   errorBuilder: (ctx, err, stack) => const Icon(Icons.login, size: 22, color: Colors.blue),
                                 ),
                           label: Text(
-                            auth.isLoading ? 'Verifying with Google...' : 'Continue with Google',
+                            auth.isLoading ? 'Redirecting to Google...' : 'Sign In with Google (Site Kit One-Click)',
                             style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
                           ),
                           onPressed: auth.isLoading ? null : _handleGoogleLogin,
@@ -185,7 +199,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             const SizedBox(width: 6),
                             Expanded(
                               child: Text(
-                                'Role automatically assigned from your WordPress profile (Sales Agent, Manager, Finance, Dispatcher).',
+                                'Powered by Google Site Kit: Instant 1-click login bound to your WordPress user profile & role permissions.',
                                 style: TextStyle(
                                   fontSize: 10,
                                   color: AppColors.getTextMuted(context),

@@ -9,9 +9,11 @@ import '../models/call_log_model.dart';
 import '../models/event_model.dart';
 import '../models/lead_model.dart';
 import '../models/quote_model.dart';
+import 'http_client_helper.dart';
 import 'storage_service.dart';
 
 class ApiService {
+  final http.Client _client = getHttpClient();
   String _baseUrl;
   String? _apiToken;
 
@@ -611,7 +613,7 @@ class ApiService {
     try {
       final uri = Uri.parse('$baseUrl/mobile/ai-settings');
       if (outboundEnabled == null && receptionistEnabled == null) {
-        final response = await http.get(uri, headers: _headers).timeout(const Duration(seconds: 8));
+        final response = await _client.get(uri, headers: _headers).timeout(const Duration(seconds: 8));
         if (response.statusCode == 200) {
           return _safeJsonDecode(response.body);
         }
@@ -626,7 +628,7 @@ class ApiService {
             'receptionist_ai_active': val,
           },
         });
-        final response = await http.post(uri, headers: _headers, body: body).timeout(const Duration(seconds: 8));
+        final response = await _client.post(uri, headers: _headers, body: body).timeout(const Duration(seconds: 8));
         if (response.statusCode == 200) {
           return _safeJsonDecode(response.body);
         }
@@ -641,7 +643,7 @@ class ApiService {
   Future<Map<String, dynamic>?> fetchAutomationSettings() async {
     try {
       final uri = Uri.parse('$baseUrl/mobile/automation-settings');
-      final response = await http.get(uri, headers: _headers).timeout(const Duration(seconds: 8));
+      final response = await _client.get(uri, headers: _headers).timeout(const Duration(seconds: 8));
       if (response.statusCode == 200) {
         return _safeJsonDecode(response.body);
       }
@@ -665,7 +667,7 @@ class ApiService {
         if (autoReplyEnabled != null) 'whatsapp_auto_reply': autoReplyEnabled ? '1' : '0',
         if (missedCallReplyEnabled != null) 'missed_call_auto_reply': missedCallReplyEnabled ? '1' : '0',
       });
-      final response = await http.post(uri, headers: _headers, body: body).timeout(const Duration(seconds: 8));
+      final response = await _client.post(uri, headers: _headers, body: body).timeout(const Duration(seconds: 8));
       if (response.statusCode == 200) {
         return _safeJsonDecode(response.body);
       }
@@ -679,7 +681,7 @@ class ApiService {
   Future<Map<String, dynamic>?> fetchAgentProfile() async {
     try {
       final uri = Uri.parse('$baseUrl/mobile/agent-profile');
-      final response = await http.get(uri, headers: _headers).timeout(const Duration(seconds: 8));
+      final response = await _client.get(uri, headers: _headers).timeout(const Duration(seconds: 8));
       if (response.statusCode == 200) {
         final data = _safeJsonDecode(response.body);
         if (data != null && data['ok'] == true && data['agent'] is Map) {
@@ -948,7 +950,7 @@ class ApiService {
   Future<List<Map<String, dynamic>>?> fetchGroundTariffs() async {
     try {
       final uri = Uri.parse('$baseUrl/mobile/tariffs');
-      final response = await http.get(uri, headers: _headers).timeout(const Duration(seconds: 15));
+      final response = await _client.get(uri, headers: _headers).timeout(const Duration(seconds: 15));
       if (response.statusCode == 200) {
         final data = _safeJsonDecode(response.body);
         if (data != null && data['tariffs'] is List) {
@@ -967,7 +969,7 @@ class ApiService {
     try {
       final uri = Uri.parse('$baseUrl/mobile/tariffs');
       final body = json.encode({'tariffs': tariffs});
-      final response = await http.post(uri, headers: _headers, body: body).timeout(const Duration(seconds: 15));
+      final response = await _client.post(uri, headers: _headers, body: body).timeout(const Duration(seconds: 15));
       if (response.statusCode == 200) {
         final data = _safeJsonDecode(response.body);
         return data != null && data['success'] == true;
@@ -982,7 +984,7 @@ class ApiService {
   Future<List<Map<String, dynamic>>?> fetchCabTariffs() async {
     try {
       final uri = Uri.parse('$baseUrl/mobile/cabs');
-      final response = await http.get(uri, headers: _headers).timeout(const Duration(seconds: 15));
+      final response = await _client.get(uri, headers: _headers).timeout(const Duration(seconds: 15));
       if (response.statusCode == 200) {
         final data = _safeJsonDecode(response.body);
         if (data != null && data['cabs'] is List) {
@@ -1001,7 +1003,7 @@ class ApiService {
     try {
       final uri = Uri.parse('$baseUrl/mobile/cabs');
       final body = json.encode({'cabs': cabs});
-      final response = await http.post(uri, headers: _headers, body: body).timeout(const Duration(seconds: 15));
+      final response = await _client.post(uri, headers: _headers, body: body).timeout(const Duration(seconds: 15));
       if (response.statusCode == 200) {
         final data = _safeJsonDecode(response.body);
         return data != null && data['success'] == true;
@@ -1029,7 +1031,7 @@ class ApiService {
         if (status.isNotEmpty && status != 'all') 'status': status,
       };
       final uri = Uri.parse('$baseUrl/mobile/b2b-agencies').replace(queryParameters: queryParams);
-      final response = await http.get(uri, headers: _headers).timeout(const Duration(seconds: 30));
+      final response = await _client.get(uri, headers: _headers).timeout(const Duration(seconds: 30));
       if (response.statusCode == 200) {
         final data = _safeJsonDecode(response.body);
         if (data != null && data['success'] == true) {
@@ -1053,7 +1055,7 @@ class ApiService {
         'agency_id': agencyId,
         if (customMessage != null && customMessage.isNotEmpty) 'message': customMessage,
       });
-      final response = await http.post(uri, headers: _headers, body: body).timeout(const Duration(seconds: 12));
+      final response = await _client.post(uri, headers: _headers, body: body).timeout(const Duration(seconds: 12));
       if (response.statusCode == 200) {
         final data = _safeJsonDecode(response.body);
         return data != null && data['success'] == true;
@@ -1069,7 +1071,7 @@ class ApiService {
     try {
       final uri = Uri.parse('$baseUrl/mobile/b2b-sync-crm');
       final body = json.encode({'agency_id': agencyId});
-      final response = await http.post(uri, headers: _headers, body: body).timeout(const Duration(seconds: 12));
+      final response = await _client.post(uri, headers: _headers, body: body).timeout(const Duration(seconds: 12));
       if (response.statusCode == 200) {
         final data = _safeJsonDecode(response.body);
         return data != null && data['success'] == true;
@@ -1097,7 +1099,7 @@ class ApiService {
         'email': email,
         'address': address,
       });
-      final response = await http.post(uri, headers: _headers, body: body).timeout(const Duration(seconds: 12));
+      final response = await _client.post(uri, headers: _headers, body: body).timeout(const Duration(seconds: 12));
       if (response.statusCode == 200) {
         final data = _safeJsonDecode(response.body);
         return data != null && data['success'] == true;
@@ -1121,7 +1123,7 @@ class ApiService {
         if (runScheduledNow) 'run_scheduled_now': true,
         if (rawList != null && rawList.isNotEmpty) 'raw_list': rawList,
       });
-      final response = await http.post(uri, headers: _headers, body: body).timeout(const Duration(seconds: 18));
+      final response = await _client.post(uri, headers: _headers, body: body).timeout(const Duration(seconds: 18));
       if (response.statusCode == 200) {
         return _safeJsonDecode(response.body);
       }
@@ -1136,7 +1138,7 @@ class ApiService {
     try {
       final uri = Uri.parse('$baseUrl/mobile/b2b-sync-crm');
       final body = json.encode({'sync_all': true});
-      final response = await http.post(uri, headers: _headers, body: body).timeout(const Duration(seconds: 15));
+      final response = await _client.post(uri, headers: _headers, body: body).timeout(const Duration(seconds: 15));
       if (response.statusCode == 200) {
         return _safeJsonDecode(response.body);
       }
@@ -1177,7 +1179,7 @@ class ApiService {
   Future<List<Map<String, dynamic>>> fetchCatalog() async {
     try {
       final uri = Uri.parse('$baseUrl/catalog');
-      final response = await http.get(uri, headers: _headers).timeout(const Duration(seconds: 30));
+      final response = await _client.get(uri, headers: _headers).timeout(const Duration(seconds: 30));
       if (response.statusCode == 200) {
         final decoded = _safeJsonDecode(response.body);
         if (decoded is Map && decoded['items'] is List) {
@@ -1213,7 +1215,7 @@ class ApiService {
         'advance_amount': advanceAmount,
         if (message != null && message.isNotEmpty) 'message': message,
       });
-      final response = await http.post(uri, headers: _headers, body: body).timeout(const Duration(seconds: 15));
+      final response = await _client.post(uri, headers: _headers, body: body).timeout(const Duration(seconds: 15));
       if (response.statusCode == 200) {
         return _safeJsonDecode(response.body);
       }
@@ -1227,7 +1229,7 @@ class ApiService {
   Future<Map<String, dynamic>?> fetchFinancials() async {
     try {
       final uri = Uri.parse('$baseUrl/mobile/financials');
-      final response = await http.get(uri, headers: _headers).timeout(const Duration(seconds: 30));
+      final response = await _client.get(uri, headers: _headers).timeout(const Duration(seconds: 30));
       if (response.statusCode == 200) {
         return _safeJsonDecode(response.body);
       }
@@ -1266,7 +1268,7 @@ class ApiService {
         'notify_customer': notifyCustomer,
         'notify_driver': notifyDriver,
       });
-      final response = await http.post(uri, headers: _headers, body: body).timeout(const Duration(seconds: 15));
+      final response = await _client.post(uri, headers: _headers, body: body).timeout(const Duration(seconds: 15));
       if (response.statusCode == 200) {
         return _safeJsonDecode(response.body);
       }
@@ -1281,7 +1283,7 @@ class ApiService {
     try {
       final clean = phone.replaceAll(RegExp(r'[^0-9]'), '');
       final uri = Uri.parse('$baseUrl/mobile/caller-lookup?phone=$clean');
-      final response = await http.get(uri, headers: _headers).timeout(const Duration(seconds: 8));
+      final response = await _client.get(uri, headers: _headers).timeout(const Duration(seconds: 8));
       if (response.statusCode == 200) {
         return _safeJsonDecode(response.body);
       }
@@ -1310,7 +1312,7 @@ class ApiService {
         if (dealValue != null && dealValue >= 0) 'deal_value': dealValue,
         if (followUpDate != null && followUpDate.isNotEmpty) 'follow_up_date': followUpDate,
       });
-      final response = await http.post(uri, headers: _headers, body: body).timeout(const Duration(seconds: 15));
+      final response = await _client.post(uri, headers: _headers, body: body).timeout(const Duration(seconds: 15));
       if (response.statusCode == 200) {
         return _safeJsonDecode(response.body);
       }
@@ -1335,7 +1337,7 @@ class ApiService {
         'purpose': purpose,
         'send_whatsapp': sendWhatsApp,
       });
-      final response = await http.post(uri, headers: _headers, body: body).timeout(const Duration(seconds: 15));
+      final response = await _client.post(uri, headers: _headers, body: body).timeout(const Duration(seconds: 15));
       if (response.statusCode == 200) {
         return _safeJsonDecode(response.body);
       }
@@ -1349,7 +1351,7 @@ class ApiService {
   Future<Map<String, dynamic>?> fetchGoogleAdsConversions() async {
     try {
       final uri = Uri.parse('$baseUrl/mobile/google-ads/conversions');
-      final response = await http.get(uri, headers: _headers).timeout(const Duration(seconds: 30));
+      final response = await _client.get(uri, headers: _headers).timeout(const Duration(seconds: 30));
       if (response.statusCode == 200) {
         return _safeJsonDecode(response.body);
       }
@@ -1367,7 +1369,7 @@ class ApiService {
   }) async {
     try {
       final uri = Uri.parse('$baseUrl/mobile/bank-statement/transactions?type=$type&status=$status&limit=$limit');
-      final response = await http.get(uri, headers: _headers).timeout(const Duration(seconds: 30));
+      final response = await _client.get(uri, headers: _headers).timeout(const Duration(seconds: 30));
       if (response.statusCode == 200) {
         return _safeJsonDecode(response.body);
       }
@@ -1390,7 +1392,7 @@ class ApiService {
         'bank_name': bankName,
         'account_no': accountNo,
       });
-      final response = await http.post(uri, headers: _headers, body: body).timeout(const Duration(seconds: 25));
+      final response = await _client.post(uri, headers: _headers, body: body).timeout(const Duration(seconds: 25));
       if (response.statusCode < 500 && response.body.isNotEmpty) {
         return _safeJsonDecode(response.body);
       }
@@ -1412,7 +1414,7 @@ class ApiService {
         payload['booking_id'] = bookingId;
       }
       final body = json.encode(payload);
-      final response = await http.post(uri, headers: _headers, body: body).timeout(const Duration(seconds: 10));
+      final response = await _client.post(uri, headers: _headers, body: body).timeout(const Duration(seconds: 10));
       if (response.statusCode < 500 && response.body.isNotEmpty) {
         return _safeJsonDecode(response.body);
       }
@@ -1426,7 +1428,7 @@ class ApiService {
   Future<Map<String, dynamic>?> fetchZohoSummary() async {
     try {
       final uri = Uri.parse('$baseUrl/mobile/zoho/summary');
-      final response = await http.get(uri, headers: _headers).timeout(const Duration(seconds: 15));
+      final response = await _client.get(uri, headers: _headers).timeout(const Duration(seconds: 15));
       if (response.statusCode < 500 && response.body.isNotEmpty) {
         return _safeJsonDecode(response.body);
       }
@@ -1440,7 +1442,7 @@ class ApiService {
   Future<Map<String, dynamic>?> syncZohoInvoices() async {
     try {
       final uri = Uri.parse('$baseUrl/mobile/zoho/sync');
-      final response = await http.post(uri, headers: _headers).timeout(const Duration(seconds: 20));
+      final response = await _client.post(uri, headers: _headers).timeout(const Duration(seconds: 20));
       if (response.statusCode < 500 && response.body.isNotEmpty) {
         return _safeJsonDecode(response.body);
       }
@@ -1454,7 +1456,7 @@ class ApiService {
   Future<Map<String, dynamic>?> fetchZohoConfig() async {
     try {
       final uri = Uri.parse('$baseUrl/mobile/zoho/config');
-      final response = await http.get(uri, headers: _headers).timeout(const Duration(seconds: 10));
+      final response = await _client.get(uri, headers: _headers).timeout(const Duration(seconds: 10));
       if (response.statusCode < 500 && response.body.isNotEmpty) {
         return _safeJsonDecode(response.body);
       }
@@ -1481,7 +1483,7 @@ class ApiService {
         'org_id': orgId.trim(),
         'datacenter': datacenter.trim(),
       };
-      final response = await http.post(
+      final response = await _client.post(
         uri,
         headers: _headers,
         body: jsonEncode(payload),
@@ -1499,7 +1501,7 @@ class ApiService {
   Future<Map<String, dynamic>?> syncGoogleAds() async {
     try {
       final uri = Uri.parse('$baseUrl/mobile/google-ads/sync');
-      final response = await http.post(uri, headers: _headers).timeout(const Duration(seconds: 25));
+      final response = await _client.post(uri, headers: _headers).timeout(const Duration(seconds: 25));
       if (response.body.isNotEmpty) {
         return _safeJsonDecode(response.body);
       }
@@ -1513,7 +1515,7 @@ class ApiService {
   Future<Map<String, dynamic>?> fetchCustomerMargins() async {
     try {
       final uri = Uri.parse('$baseUrl/mobile/customer-margins');
-      final response = await http.get(uri, headers: _headers).timeout(const Duration(seconds: 25));
+      final response = await _client.get(uri, headers: _headers).timeout(const Duration(seconds: 25));
       if (response.body.isNotEmpty) {
         return _safeJsonDecode(response.body);
       }
@@ -1548,7 +1550,7 @@ class ApiService {
         'bank_txn_id': ?bankTxnId,
         'notes': ?notes,
       };
-      final response = await http.post(
+      final response = await _client.post(
         uri,
         headers: _headers,
         body: jsonEncode(payload),
@@ -1581,7 +1583,7 @@ class ApiService {
         'vendor_name': ?vendorName,
         'notes': ?notes,
       };
-      final response = await http.post(
+      final response = await _client.post(
         uri,
         headers: _headers,
         body: jsonEncode(payload),
@@ -1599,7 +1601,7 @@ class ApiService {
   Future<Map<String, dynamic>?> deleteCustomerExpense(int expenseId) async {
     try {
       final uri = Uri.parse('$baseUrl/mobile/customer-expenses/delete');
-      final response = await http.post(
+      final response = await _client.post(
         uri,
         headers: _headers,
         body: jsonEncode({'id': expenseId}),
@@ -1617,7 +1619,7 @@ class ApiService {
   Future<Map<String, dynamic>?> fetchGoogleAdsConfig() async {
     try {
       final uri = Uri.parse('$baseUrl/mobile/google-ads/config');
-      final response = await http.get(uri, headers: _headers).timeout(const Duration(seconds: 30));
+      final response = await _client.get(uri, headers: _headers).timeout(const Duration(seconds: 30));
       if (response.body.isNotEmpty) {
         return _safeJsonDecode(response.body);
       }
@@ -1640,7 +1642,7 @@ class ApiService {
         'value': value,
         if (orderId != null) 'order_id': orderId.trim(),
       };
-      final response = await http.post(
+      final response = await _client.post(
         uri,
         headers: _headers,
         body: jsonEncode(payload),
@@ -1719,9 +1721,13 @@ class ApiService {
   Future<Map<String, dynamic>?> fetchMe() async {
     try {
       final uri = Uri.parse('$baseUrl/mobile/auth/me');
-      final response = await http.get(uri, headers: _headers).timeout(const Duration(seconds: 10));
+      final response = await _client.get(uri, headers: _headers).timeout(const Duration(seconds: 10));
       if (response.statusCode == 200) {
-        return _safeJsonDecode(response.body);
+        final data = _safeJsonDecode(response.body);
+        if (data != null && data['token'] != null && data['token'].toString().isNotEmpty) {
+          await setApiToken(data['token'].toString());
+        }
+        return data;
       }
     } catch (e) {
       debugPrint('Error fetching me profile: $e');
@@ -1733,7 +1739,7 @@ class ApiService {
   Future<Map<String, dynamic>?> fetchPayrollEmployees() async {
     try {
       final uri = Uri.parse('$baseUrl/mobile/payroll/employees');
-      final response = await http.get(uri, headers: _headers).timeout(const Duration(seconds: 15));
+      final response = await _client.get(uri, headers: _headers).timeout(const Duration(seconds: 15));
       if (response.body.isNotEmpty) {
         return _safeJsonDecode(response.body);
       }
@@ -1747,7 +1753,7 @@ class ApiService {
   Future<Map<String, dynamic>?> savePayrollEmployee(Map<String, dynamic> employeeData) async {
     try {
       final uri = Uri.parse('$baseUrl/mobile/payroll/employees');
-      final response = await http.post(
+      final response = await _client.post(
         uri,
         headers: _headers,
         body: jsonEncode(employeeData),
@@ -1772,7 +1778,7 @@ class ApiService {
         'month': ?month,
         'attendance': ?attendance,
       };
-      final response = await http.post(
+      final response = await _client.post(
         uri,
         headers: _headers,
         body: jsonEncode(payload),
@@ -1797,7 +1803,7 @@ class ApiService {
         'employee_id': employeeId,
         'month': ?month,
       };
-      final response = await http.post(
+      final response = await _client.post(
         uri,
         headers: _headers,
         body: jsonEncode(payload),
@@ -1818,7 +1824,7 @@ class ApiService {
       final payload = {
         'month': ?month,
       };
-      final response = await http.post(
+      final response = await _client.post(
         uri,
         headers: _headers,
         body: jsonEncode(payload),
@@ -1877,7 +1883,7 @@ class ApiService {
   Future<List<Map<String, String>>> fetchTeamMembers() async {
     try {
       final uri = Uri.parse('$baseUrl/mobile/me');
-      final response = await http.get(uri, headers: _headers).timeout(const Duration(seconds: 10));
+      final response = await _client.get(uri, headers: _headers).timeout(const Duration(seconds: 10));
       if (response.statusCode == 200) {
         final data = _safeJsonDecode(response.body);
         if (data != null && data['team'] is List) {
@@ -1914,7 +1920,7 @@ class ApiService {
   /// 45. VM SEO Brain & Blog Intelligence Overview
   Future<Map<String, dynamic>?> fetchSeoBrainOverview() async {
     try {
-      final res = await http.get(
+      final res = await _client.get(
         Uri.parse('$baseUrl/mobile/seo-brain/overview'),
         headers: _headers,
       );
@@ -1930,7 +1936,7 @@ class ApiService {
   /// 46. VM Social AI & Multi-Platform Intelligence Overview
   Future<Map<String, dynamic>?> fetchSocialAiOverview() async {
     try {
-      final res = await http.get(
+      final res = await _client.get(
         Uri.parse('$baseUrl/mobile/social-ai/overview'),
         headers: _headers,
       );
