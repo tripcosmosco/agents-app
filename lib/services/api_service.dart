@@ -978,6 +978,40 @@ class ApiService {
     return false;
   }
 
+  /// Cab Fleet & Vehicle Tariffs Sync
+  Future<List<Map<String, dynamic>>?> fetchCabTariffs() async {
+    try {
+      final uri = Uri.parse('$baseUrl/mobile/cabs');
+      final response = await http.get(uri, headers: _headers).timeout(const Duration(seconds: 15));
+      if (response.statusCode == 200) {
+        final data = _safeJsonDecode(response.body);
+        if (data != null && data['cabs'] is List) {
+          return (data['cabs'] as List)
+              .map((e) => Map<String, dynamic>.from(e as Map))
+              .toList();
+        }
+      }
+    } catch (e) {
+      debugPrint('Error fetching cab tariffs: $e');
+    }
+    return null;
+  }
+
+  Future<bool> saveCabTariffs(List<Map<String, dynamic>> cabs) async {
+    try {
+      final uri = Uri.parse('$baseUrl/mobile/cabs');
+      final body = json.encode({'cabs': cabs});
+      final response = await http.post(uri, headers: _headers, body: body).timeout(const Duration(seconds: 15));
+      if (response.statusCode == 200) {
+        final data = _safeJsonDecode(response.body);
+        return data != null && data['success'] == true;
+      }
+    } catch (e) {
+      debugPrint('Error saving cab tariffs: $e');
+    }
+    return false;
+  }
+
   /// 18. Fetch B2B Travel Partner Agencies Directory
   Future<Map<String, dynamic>?> fetchB2bAgencies({
     String search = '',

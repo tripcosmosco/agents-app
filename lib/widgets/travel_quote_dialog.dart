@@ -7,9 +7,11 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../core/theme/app_colors.dart';
+import '../models/cab_tariff_item.dart';
 import '../models/lead_model.dart';
 import '../providers/lead_provider.dart';
 import '../screens/quotation_desk_screen.dart';
+import '../services/cab_tariff_service.dart';
 
 /// Customizable Dynamic Activity & VIP Add-on Model
 class ActivityTariffItem {
@@ -85,6 +87,7 @@ class _TravelQuoteDialogState extends State<TravelQuoteDialog> {
   late bool _isB2bMode;
   String _hotelCategory = '4-Star Deluxe';
   String _cabType = 'Innova Crysta';
+  List<CabTariffItem> _fleet = [];
   List<ActivityTariffItem> _activities = [];
 
   void _initDefaultActivities() {
@@ -156,7 +159,35 @@ class _TravelQuoteDialogState extends State<TravelQuoteDialog> {
         }
       }
     } catch (e) {
-      debugPrint('Error loading saved tariffs: ');
+      debugPrint('Error loading saved tariffs: $e');
+    }
+  }
+
+  Future<void> _loadFleetTariffs() async {
+    try {
+      final apiService = Provider.of<LeadProvider>(context, listen: false).apiService;
+      final loaded = await CabTariffService.loadFleet(apiService: apiService);
+      if (mounted && loaded.isNotEmpty) {
+        setState(() {
+          _fleet = loaded;
+          final activeNames = _fleet.where((c) => c.isActive).map((c) => c.name).toList();
+          if (!activeNames.contains(_cabType)) {
+            if (_pax > 6) {
+              final tempo = _fleet.firstWhere((c) => c.id.contains('tempo') || c.capacity.contains('12'), orElse: () => _fleet.first);
+              _cabType = tempo.name;
+            } else if (_pax <= 2) {
+              final sedan = _fleet.firstWhere((c) => c.id.contains('sedan') || c.capacity.contains('4'), orElse: () => _fleet.first);
+              _cabType = sedan.name;
+            } else {
+              final suv = _fleet.firstWhere((c) => c.id.contains('innova') || c.capacity.contains('6'), orElse: () => _fleet.first);
+              _cabType = suv.name;
+            }
+          }
+          _syncPriceControllers();
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading fleet tariffs: $e');
     }
   }
 
@@ -230,6 +261,7 @@ class _TravelQuoteDialogState extends State<TravelQuoteDialog> {
     _syncPriceControllers();
     _quoteMessageController.text = _generateQuotationText();
     _loadSavedTariffs();
+    _loadFleetTariffs();
 
     // Dynamically load live catalog tours from WordPress /catalog
     final apiService = Provider.of<LeadProvider>(context, listen: false).apiService;
@@ -277,9 +309,18 @@ class _TravelQuoteDialogState extends State<TravelQuoteDialog> {
 
     int total = basePerPax * _pax;
 
-    // Vehicle adjustments
-    if (_cabType == 'Innova Crysta') total += 3500;
-    if (_cabType == '12S Force Tempo Traveller') total += 8000;
+    // Dynamic Vehicle adjustments from Fleet Manager
+    if (_fleet.isNotEmpty) {
+      final matchingCab = _fleet.firstWhere(
+        (c) => c.name.toLowerCase() == _cabType.toLowerCase(),
+        orElse: () => CabTariffItem(id: 'default', name: _cabType, packageSurcharge: 0),
+      );
+      total += matchingCab.packageSurcharge;
+    } else {
+      if (_cabType.contains('Innova')) total += 3500;
+      if (_cabType.contains('Tempo')) total += 8000;
+      if (_cabType.contains('Urbania')) total += 14000;
+    }
 
     // Dynamic Activity Addons
     for (final act in _activities) {
@@ -778,41 +819,86 @@ class _TravelQuoteDialogState extends State<TravelQuoteDialog> {
                 const SizedBox(height: 12),
 
                 // 3. Transport Vehicle
-                Row(
-                  children: [
-                    Text('CAB FLEET: ', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: AppColors.getTextMuted(context))),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10),
-                        decoration: BoxDecoration(
-                          color: AppColors.getElevated(context),
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: AppColors.getBorder(context)),
-                        ),
-                        child: DropdownButtonHideUnderline(
-                          child: DropdownButton<String>(
-                            isExpanded: true,
-                            dropdownColor: AppColors.getElevated(context),
-                            value: ['Swift Dzire AC', 'Innova Crysta', '12S Force Tempo Traveller'].contains(_cabType)
-                                ? _cabType
-                                : 'Innova Crysta',
-                            items: ['Swift Dzire AC', 'Innova Crysta', '12S Force Tempo Traveller']
-                                .map((c) => DropdownMenuItem(value: c, child: Text(c, style: TextStyle(fontSize: 12, color: AppColors.getTextPrimary(context)))))
-                                .toList(),
-                            onChanged: (val) {
-                              if (val != null) {
-                                setState(() {
-                                  _cabType = val;
-                                  _syncPriceControllers();
-                                });
-                              }
-                            },
+                Builder(
+                  builder: (context) {
+                    final availableCabs = _fleet.isNotEmpty
+                        ? _fleet.where((c) => c.isActive).map((c) => c.name).toList()
+                        : ['Swift Dzire AC', 'Innova Crysta', '12S Force Tempo Traveller'];
+
+                    return Row(
+                      children: [
+                        Text('CAB FLEET: ', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: AppColors.getTextMuted(context))),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10),
+                            decoration: BoxDecoration(
+                              color: AppColors.getElevated(context),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: AppColors.getBorder(context)),
+                            ),
+                            child: DropdownButtonHideUnderline(
+                              child: DropdownButton<String>(
+                                isExpanded: true,
+                                dropdownColor: AppColors.getElevated(context),
+                                value: availableCabs.contains(_cabType)
+                                    ? _cabType
+                                    : (availableCabs.isNotEmpty ? availableCabs.first : 'Innova Crysta'),
+                                items: availableCabs
+                                    .map((c) => DropdownMenuItem(value: c, child: Text(c, style: TextStyle(fontSize: 12, color: AppColors.getTextPrimary(context)))))
+                                    .toList(),
+                                onChanged: (val) {
+                                  if (val != null) {
+                                    setState(() {
+                                      _cabType = val;
+                                      _syncPriceControllers();
+                                    });
+                                  }
+                                },
+                              ),
+                            ),
                           ),
                         ),
-                      ),
-                    ),
-                  ],
+                        const SizedBox(width: 8),
+                        InkWell(
+                          onTap: () {
+                            TariffPricingManagerSheet.show(
+                              context,
+                              initialTab: 0,
+                              onTariffsUpdated: () {
+                                _loadFleetTariffs();
+                                _loadSavedTariffs();
+                              },
+                            );
+                          },
+                          borderRadius: BorderRadius.circular(8),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 7),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF38BDF8).withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: const Color(0xFF38BDF8).withValues(alpha: 0.5)),
+                            ),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.tune_rounded, size: 14, color: Color(0xFF38BDF8)),
+                                SizedBox(width: 4),
+                                Text(
+                                  'Cabs ⚙️',
+                                  style: TextStyle(
+                                    fontSize: 10.5,
+                                    fontWeight: FontWeight.w800,
+                                    color: Color(0xFF38BDF8),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
+                  },
                 ),
                 const SizedBox(height: 12),
 
