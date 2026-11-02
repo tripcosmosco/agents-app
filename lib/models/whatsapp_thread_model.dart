@@ -123,6 +123,12 @@ class WhatsAppThread {
           .toList();
     }
 
+    final parsedLastMessageTime = json['last_message_time'] != null
+        ? DateTime.tryParse(json['last_message_time'].toString())?.toLocal() ?? DateTime.now()
+        : (json['updated_at'] != null
+            ? DateTime.tryParse(json['updated_at'].toString())?.toLocal() ?? DateTime.now()
+            : DateTime.now());
+
     return WhatsAppThread(
       id: json['id']?.toString() ?? '',
       contactId: int.tryParse(json['contact_id']?.toString() ?? '0') ?? 0,
@@ -134,9 +140,7 @@ class WhatsAppThread {
       lastMessageFromMe: json['last_message_from_me'] == true,
       lastMessageStatus: json['last_message_status']?.toString() ?? 'read',
       timeAgo: json['time_ago']?.toString() ?? '',
-      lastMessageTime: json['last_message_time'] != null
-          ? DateTime.tryParse(json['last_message_time'].toString())?.toLocal() ?? DateTime.now()
-          : DateTime.now(),
+      lastMessageTime: parsedLastMessageTime,
       unreadCount: int.tryParse(json['unread_count']?.toString() ?? '0') ?? 0,
       isAiAssisted: json['is_ai_assisted'] == true,
       assignedAgent: json['assigned_agent']?.toString() ?? 'Nishkarsh AI',
@@ -150,11 +154,21 @@ class WhatsAppThread {
           ? DateTime.tryParse(json['next_follow_up_at'].toString())
           : null,
       callCount: int.tryParse(json['call_count']?.toString() ?? '0') ?? 0,
-      slaBreached: json['sla_breached'] == true ||
-          ((json['unread_count'] as int? ?? 0) > 0 &&
-              !(json['last_message_from_me'] == true) &&
-              (DateTime.now().difference(DateTime.tryParse(json['updated_at']?.toString() ?? json['last_message_time']?.toString() ?? '') ?? DateTime.now()).inMinutes >= 5)),
-      slaWaitMinutes: (json['sla_wait_minutes'] as num?)?.toInt() ?? 0,
+      slaBreached: () {
+        final waitMin = (json['sla_wait_minutes'] as num?)?.toInt() ?? 0;
+        if (waitMin >= 5) return true;
+        final isUnreadIncoming = ((json['unread_count'] as int? ?? 0) > 0) && (json['last_message_from_me'] != true);
+        if (!isUnreadIncoming) return false;
+        final elapsed = DateTime.now().difference(parsedLastMessageTime).inMinutes.abs();
+        return elapsed >= 5;
+      }(),
+      slaWaitMinutes: () {
+        final waitMin = (json['sla_wait_minutes'] as num?)?.toInt() ?? 0;
+        if (waitMin > 0) return waitMin;
+        final isUnreadIncoming = ((json['unread_count'] as int? ?? 0) > 0) && (json['last_message_from_me'] != true);
+        if (!isUnreadIncoming) return 0;
+        return DateTime.now().difference(parsedLastMessageTime).inMinutes.abs();
+      }(),
       messages: parsedMsgs,
     );
   }

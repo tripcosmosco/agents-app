@@ -1310,7 +1310,7 @@ class _WhatsAppHubScreenState extends State<WhatsAppHubScreen> {
                                     overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
-                                if (th.slaBreached) ...[
+                                if (th.slaBreached && th.slaWaitMinutes >= 5) ...[
                                   const SizedBox(width: 6),
                                   Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
