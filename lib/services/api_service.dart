@@ -67,7 +67,9 @@ class ApiService {
       if (savedToken != null && savedToken.trim().isNotEmpty) {
         _apiToken = savedToken.trim();
       } else {
-        _apiToken = null;
+        _apiToken = (AppConstants.defaultMobileToken != null && AppConstants.defaultMobileToken!.isNotEmpty)
+            ? AppConstants.defaultMobileToken!.trim()
+            : null;
       }
     } catch (e) {
       debugPrint('Error loading API preferences: $e');
@@ -94,7 +96,9 @@ class ApiService {
     try {
       final clean = (token ?? '').trim();
       if (clean.isEmpty) {
-        _apiToken = null;
+        _apiToken = (AppConstants.defaultMobileToken != null && AppConstants.defaultMobileToken!.isNotEmpty)
+            ? AppConstants.defaultMobileToken!.trim()
+            : null;
         await StorageService.clearToken();
       } else {
         _apiToken = clean;
