@@ -1,8 +1,10 @@
 import 'tariff_pricing_manager_sheet.dart';
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../core/theme/app_colors.dart';
 import '../models/lead_model.dart';
@@ -51,7 +53,32 @@ class _B2bPartnersViewState extends State<B2bPartnersView> {
   @override
   void initState() {
     super.initState();
+    _loadCachedAgencies();
     _loadAgenciesFromServer();
+  }
+
+  Future<void> _loadCachedAgencies() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final cachedJson = prefs.getString('tc_cached_b2b_agencies_data');
+      if (cachedJson != null && cachedJson.isNotEmpty && mounted) {
+        final decoded = json.decode(cachedJson) as Map<String, dynamic>;
+        final rawList = decoded['agencies'] as List<dynamic>? ?? [];
+        if (rawList.isNotEmpty && _agencies.isEmpty) {
+          setState(() {
+            _agencies = rawList.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+            if (decoded['counts'] is Map) {
+              _counts = Map<String, dynamic>.from(decoded['counts'] as Map);
+            }
+            if (decoded['next_city'] != null) {
+              _nextScheduledCity = decoded['next_city'].toString();
+            }
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint('Error loading cached B2B agencies: $e');
+    }
   }
 
   @override
@@ -77,7 +104,7 @@ class _B2bPartnersViewState extends State<B2bPartnersView> {
     if (!mounted) return;
     setState(() {
       _isLoading = true;
-      _errorMessage = null;
+      if (_agencies.isEmpty) _errorMessage = null;
     });
 
     try {
@@ -93,6 +120,7 @@ class _B2bPartnersViewState extends State<B2bPartnersView> {
         final rawList = res['agencies'] as List<dynamic>? ?? [];
         setState(() {
           _agencies = rawList.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+          _errorMessage = null;
           if (res['counts'] is Map) {
             _counts = Map<String, dynamic>.from(res['counts'] as Map);
           }
@@ -100,13 +128,20 @@ class _B2bPartnersViewState extends State<B2bPartnersView> {
             _nextScheduledCity = res['next_city'].toString();
           }
         });
+        // Cache to local storage
+        if (_searchQuery.isEmpty && _selectedCity == 'All' && _selectedStatus == 'all') {
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString('tc_cached_b2b_agencies_data', json.encode(res));
+        }
       } else if (mounted) {
-        setState(() {
-          _errorMessage = 'Unable to reach B2B database. Please verify server connection.';
-        });
+        if (_agencies.isEmpty) {
+          setState(() {
+            _errorMessage = 'Unable to reach B2B database. Please verify server connection.';
+          });
+        }
       }
     } catch (e) {
-      if (mounted) {
+      if (mounted && _agencies.isEmpty) {
         setState(() {
           _errorMessage = 'Connection error: $e';
         });
@@ -1417,6 +1452,8 @@ If you have confirmed client enquiries or pending groups from $city, please let 
                   ),
                 ),
                 selected: isSelected,
+                visualDensity: VisualDensity.compact,
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 selectedColor: isDark ? const Color(0xFFF59E0B) : const Color(0xFFB45309),
                 backgroundColor: isDark ? AppColors.surfaceCard : const Color(0xFFF1F5F9),
                 side: BorderSide(
@@ -1455,14 +1492,21 @@ If you have confirmed client enquiries or pending groups from $city, please let 
                               Text(
                                 _errorMessage!,
                                 textAlign: TextAlign.center,
-                                style: const TextStyle(color: Colors.white70, fontSize: 13),
+                                style: TextStyle(
+                                  color: isDark ? Colors.white70 : AppColors.lightTextPrimary,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                ),
                               ),
                               const SizedBox(height: 14),
                               ElevatedButton.icon(
                                 onPressed: _loadAgenciesFromServer,
                                 icon: const Icon(Icons.refresh_rounded, size: 16),
                                 label: const Text('Retry Fetching'),
-                                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF2563EB)),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFF2563EB),
+                                  foregroundColor: Colors.white,
+                                ),
                               ),
                             ],
                           ),

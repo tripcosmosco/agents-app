@@ -1564,6 +1564,7 @@ class _WhatsAppHubScreenState extends State<WhatsAppHubScreen> {
   // TAB 1: LIVE WEBSITE CHATBOT SESSIONS
   // ===========================================================================
   Widget _buildWebChatsTab() {
+    final isLight = Theme.of(context).brightness == Brightness.light;
     if (_isLoadingWebChats) {
       return const Center(
         child: CircularProgressIndicator(color: AppColors.accentGold),
@@ -1580,7 +1581,7 @@ class _WhatsAppHubScreenState extends State<WhatsAppHubScreen> {
               Icon(
                 Icons.travel_explore_rounded,
                 size: 54,
-                color: AppColors.textMuted.withValues(alpha: 0.4),
+                color: isLight ? AppColors.lightTextMuted : AppColors.textMuted.withValues(alpha: 0.4),
               ),
               const SizedBox(height: 12),
               Text(
@@ -1592,9 +1593,12 @@ class _WhatsAppHubScreenState extends State<WhatsAppHubScreen> {
                 ),
               ),
               const SizedBox(height: 6),
-              const Text(
+              Text(
                 'When visitors message the AI Concierge on tripcosmos.co, their live chat appears here for 1-tap human takeover.',
-                style: TextStyle(color: AppColors.textMuted, fontSize: 12),
+                style: TextStyle(
+                  color: isLight ? AppColors.lightTextSecondary : AppColors.textMuted,
+                  fontSize: 12,
+                ),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 16),
@@ -1606,8 +1610,10 @@ class _WhatsAppHubScreenState extends State<WhatsAppHubScreen> {
                     icon: const Icon(Icons.refresh, size: 16),
                     label: const Text('Refresh Web Chats'),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.surfaceCard,
-                      foregroundColor: AppColors.accentGold,
+                      backgroundColor: isLight ? Colors.white : AppColors.surfaceCard,
+                      foregroundColor: isLight ? AppColors.lightTextPrimary : AppColors.accentGold,
+                      side: BorderSide(color: isLight ? AppColors.lightBorderSubtle : Colors.transparent),
+                      elevation: isLight ? 1 : 0,
                     ),
                   ),
                   ElevatedButton.icon(
@@ -1615,8 +1621,9 @@ class _WhatsAppHubScreenState extends State<WhatsAppHubScreen> {
                     icon: const Icon(Icons.radar_rounded, size: 16),
                     label: const Text('Open Visitor Radar'),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.successGreen,
-                      foregroundColor: Colors.black,
+                      backgroundColor: isLight ? const Color(0xFF10B981) : AppColors.successGreen,
+                      foregroundColor: Colors.white,
+                      elevation: isLight ? 1 : 0,
                     ),
                   ),
                 ],
@@ -1863,6 +1870,9 @@ class _WhatsAppHubScreenState extends State<WhatsAppHubScreen> {
         setState(() {
           _selectedTab = index;
         });
+        if (index == 1) {
+          _fetchWebChats();
+        }
       },
       borderRadius: BorderRadius.circular(12),
       child: Container(
