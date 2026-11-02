@@ -39,6 +39,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   bool _securityLockEnabled = false;
   String _savedPin = '1234';
+  bool _devWorkspaceUnlocked = false;
 
   @override
   void initState() {
@@ -51,10 +52,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Future<void> _loadSecurityPreferences() async {
     final prefs = await SharedPreferences.getInstance();
     final pin = await StorageService.getSecurityPin();
+    final devUnlocked = prefs.getBool('tc_dev_workspace_unlocked') ?? false;
     if (mounted) {
       setState(() {
         _securityLockEnabled = prefs.getBool('tc_security_lock_enabled') ?? false;
         _savedPin = pin;
+        _devWorkspaceUnlocked = devUnlocked;
       });
     }
   }
@@ -550,6 +553,308 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
       );
     }
+  }
+
+  Future<void> _switchToWorkspace({
+    required String name,
+    required String url,
+    required String token,
+  }) async {
+    setState(() {
+      _urlController.text = url;
+      _tokenController.text = token;
+      _isSaving = true;
+    });
+
+    final success = await widget.apiService.saveConfig(
+      newBaseUrl: url,
+      newApiToken: token,
+    );
+
+    Map<String, dynamic>? profile;
+    if (success) {
+      profile = await widget.apiService.fetchAgentProfile();
+    }
+
+    if (!mounted) return;
+
+    setState(() {
+      _isSaving = false;
+      _testResult = null;
+    });
+
+    if (success) {
+      if (profile != null && profile['name'] != null) {
+        final agentName = profile['name'].toString().trim();
+        context.read<LeadProvider>().setCurrentAgent(agentName);
+        context.read<WhatsAppProvider>().setCurrentAgent(agentName);
+      }
+
+      // Refresh providers with updated connection
+      context.read<LeadProvider>().refreshLeadsFromServer();
+      context.read<CallProvider>().checkCallQueue();
+      context.read<EventProvider>().refresh();
+      context.read<WhatsAppProvider>().fetchThreadsFromServer();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('✓ Switched active workspace to $name!'),
+          backgroundColor: AppColors.successGreen,
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Failed to switch workspace.'),
+          backgroundColor: AppColors.errorRed,
+        ),
+      );
+    }
+  }
+
+  void _promptDeveloperUnlock() {
+    final emailCtrl = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.getCard(context),
+        title: Text(
+          'Master Developer Verification',
+          style: TextStyle(color: AppColors.getTextPrimary(context), fontSize: 16),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'TripCrafters is a client website. Multi-workspace switching is restricted exclusively to authorized developer accounts.',
+              style: TextStyle(color: AppColors.getTextSecondary(context), fontSize: 12),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: emailCtrl,
+              autofocus: true,
+              keyboardType: TextInputType.emailAddress,
+              style: TextStyle(color: AppColors.getTextPrimary(context), fontSize: 13),
+              decoration: const InputDecoration(
+                hintText: 'Enter developer email',
+                prefixIcon: Icon(Icons.admin_panel_settings_rounded, size: 18, color: AppColors.accentGold),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.accentGold),
+            onPressed: () async {
+              final input = emailCtrl.text.trim().toLowerCase();
+              if (input == AppConstants.masterDeveloperEmail.toLowerCase()) {
+                final prefs = await SharedPreferences.getInstance();
+                await prefs.setBool('tc_dev_workspace_unlocked', true);
+                if (ctx.mounted) {
+                  Navigator.pop(ctx);
+                }
+                if (!mounted) return;
+                setState(() {
+                  _devWorkspaceUnlocked = true;
+                });
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('✓ Developer identity verified: webxprodigital@gmail.com. Multi-workspace unlocked.'),
+                    backgroundColor: AppColors.successGreen,
+                  ),
+                );
+              } else {
+                if (ctx.mounted) {
+                  Navigator.pop(ctx);
+                }
+                if (!mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Access Denied: Email not authorized for developer workspaces.'),
+                    backgroundColor: AppColors.errorRed,
+                  ),
+                );
+              }
+            },
+            child: const Text('Verify Access', style: TextStyle(color: AppColors.primaryDark, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWorkspaceSwitcherCard(BuildContext context) {
+    final activeUrl = _urlController.text.trim().toLowerCase();
+    final isTripCosmos = activeUrl.contains('tripcosmos.co');
+    final isTripCrafters = activeUrl.contains('tripcrafters.co');
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 14),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.accentGold.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: AppColors.accentGold.withValues(alpha: 0.35),
+          width: 1.2,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.hub_rounded, size: 18, color: AppColors.accentGold),
+              const SizedBox(width: 8),
+              const Expanded(
+                child: Text(
+                  'MASTER WORKSPACE SWITCHER',
+                  style: TextStyle(
+                    color: AppColors.accentGold,
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0.6,
+                  ),
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+                decoration: BoxDecoration(
+                  color: AppColors.accentGold.withValues(alpha: 0.18),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: const Text(
+                  'webxprodigital@gmail.com',
+                  style: TextStyle(
+                    color: AppColors.accentGold,
+                    fontSize: 9.5,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            'Authorized developer session. Switch between your core hub and client websites instantly with automated token and pipeline binding.',
+            style: TextStyle(
+              color: AppColors.textMuted,
+              fontSize: 11,
+              height: 1.35,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              // TripCosmos Button
+              Expanded(
+                child: InkWell(
+                  onTap: _isSaving ? null : () => _switchToWorkspace(
+                    name: 'TripCosmos Hub',
+                    url: AppConstants.tripCosmosBaseUrl,
+                    token: AppConstants.tripCosmosToken,
+                  ),
+                  borderRadius: BorderRadius.circular(10),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+                    decoration: BoxDecoration(
+                      color: isTripCosmos ? AppColors.accentOrange.withValues(alpha: 0.22) : AppColors.getCard(context),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: isTripCosmos ? AppColors.accentOrange : AppColors.getBorder(context),
+                        width: isTripCosmos ? 1.8 : 1.0,
+                      ),
+                    ),
+                    child: Column(
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(isTripCosmos ? '● ' : '○ ', style: TextStyle(color: isTripCosmos ? AppColors.accentOrange : AppColors.textMuted, fontSize: 10)),
+                            Text(
+                              'TripCosmos.co',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12,
+                                color: AppColors.getTextPrimary(context),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 3),
+                        Text(
+                          isTripCosmos ? 'Active Workspace' : 'HQ Master',
+                          style: TextStyle(
+                            color: isTripCosmos ? AppColors.accentOrange : AppColors.textMuted,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              // TripCrafters Button
+              Expanded(
+                child: InkWell(
+                  onTap: _isSaving ? null : () => _switchToWorkspace(
+                    name: 'TripCrafters Client',
+                    url: AppConstants.tripCraftersBaseUrl,
+                    token: AppConstants.tripCraftersToken,
+                  ),
+                  borderRadius: BorderRadius.circular(10),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+                    decoration: BoxDecoration(
+                      color: isTripCrafters ? const Color(0xFFEA580C).withValues(alpha: 0.22) : AppColors.getCard(context),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: isTripCrafters ? const Color(0xFFEA580C) : AppColors.getBorder(context),
+                        width: isTripCrafters ? 1.8 : 1.0,
+                      ),
+                    ),
+                    child: Column(
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(isTripCrafters ? '● ' : '○ ', style: TextStyle(color: isTripCrafters ? const Color(0xFFEA580C) : AppColors.textMuted, fontSize: 10)),
+                            Text(
+                              'TripCrafters.co',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12,
+                                color: AppColors.getTextPrimary(context),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 3),
+                        Text(
+                          isTripCrafters ? 'Active Workspace' : 'Client Website',
+                          style: TextStyle(
+                            color: isTripCrafters ? const Color(0xFFEA580C) : AppColors.textMuted,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -1438,6 +1743,36 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 },
               ),
               const SizedBox(height: 20),
+
+              // Developer Multi-Workspace Switcher Gate (Restricted to webxprodigital@gmail.com)
+              Consumer<AuthProvider>(
+                builder: (context, authProvider, _) {
+                  final authUser = authProvider.user;
+                  final isMasterEmail = authUser != null &&
+                      authUser.email.trim().toLowerCase() ==
+                          AppConstants.masterDeveloperEmail.toLowerCase();
+                  final isAuthorized = isMasterEmail || _devWorkspaceUnlocked;
+
+                  if (isAuthorized) {
+                    return _buildWorkspaceSwitcherCard(context);
+                  }
+
+                  // Client end: Restricted view, subtle developer verification gate on long press
+                  return Align(
+                    alignment: Alignment.centerRight,
+                    child: GestureDetector(
+                      onLongPress: _promptDeveloperUnlock,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        child: const Text(
+                          'Workspace Cluster: Production',
+                          style: TextStyle(color: AppColors.textMuted, fontSize: 10),
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
 
               // Section: REST API Configuration
               const Text(

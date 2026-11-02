@@ -11,6 +11,18 @@ class AppConstants {
   // Default Master Token for seamless workspace authentication
   static const String defaultMobileToken = '3dfdf76d9d1a98b1fd4da8382d970a6e';
 
+  // Master Developer Gate (Hardcoded for Developer End Only)
+  static const String masterDeveloperEmail = 'webxprodigital@gmail.com';
+
+  // Master Multi-Tenant Workspaces (Visible only to master developer)
+  static const String tripCosmosBaseUrl =
+      'https://tripcosmos.co/wp-json/tc-agents/v1';
+  static const String tripCosmosToken = '3dfdf76d9d1a98b1fd4da8382d970a6e';
+
+  static const String tripCraftersBaseUrl =
+      'https://tripcrafters.co/wp-json/tc-agents/v1';
+  static const String tripCraftersToken = 'yFvnQgSwALF6DE3pvcyDOfcsdHflbbs5';
+
   // Primary Free Hardware Bridge
   static const String officeJioPhone = '+919336116210';
   static const String officeJioDisplay = '+91 93361 16210 (Jio 5G Master)';
