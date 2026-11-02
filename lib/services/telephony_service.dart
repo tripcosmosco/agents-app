@@ -27,7 +27,9 @@ class TelephonyService {
   }) async {
     // Strip non-digit characters except country code
     String cleanPhone = phoneNumber.replaceAll(RegExp(r'[^0-9]'), '');
-    if (cleanPhone.length == 10) {
+    if (cleanPhone.length == 11 && cleanPhone.startsWith('0')) {
+      cleanPhone = '91${cleanPhone.substring(1)}'; // Handle trunk 0 prefix (e.g. 09876543210 -> 919876543210)
+    } else if (cleanPhone.length == 10) {
       cleanPhone = '91$cleanPhone'; // Default India country code
     }
 
