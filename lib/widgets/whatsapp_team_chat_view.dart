@@ -182,6 +182,7 @@ class _WhatsAppTeamChatViewState extends State<WhatsAppTeamChatView> {
   }
 
   void _showStageSelectorSheet(BuildContext context, WhatsAppProvider provider, WhatsAppThread thread) {
+    final isLight = Theme.of(context).brightness == Brightness.light;
     final stages = [
       {'key': 'new', 'label': '🔥 New Inquiry', 'color': const Color(0xFF38BDF8)},
       {'key': 'contacted', 'label': '📞 Contacted', 'color': Colors.amber},
@@ -199,7 +200,7 @@ class _WhatsAppTeamChatViewState extends State<WhatsAppTeamChatView> {
 
     showModalBottomSheet(
       context: context,
-      backgroundColor: const Color(0xFF1E293B),
+      backgroundColor: isLight ? Colors.white : const Color(0xFF1E293B),
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
@@ -215,15 +216,15 @@ class _WhatsAppTeamChatViewState extends State<WhatsAppTeamChatView> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Update Superfone Lead Stage & Deal Value',
-              style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 16),
+              style: TextStyle(color: isLight ? AppColors.lightTextPrimary : Colors.white, fontWeight: FontWeight.w700, fontSize: 16),
             ),
             const SizedBox(height: 12),
             TextField(
               controller: dealController,
               keyboardType: TextInputType.number,
-              style: const TextStyle(color: Colors.white),
+              style: TextStyle(color: isLight ? AppColors.lightTextPrimary : Colors.white),
               decoration: const InputDecoration(
                 labelText: 'Package / Deal Value (₹)',
                 hintText: 'e.g. 28500',
@@ -239,12 +240,14 @@ class _WhatsAppTeamChatViewState extends State<WhatsAppTeamChatView> {
                 final isSelected = thread.stage.toLowerCase() == st['key'];
                 final color = st['color'] as Color;
                 return ActionChip(
-                  backgroundColor: isSelected ? color.withValues(alpha: 0.25) : const Color(0xFF0F172A),
-                  side: BorderSide(color: isSelected ? color : Colors.white24),
+                  backgroundColor: isSelected
+                      ? color.withValues(alpha: 0.25)
+                      : (isLight ? const Color(0xFFF1F5F9) : const Color(0xFF0F172A)),
+                  side: BorderSide(color: isSelected ? color : (isLight ? AppColors.lightBorderSubtle : Colors.white24)),
                   label: Text(
                     st['label'] as String,
                     style: TextStyle(
-                      color: isSelected ? color : Colors.white,
+                      color: isSelected ? color : (isLight ? AppColors.lightTextPrimary : Colors.white),
                       fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
                       fontSize: 12,
                     ),
@@ -338,12 +341,13 @@ class _WhatsAppTeamChatViewState extends State<WhatsAppTeamChatView> {
   }
 
   void _showCallModeSelector(BuildContext context, WhatsAppThread currentThread) {
+    final isLight = Theme.of(context).brightness == Brightness.light;
     final aiProvider = context.read<AiAgentProvider>();
     final activePersona = aiProvider.selectedPersona;
 
     showModalBottomSheet(
       context: context,
-      backgroundColor: const Color(0xFF1E293B),
+      backgroundColor: isLight ? Colors.white : const Color(0xFF1E293B),
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (ctx) => Padding(
         padding: const EdgeInsets.all(20),
@@ -357,7 +361,7 @@ class _WhatsAppTeamChatViewState extends State<WhatsAppTeamChatView> {
                 const SizedBox(width: 10),
                 Text(
                   'Call ${currentThread.displayName}',
-                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                  style: TextStyle(color: isLight ? AppColors.lightTextPrimary : Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
                 ),
               ],
             ),
@@ -368,8 +372,8 @@ class _WhatsAppTeamChatViewState extends State<WhatsAppTeamChatView> {
                 backgroundColor: AppColors.successGreen,
                 child: Icon(Icons.phone_android_rounded, color: Colors.white, size: 20),
               ),
-              title: const Text('Direct Carrier Call (Your Phone SIM)', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-              subtitle: Text('Call ${currentThread.customerPhone} directly from your phone dialer (₹0 Cost)', style: const TextStyle(color: Colors.white54, fontSize: 11)),
+              title: Text('Direct Carrier Call (Your Phone SIM)', style: TextStyle(color: isLight ? AppColors.lightTextPrimary : Colors.white, fontWeight: FontWeight.bold)),
+              subtitle: Text('Call ${currentThread.customerPhone} directly from your phone dialer (₹0 Cost)', style: TextStyle(color: isLight ? AppColors.lightTextMuted : Colors.white54, fontSize: 11)),
               onTap: () {
                 Navigator.pop(ctx);
                 context.read<CallProvider>().startOutboundCall(
@@ -413,9 +417,10 @@ class _WhatsAppTeamChatViewState extends State<WhatsAppTeamChatView> {
   }
 
   void _showFailedMessageDetailsSheet(BuildContext context, WhatsAppProvider provider, WhatsAppMessage msg, WhatsAppThread thread) {
+    final isLight = Theme.of(context).brightness == Brightness.light;
     showModalBottomSheet(
       context: context,
-      backgroundColor: const Color(0xFF1E293B),
+      backgroundColor: isLight ? Colors.white : const Color(0xFF1E293B),
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (ctx) => Padding(
         padding: const EdgeInsets.all(20),
@@ -423,13 +428,13 @@ class _WhatsAppTeamChatViewState extends State<WhatsAppTeamChatView> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Row(
+            Row(
               children: [
-                Icon(Icons.error_outline_rounded, color: AppColors.errorRed, size: 24),
-                SizedBox(width: 10),
+                const Icon(Icons.error_outline_rounded, color: AppColors.errorRed, size: 24),
+                const SizedBox(width: 10),
                 Text(
                   'WhatsApp Delivery Failed',
-                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                  style: TextStyle(color: isLight ? AppColors.lightTextPrimary : Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
                 ),
               ],
             ),
@@ -437,7 +442,7 @@ class _WhatsAppTeamChatViewState extends State<WhatsAppTeamChatView> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: const Color(0xFF0F172A),
+                color: isLight ? const Color(0xFFFEF2F2) : const Color(0xFF0F172A),
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
               ),
@@ -449,14 +454,14 @@ class _WhatsAppTeamChatViewState extends State<WhatsAppTeamChatView> {
                     style: TextStyle(color: AppColors.errorRed, fontWeight: FontWeight.bold, fontSize: 11),
                   ),
                   const SizedBox(height: 4),
-                  const Text(
+                  Text(
                     'Evolution WhatsApp Gateway returned: "HTTP 500 Connection Closed". The central WhatsApp session (+91 9336116210) is currently disconnected.',
-                    style: TextStyle(color: Colors.white70, fontSize: 12),
+                    style: TextStyle(color: isLight ? AppColors.lightTextPrimary : Colors.white70, fontSize: 12),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     'Message: "${msg.text}"',
-                    style: const TextStyle(color: Colors.white54, fontSize: 11, fontStyle: FontStyle.italic),
+                    style: TextStyle(color: isLight ? AppColors.lightTextMuted : Colors.white54, fontSize: 11, fontStyle: FontStyle.italic),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -509,9 +514,10 @@ class _WhatsAppTeamChatViewState extends State<WhatsAppTeamChatView> {
   }
 
   void _showEvolutionQrSheet(BuildContext context, WhatsAppProvider provider) {
+    final isLight = Theme.of(context).brightness == Brightness.light;
     showModalBottomSheet(
       context: context,
-      backgroundColor: const Color(0xFF1E293B),
+      backgroundColor: isLight ? Colors.white : const Color(0xFF1E293B),
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (ctx) => FutureBuilder<Map<String, dynamic>?>(
         future: provider.apiService.fetchEvolutionStatus(),
@@ -544,14 +550,14 @@ class _WhatsAppTeamChatViewState extends State<WhatsAppTeamChatView> {
                     const SizedBox(width: 10),
                     Text(
                       isOpen ? 'WhatsApp Gateway Connected' : 'WhatsApp Gateway Disconnected',
-                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                      style: TextStyle(color: isLight ? AppColors.lightTextPrimary : Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
                     ),
                   ],
                 ),
                 const SizedBox(height: 8),
                 Text(
                   'Instance: ${data?['instance'] ?? 'TripCosmos.co'} • State: $state',
-                  style: const TextStyle(color: Colors.white54, fontSize: 12),
+                  style: TextStyle(color: isLight ? AppColors.lightTextMuted : Colors.white54, fontSize: 12),
                 ),
                 const SizedBox(height: 12),
                 if (!isOpen && qr.isNotEmpty && qr.startsWith('data:image')) ...[
@@ -597,12 +603,13 @@ class _WhatsAppTeamChatViewState extends State<WhatsAppTeamChatView> {
   }
 
   void _showReassignAgentSheet(BuildContext context, WhatsAppProvider provider, WhatsAppThread currentThread) {
+    final isLight = Theme.of(context).brightness == Brightness.light;
     final aiProvider = context.read<AiAgentProvider>();
     final aiPersonas = aiProvider.personas;
 
     showModalBottomSheet(
       context: context,
-      backgroundColor: const Color(0xFF1E293B),
+      backgroundColor: isLight ? Colors.white : const Color(0xFF1E293B),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -614,12 +621,12 @@ class _WhatsAppTeamChatViewState extends State<WhatsAppTeamChatView> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 16),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Text(
                     'Assign Thread Handler (AI Persona or Human Rep)',
                     style: TextStyle(
-                      color: Colors.white,
+                      color: isLight ? AppColors.lightTextPrimary : Colors.white,
                       fontWeight: FontWeight.w700,
                       fontSize: 16,
                     ),
@@ -647,7 +654,7 @@ class _WhatsAppTeamChatViewState extends State<WhatsAppTeamChatView> {
                     ),
                     title: Row(
                       children: [
-                        Text(persona.name, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                        Text(persona.name, style: TextStyle(color: isLight ? AppColors.lightTextPrimary : Colors.white, fontWeight: FontWeight.bold)),
                         const SizedBox(width: 6),
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
@@ -742,10 +749,13 @@ class _WhatsAppTeamChatViewState extends State<WhatsAppTeamChatView> {
 
     final stageColor = _stageColor(currentThread.stage);
 
+    final isLight = Theme.of(context).brightness == Brightness.light;
+
     return Scaffold(
-      backgroundColor: const Color(0xFF0B132B),
+      backgroundColor: isLight ? const Color(0xFFEFEAE2) : const Color(0xFF0B132B),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF1E293B),
+        backgroundColor: isLight ? Colors.white : const Color(0xFF1E293B),
+        iconTheme: IconThemeData(color: isLight ? AppColors.lightTextPrimary : Colors.white),
         elevation: 1,
         leading: widget.onBack != null
             ? IconButton(
@@ -782,13 +792,13 @@ class _WhatsAppTeamChatViewState extends State<WhatsAppTeamChatView> {
                         Flexible(
                           child: Text(
                             currentThread.displayName,
-                            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Colors.white),
+                            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: isLight ? AppColors.lightTextPrimary : Colors.white),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
                         const SizedBox(width: 4),
-                        const Icon(Icons.edit_note_rounded, size: 14, color: Colors.white38),
+                        Icon(Icons.edit_note_rounded, size: 14, color: isLight ? AppColors.lightTextMuted : Colors.white38),
                       ],
                     ),
                     Row(
@@ -796,7 +806,7 @@ class _WhatsAppTeamChatViewState extends State<WhatsAppTeamChatView> {
                         Flexible(
                           child: Text(
                             currentThread.customerPhone,
-                            style: const TextStyle(fontSize: 10.5, color: Colors.white70, fontFamily: 'monospace'),
+                            style: TextStyle(fontSize: 10.5, color: isLight ? AppColors.lightTextSecondary : Colors.white70, fontFamily: 'monospace'),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -842,7 +852,7 @@ class _WhatsAppTeamChatViewState extends State<WhatsAppTeamChatView> {
           // Compact More Tools Menu (Quote Generator, Cab Fare Calculator, Live Sync)
           PopupMenuButton<String>(
             tooltip: 'Sales Tools & Sync',
-            icon: const Icon(Icons.more_vert_rounded, color: Colors.white70, size: 20),
+            icon: Icon(Icons.more_vert_rounded, color: isLight ? AppColors.lightTextSecondary : Colors.white70, size: 20),
             onSelected: (val) {
               if (val == 'quote') {
                 final tempLead = LeadModel(
@@ -917,9 +927,9 @@ class _WhatsAppTeamChatViewState extends State<WhatsAppTeamChatView> {
           Container(
             width: double.infinity,
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-            decoration: const BoxDecoration(
-              color: Color(0xFF141E33),
-              border: Border(bottom: BorderSide(color: Colors.white12)),
+            decoration: BoxDecoration(
+              color: isLight ? Colors.white : const Color(0xFF141E33),
+              border: Border(bottom: BorderSide(color: isLight ? AppColors.lightBorderSubtle : Colors.white12)),
             ),
             child: SingleChildScrollView(
               scrollDirection: Axis.horizontal,
@@ -953,8 +963,8 @@ class _WhatsAppTeamChatViewState extends State<WhatsAppTeamChatView> {
                             const SizedBox(width: 5),
                             Text(
                               '• ₹${NumberFormat.compact().format(currentThread.dealValue)}',
-                              style: const TextStyle(
-                                color: Colors.white,
+                              style: TextStyle(
+                                color: isLight ? AppColors.lightTextPrimary : Colors.white,
                                 fontSize: 10.5,
                                 fontWeight: FontWeight.w700,
                               ),
@@ -977,12 +987,12 @@ class _WhatsAppTeamChatViewState extends State<WhatsAppTeamChatView> {
                       decoration: BoxDecoration(
                         color: currentThread.nextFollowUpAt != null
                             ? AppColors.accentGold.withValues(alpha: 0.18)
-                            : Colors.white.withValues(alpha: 0.06),
+                            : (isLight ? const Color(0xFFF1F5F9) : Colors.white.withValues(alpha: 0.06)),
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(
                           color: currentThread.nextFollowUpAt != null
                               ? AppColors.accentGold
-                              : Colors.white24,
+                              : (isLight ? const Color(0xFFCBD5E1) : Colors.white24),
                         ),
                       ),
                       child: Row(
@@ -993,7 +1003,7 @@ class _WhatsAppTeamChatViewState extends State<WhatsAppTeamChatView> {
                             size: 12,
                             color: currentThread.nextFollowUpAt != null
                                 ? AppColors.accentGold
-                                : Colors.white70,
+                                : (isLight ? AppColors.lightTextSecondary : Colors.white70),
                           ),
                           const SizedBox(width: 4),
                           Text(
@@ -1003,7 +1013,7 @@ class _WhatsAppTeamChatViewState extends State<WhatsAppTeamChatView> {
                             style: TextStyle(
                               color: currentThread.nextFollowUpAt != null
                                   ? AppColors.accentGold
-                                  : Colors.white70,
+                                  : (isLight ? AppColors.lightTextSecondary : Colors.white70),
                               fontSize: 10.5,
                               fontWeight: FontWeight.w700,
                             ),
@@ -1021,19 +1031,19 @@ class _WhatsAppTeamChatViewState extends State<WhatsAppTeamChatView> {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF3B82F6).withValues(alpha: 0.15),
+                        color: isLight ? const Color(0xFFEFF6FF) : const Color(0xFF3B82F6).withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: const Color(0xFF3B82F6).withValues(alpha: 0.4)),
+                        border: Border.all(color: isLight ? const Color(0xFFBFDBFE) : const Color(0xFF3B82F6).withValues(alpha: 0.4)),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(Icons.person_outline, size: 12, color: Color(0xFF60A5FA)),
+                          Icon(Icons.person_outline, size: 12, color: isLight ? const Color(0xFF2563EB) : const Color(0xFF60A5FA)),
                           const SizedBox(width: 4),
                           Text(
                             currentThread.assignedAgent,
-                            style: const TextStyle(
-                              color: Color(0xFF93C5FD),
+                            style: TextStyle(
+                              color: isLight ? const Color(0xFF1D4ED8) : const Color(0xFF93C5FD),
                               fontSize: 10.5,
                               fontWeight: FontWeight.w700,
                             ),
@@ -1153,7 +1163,10 @@ class _WhatsAppTeamChatViewState extends State<WhatsAppTeamChatView> {
           Container(
             height: 40,
             padding: const EdgeInsets.symmetric(horizontal: 8),
-            color: const Color(0xFF1E293B),
+            decoration: BoxDecoration(
+              color: isLight ? Colors.white : const Color(0xFF1E293B),
+              border: Border(bottom: BorderSide(color: isLight ? AppColors.lightBorderSubtle : Colors.transparent)),
+            ),
             child: ListView(
               scrollDirection: Axis.horizontal,
               children: [
@@ -1189,10 +1202,14 @@ class _WhatsAppTeamChatViewState extends State<WhatsAppTeamChatView> {
                   child: ActionChip(
                     label: Text(
                       reply['label']!,
-                      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.white),
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: isLight ? const Color(0xFF1E293B) : Colors.white,
+                      ),
                     ),
-                    backgroundColor: const Color(0xFF0F172A),
-                    side: const BorderSide(color: Colors.white12),
+                    backgroundColor: isLight ? const Color(0xFFF1F5F9) : const Color(0xFF0F172A),
+                    side: BorderSide(color: isLight ? const Color(0xFFCBD5E1) : Colors.white12),
                     onPressed: () => _sendMessage(provider, reply['text']),
                   ),
                 )),
@@ -1203,9 +1220,9 @@ class _WhatsAppTeamChatViewState extends State<WhatsAppTeamChatView> {
           // Input Bar with WhatsApp vs Internal Team Note Mode
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            decoration: const BoxDecoration(
-              color: Color(0xFF1E293B),
-              border: Border(top: BorderSide(color: Colors.white12)),
+            decoration: BoxDecoration(
+              color: isLight ? Colors.white : const Color(0xFF1E293B),
+              border: Border(top: BorderSide(color: isLight ? AppColors.lightBorderSubtle : Colors.white12)),
             ),
             child: SafeArea(
               child: Column(
@@ -1284,11 +1301,11 @@ class _WhatsAppTeamChatViewState extends State<WhatsAppTeamChatView> {
                               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                               decoration: BoxDecoration(
                                 color: !_isInternalNoteMode
-                                    ? AppColors.whatsappGreen.withValues(alpha: 0.25)
+                                    ? (isLight ? const Color(0xFFDCFCE7) : AppColors.whatsappGreen.withValues(alpha: 0.25))
                                     : Colors.transparent,
                                 borderRadius: BorderRadius.circular(12),
                                 border: Border.all(
-                                  color: !_isInternalNoteMode ? AppColors.whatsappGreen : Colors.white12,
+                                  color: !_isInternalNoteMode ? (isLight ? const Color(0xFF22C55E) : AppColors.whatsappGreen) : (isLight ? AppColors.lightBorderSubtle : Colors.white12),
                                 ),
                               ),
                               child: Row(
@@ -1297,7 +1314,7 @@ class _WhatsAppTeamChatViewState extends State<WhatsAppTeamChatView> {
                                   Icon(
                                     Icons.chat_bubble_rounded,
                                     size: 11,
-                                    color: !_isInternalNoteMode ? AppColors.whatsappGreen : Colors.white38,
+                                    color: !_isInternalNoteMode ? (isLight ? const Color(0xFF15803D) : AppColors.whatsappGreen) : (isLight ? AppColors.lightTextMuted : Colors.white38),
                                   ),
                                   const SizedBox(width: 4),
                                   Text(
@@ -1305,7 +1322,7 @@ class _WhatsAppTeamChatViewState extends State<WhatsAppTeamChatView> {
                                     style: TextStyle(
                                       fontSize: 10.5,
                                       fontWeight: !_isInternalNoteMode ? FontWeight.bold : FontWeight.normal,
-                                      color: !_isInternalNoteMode ? Colors.white : Colors.white54,
+                                      color: !_isInternalNoteMode ? (isLight ? const Color(0xFF15803D) : Colors.white) : (isLight ? AppColors.lightTextSecondary : Colors.white54),
                                     ),
                                   ),
                                 ],
@@ -1320,11 +1337,11 @@ class _WhatsAppTeamChatViewState extends State<WhatsAppTeamChatView> {
                               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                               decoration: BoxDecoration(
                                 color: _isInternalNoteMode
-                                    ? const Color(0xFFF59E0B).withValues(alpha: 0.25)
+                                    ? (isLight ? const Color(0xFFFEF3C7) : const Color(0xFFF59E0B).withValues(alpha: 0.25))
                                     : Colors.transparent,
                                 borderRadius: BorderRadius.circular(12),
                                 border: Border.all(
-                                  color: _isInternalNoteMode ? const Color(0xFFF59E0B) : Colors.white12,
+                                  color: _isInternalNoteMode ? const Color(0xFFF59E0B) : (isLight ? AppColors.lightBorderSubtle : Colors.white12),
                                 ),
                               ),
                               child: Row(
@@ -1333,7 +1350,7 @@ class _WhatsAppTeamChatViewState extends State<WhatsAppTeamChatView> {
                                   Icon(
                                     Icons.lock_rounded,
                                     size: 11,
-                                    color: _isInternalNoteMode ? const Color(0xFFFBBF24) : Colors.white38,
+                                    color: _isInternalNoteMode ? (isLight ? const Color(0xFFB45309) : const Color(0xFFFBBF24)) : (isLight ? AppColors.lightTextMuted : Colors.white38),
                                   ),
                                   const SizedBox(width: 4),
                                   Text(
@@ -1341,7 +1358,7 @@ class _WhatsAppTeamChatViewState extends State<WhatsAppTeamChatView> {
                                     style: TextStyle(
                                       fontSize: 10.5,
                                       fontWeight: _isInternalNoteMode ? FontWeight.bold : FontWeight.normal,
-                                      color: _isInternalNoteMode ? const Color(0xFFFDE68A) : Colors.white54,
+                                      color: _isInternalNoteMode ? (isLight ? const Color(0xFFB45309) : const Color(0xFFFDE68A)) : (isLight ? AppColors.lightTextSecondary : Colors.white54),
                                     ),
                                   ),
                                 ],
@@ -1359,20 +1376,26 @@ class _WhatsAppTeamChatViewState extends State<WhatsAppTeamChatView> {
                       Expanded(
                         child: TextField(
                           controller: _textController,
-                          style: const TextStyle(color: Colors.white, fontSize: 14),
+                          style: TextStyle(color: isLight ? AppColors.lightTextPrimary : Colors.white, fontSize: 14),
                           decoration: InputDecoration(
                             hintText: _isInternalNoteMode
                                 ? 'Add private CRM team note (persisted on server)...'
                                 : 'Type WhatsApp message to ${currentThread.displayName}...',
-                            hintStyle: const TextStyle(color: Colors.white38, fontSize: 13),
+                            hintStyle: TextStyle(color: isLight ? AppColors.lightTextMuted : Colors.white38, fontSize: 13),
                             filled: true,
-                            fillColor: const Color(0xFF0F172A),
+                            fillColor: isLight ? const Color(0xFFF1F5F9) : const Color(0xFF0F172A),
                             isDense: true,
                             contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(24),
                               borderSide: BorderSide(
-                                color: _isInternalNoteMode ? const Color(0xFFF59E0B) : Colors.transparent,
+                                color: _isInternalNoteMode ? const Color(0xFFF59E0B) : (isLight ? const Color(0xFFCBD5E1) : Colors.transparent),
+                              ),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(24),
+                              borderSide: BorderSide(
+                                color: _isInternalNoteMode ? const Color(0xFFF59E0B) : (isLight ? const Color(0xFFCBD5E1) : Colors.transparent),
                               ),
                             ),
                           ),
@@ -1421,9 +1444,9 @@ class _WhatsAppTeamChatViewState extends State<WhatsAppTeamChatView> {
           margin: const EdgeInsets.symmetric(vertical: 6),
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
           decoration: BoxDecoration(
-            color: const Color(0xFF172554),
+            color: Theme.of(context).brightness == Brightness.light ? const Color(0xFFEFF6FF) : const Color(0xFF172554),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: const Color(0xFF3B82F6).withValues(alpha: 0.45)),
+            border: Border.all(color: Theme.of(context).brightness == Brightness.light ? const Color(0xFFBFDBFE) : const Color(0xFF3B82F6).withValues(alpha: 0.45)),
           ),
           constraints: const BoxConstraints(maxWidth: 340),
           child: Row(
@@ -1459,9 +1482,9 @@ class _WhatsAppTeamChatViewState extends State<WhatsAppTeamChatView> {
           margin: const EdgeInsets.symmetric(vertical: 8),
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
           decoration: BoxDecoration(
-            color: const Color(0xFF451A03),
+            color: Theme.of(context).brightness == Brightness.light ? const Color(0xFFFEF3C7) : const Color(0xFF451A03),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: const Color(0xFFF59E0B).withValues(alpha: 0.5)),
+            border: Border.all(color: Theme.of(context).brightness == Brightness.light ? const Color(0xFFFDE68A) : const Color(0xFFF59E0B).withValues(alpha: 0.5)),
           ),
           constraints: const BoxConstraints(maxWidth: 340),
           child: Column(
@@ -1491,7 +1514,11 @@ class _WhatsAppTeamChatViewState extends State<WhatsAppTeamChatView> {
               const SizedBox(height: 4),
               Text(
                 msg.text,
-                style: const TextStyle(color: Color(0xFFFEF3C7), fontSize: 12.5, height: 1.3),
+                style: TextStyle(
+                  color: Theme.of(context).brightness == Brightness.light ? const Color(0xFF78350F) : const Color(0xFFFEF3C7),
+                  fontSize: 12.5,
+                  height: 1.3,
+                ),
               ),
             ],
           ),
@@ -1524,9 +1551,11 @@ class _WhatsAppTeamChatViewState extends State<WhatsAppTeamChatView> {
       constraints: const BoxConstraints(maxWidth: 320),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: isCustomer
-            ? (isWebChat ? const Color(0xFF0C4A6E) : const Color(0xFF1E293B))
-            : const Color(0xFF065F46),
+        color: Theme.of(context).brightness == Brightness.light
+            ? (isCustomer ? Colors.white : const Color(0xFFD9FDD3))
+            : (isCustomer
+                ? (isWebChat ? const Color(0xFF0C4A6E) : const Color(0xFF1E293B))
+                : const Color(0xFF065F46)),
         borderRadius: BorderRadius.only(
           topLeft: const Radius.circular(16),
           topRight: const Radius.circular(16),
@@ -1534,9 +1563,21 @@ class _WhatsAppTeamChatViewState extends State<WhatsAppTeamChatView> {
           bottomRight: Radius.circular(isCustomer ? 16 : 2),
         ),
         border: Border.all(
-          color: isFailed ? AppColors.errorRed.withValues(alpha: 0.6) : Colors.white10,
+          color: isFailed
+              ? AppColors.errorRed.withValues(alpha: 0.6)
+              : (Theme.of(context).brightness == Brightness.light
+                  ? (isCustomer ? const Color(0xFFE2E8F0) : const Color(0xFFBBF7D0))
+                  : Colors.white10),
           width: isFailed ? 1.5 : 1.0,
         ),
+        boxShadow: [
+          if (Theme.of(context).brightness == Brightness.light)
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.04),
+              blurRadius: 4,
+              offset: const Offset(0, 1),
+            ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1647,7 +1688,11 @@ class _WhatsAppTeamChatViewState extends State<WhatsAppTeamChatView> {
           // Message Text
           SelectableText(
             msg.text,
-            style: const TextStyle(color: Colors.white, fontSize: 13, height: 1.35),
+            style: TextStyle(
+              color: Theme.of(context).brightness == Brightness.light ? const Color(0xFF111B21) : Colors.white,
+              fontSize: 13,
+              height: 1.35,
+            ),
           ),
           const SizedBox(height: 4),
 
@@ -1658,7 +1703,10 @@ class _WhatsAppTeamChatViewState extends State<WhatsAppTeamChatView> {
             children: [
               Text(
                 timeStr,
-                style: const TextStyle(color: Colors.white38, fontSize: 9.5),
+                style: TextStyle(
+                  color: Theme.of(context).brightness == Brightness.light ? const Color(0xFF667781) : Colors.white38,
+                  fontSize: 9.5,
+                ),
               ),
               if (!isCustomer) ...[
                 const SizedBox(width: 4),
@@ -1666,7 +1714,7 @@ class _WhatsAppTeamChatViewState extends State<WhatsAppTeamChatView> {
                   isFailed ? Icons.error_outline : Icons.done_all,
                   color: isFailed
                       ? AppColors.errorRed
-                      : (msg.status == 'read' ? Colors.cyanAccent : Colors.white60),
+                      : (msg.status == 'read' ? const Color(0xFF53BDEB) : (Theme.of(context).brightness == Brightness.light ? const Color(0xFF667781) : Colors.white60)),
                   size: 13,
                 ),
                 if (isFailed) ...[
@@ -1735,13 +1783,14 @@ class _WhatsAppTeamChatViewState extends State<WhatsAppTeamChatView> {
   }
 
   void _showMessageActionsSheet(BuildContext context, WhatsAppMessage msg, WhatsAppThread thread) {
+    final isLight = Theme.of(context).brightness == Brightness.light;
     final isSentByMe = !msg.isFromCustomer && !msg.isInternalNote && !msg.isCallEvent;
     final scaffoldMessenger = ScaffoldMessenger.of(context);
     final provider = context.read<WhatsAppProvider>();
 
     showModalBottomSheet(
       context: context,
-      backgroundColor: const Color(0xFF0F172A),
+      backgroundColor: isLight ? Colors.white : const Color(0xFF0F172A),
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (ctx) => SafeArea(
         child: Padding(
@@ -1749,13 +1798,13 @@ class _WhatsAppTeamChatViewState extends State<WhatsAppTeamChatView> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Container(width: 36, height: 4, decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(2))),
+              Container(width: 36, height: 4, decoration: BoxDecoration(color: isLight ? Colors.black26 : Colors.white24, borderRadius: BorderRadius.circular(2))),
               const SizedBox(height: 12),
               // 1. Copy Message Text
               ListTile(
                 leading: const Icon(Icons.copy_rounded, color: AppColors.accentGold),
-                title: const Text('Copy Message Text', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
-                subtitle: Text(msg.text, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white54, fontSize: 11)),
+                title: Text('Copy Message Text', style: TextStyle(color: isLight ? AppColors.lightTextPrimary : Colors.white, fontWeight: FontWeight.w600)),
+                subtitle: Text(msg.text, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: isLight ? AppColors.lightTextMuted : Colors.white54, fontSize: 11)),
                 onTap: () {
                   Clipboard.setData(ClipboardData(text: msg.text));
                   Navigator.pop(ctx);
@@ -1771,7 +1820,7 @@ class _WhatsAppTeamChatViewState extends State<WhatsAppTeamChatView> {
               // 2. Quote / Reply in Chat
               ListTile(
                 leading: const Icon(Icons.reply_rounded, color: Color(0xFF38BDF8)),
-                title: const Text('Quote / Reply in Chat', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+                title: Text('Quote / Reply in Chat', style: TextStyle(color: isLight ? AppColors.lightTextPrimary : Colors.white, fontWeight: FontWeight.w600)),
                 onTap: () {
                   Navigator.pop(ctx);
                   setState(() {
@@ -1791,9 +1840,9 @@ class _WhatsAppTeamChatViewState extends State<WhatsAppTeamChatView> {
                     final confirmed = await showDialog<bool>(
                       context: context,
                       builder: (dCtx) => AlertDialog(
-                        backgroundColor: const Color(0xFF1E293B),
-                        title: const Text('Delete Message?', style: TextStyle(color: Colors.white)),
-                        content: const Text('This will delete this message for everyone in this WhatsApp conversation.', style: TextStyle(color: Colors.white70)),
+                        backgroundColor: isLight ? Colors.white : const Color(0xFF1E293B),
+                        title: Text('Delete Message?', style: TextStyle(color: isLight ? AppColors.lightTextPrimary : Colors.white)),
+                        content: Text('This will delete this message for everyone in this WhatsApp conversation.', style: TextStyle(color: isLight ? AppColors.lightTextSecondary : Colors.white70)),
                         actions: [
                            TextButton(onPressed: () => Navigator.pop(dCtx, false), child: const Text('Cancel')),
                            ElevatedButton(
