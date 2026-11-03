@@ -18,8 +18,65 @@
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <meta name="description" content="TripCosmos.co - X-Agents | Premium AI Telephony, CRM & Multi-Source Lead Management App.">
   <meta name="google-signin-client_id" content="77399722057-6o97tf20jmhjaaid60gks1ajn5k1029s.apps.googleusercontent.com">
+
+  <!-- Google Identity Services (GSI) for seamless Site Kit Google Auth -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <script>
+    // Clean old service workers and CacheStorage
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(function(regs) {
+        for (let r of regs) { r.unregister(); }
+      });
+    }
+    if ('caches' in window) {
+      caches.keys().then(function(keys) {
+        for (let k of keys) { caches.delete(k); }
+      });
+    }
+
+    window.tcInitGoogle = function() {
+      try {
+        if (window.google && window.google.accounts && window.google.accounts.id) {
+          const nonceArr = new Uint8Array(16);
+          crypto.getRandomValues(nonceArr);
+          const nonce = Array.from(nonceArr, b => b.toString(16).padStart(2, '0')).join('');
+          document.cookie = 'googlesitekit_auth_nonce=' + nonce + ';max-age=900;path=/;SameSite=Lax';
+          document.cookie = 'googlesitekit_auth_redirect_to=' + encodeURIComponent(window.location.origin + '/agents/') + ';max-age=300;path=/;SameSite=Lax';
+
+          window.google.accounts.id.initialize({
+            client_id: '77399722057-6o97tf20jmhjaaid60gks1ajn5k1029s.apps.googleusercontent.com',
+            nonce: nonce,
+            ux_mode: 'redirect',
+            login_uri: 'https://tripcosmos.co/wp-login.php?action=googlesitekit_auth'
+          });
+        }
+      } catch(e) {
+        console.warn('Google GSI init err:', e);
+      }
+    };
+
+    window.tcLaunchGoogle = function() {
+      try {
+        if (window.google && window.google.accounts && window.google.accounts.id) {
+          window.tcInitGoogle();
+          window.google.accounts.id.prompt(function(notification) {
+            if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+              window.location.href = 'https://tripcosmos.co/wp-login.php?redirect_to=' + encodeURIComponent(window.location.origin + '/agents/');
+            }
+          });
+        } else {
+          window.location.href = 'https://tripcosmos.co/wp-login.php?redirect_to=' + encodeURIComponent(window.location.origin + '/agents/');
+        }
+      } catch(e) {
+        window.location.href = 'https://tripcosmos.co/wp-login.php?redirect_to=' + encodeURIComponent(window.location.origin + '/agents/');
+      }
+    };
+  </script>
 
   <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
@@ -93,6 +150,6 @@
     For more details:
     * https://docs.flutter.dev/platform-integration/web/initialization
   -->
-  <script src="flutter_bootstrap.js" async></script>
+  <script src="flutter_bootstrap.js?v=2.3.0_vmsitekit1" async></script>
 </body>
 </html>

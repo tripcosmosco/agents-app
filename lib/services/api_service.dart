@@ -69,9 +69,7 @@ class ApiService {
       if (savedToken != null && savedToken.trim().isNotEmpty) {
         _apiToken = savedToken.trim();
       } else {
-        _apiToken = AppConstants.defaultMobileToken.trim().isNotEmpty
-            ? AppConstants.defaultMobileToken.trim()
-            : null;
+        _apiToken = null;
       }
     } catch (e) {
       debugPrint('Error loading API preferences: $e');
@@ -98,9 +96,7 @@ class ApiService {
     try {
       final clean = (token ?? '').trim();
       if (clean.isEmpty) {
-        _apiToken = AppConstants.defaultMobileToken.trim().isNotEmpty
-            ? AppConstants.defaultMobileToken.trim()
-            : null;
+        _apiToken = null;
         await StorageService.clearToken();
       } else {
         _apiToken = clean;
@@ -130,8 +126,7 @@ class ApiService {
     final stopwatch = Stopwatch()..start();
     try {
       final uri = Uri.parse('$baseUrl/mobile/events?limit=1');
-      final response = await http
-          .get(uri, headers: _headers)
+      final response = await _client.get(uri, headers: _headers)
           .timeout(const Duration(seconds: 25));
       stopwatch.stop();
 
@@ -169,8 +164,7 @@ class ApiService {
     if (!isAuthenticated) return [];
     try {
       final uri = Uri.parse('$baseUrl/mobile/call-queue');
-      final response = await http
-          .get(uri, headers: _headers)
+      final response = await _client.get(uri, headers: _headers)
           .timeout(const Duration(seconds: 12));
 
       if (response.statusCode == 200) {
@@ -192,8 +186,7 @@ class ApiService {
   Future<List<CallLogModel>> fetchCallLogs({int limit = 50, int offset = 0}) async {
     try {
       final uri = Uri.parse('$baseUrl/mobile/call-logs?limit=$limit&offset=$offset');
-      final response = await http
-          .get(uri, headers: _headers)
+      final response = await _client.get(uri, headers: _headers)
           .timeout(const Duration(seconds: 15));
 
       if (response.statusCode == 200) {
@@ -229,8 +222,7 @@ class ApiService {
         'notes': notes,
       });
 
-      final response = await http
-          .post(uri, headers: _headers, body: body)
+      final response = await _client.post(uri, headers: _headers, body: body)
           .timeout(const Duration(seconds: 8));
       return response.statusCode == 200;
     } catch (e) {
@@ -255,8 +247,7 @@ class ApiService {
         'agent': agentSlug,
       });
 
-      final response = await http
-          .post(uri, headers: _headers, body: body)
+      final response = await _client.post(uri, headers: _headers, body: body)
           .timeout(const Duration(seconds: 15));
       if (response.statusCode == 200) {
         final data = _safeJsonDecode(response.body);
@@ -271,11 +262,10 @@ class ApiService {
   }
 
   /// 4. Fetch CRM Leads from WordPress & Connected CRMs
-  Future<List<LeadModel>> fetchLeads() async {
+  Future<List<LeadModel>?> fetchLeads() async {
     try {
       final uri = Uri.parse('$baseUrl/mobile/leads');
-      final response = await http
-          .get(uri, headers: _headers)
+      final response = await _client.get(uri, headers: _headers)
           .timeout(const Duration(seconds: 15));
 
       if (response.statusCode == 200) {
@@ -292,7 +282,7 @@ class ApiService {
     } catch (e) {
       debugPrint('Error fetching leads: $e');
     }
-    return [];
+    return null;
   }
 
   /// 5. Smart Caller ID Lookup
@@ -312,8 +302,7 @@ class ApiService {
         'rate_type': rateType,
       });
 
-      final response = await http
-          .post(uri, headers: _headers, body: body)
+      final response = await _client.post(uri, headers: _headers, body: body)
           .timeout(const Duration(seconds: 8));
       if (response.statusCode == 200) {
         final data = _safeJsonDecode(response.body);
@@ -345,8 +334,7 @@ class ApiService {
         'vehicle_type': vehicleType,
       });
 
-      final response = await http
-          .post(uri, headers: _headers, body: body)
+      final response = await _client.post(uri, headers: _headers, body: body)
           .timeout(const Duration(seconds: 8));
       return response.statusCode == 200;
     } catch (e) {
@@ -373,8 +361,7 @@ class ApiService {
         if (sinceId != null && sinceId > 0) 'since_id': '$sinceId',
       };
       final uri = Uri.parse('$baseUrl/mobile/events').replace(queryParameters: queryParams);
-      final response = await http
-          .get(uri, headers: _headers)
+      final response = await _client.get(uri, headers: _headers)
           .timeout(const Duration(seconds: 15));
 
       if (response.statusCode == 200) {
@@ -415,8 +402,7 @@ class ApiService {
     if (!isAuthenticated) return null;
     try {
       final uri = Uri.parse('$baseUrl/mobile/whatsapp-leads');
-      final response = await http
-          .get(uri, headers: _headers)
+      final response = await _client.get(uri, headers: _headers)
           .timeout(const Duration(seconds: 12));
 
       if (response.statusCode == 200) {
@@ -446,8 +432,7 @@ class ApiService {
         if (contactId > 0) 'contact_id': contactId.toString(),
       };
       final uri = Uri.parse('$baseUrl/mobile/whatsapp-messages').replace(queryParameters: queryParams);
-      final response = await http
-          .get(uri, headers: _headers)
+      final response = await _client.get(uri, headers: _headers)
           .timeout(const Duration(seconds: 12));
 
       if (response.statusCode == 200) {
@@ -495,8 +480,7 @@ class ApiService {
         if (author != null && author.isNotEmpty) 'author': author,
       };
 
-      final response = await http
-          .post(uri, headers: _headers, body: json.encode(payload))
+      final response = await _client.post(uri, headers: _headers, body: json.encode(payload))
           .timeout(const Duration(seconds: 10));
       return response.statusCode == 200;
     } catch (e) {
@@ -522,8 +506,7 @@ class ApiService {
         'notify_manager': notifyManager,
       };
 
-      final response = await http
-          .post(uri, headers: _headers, body: json.encode(payload))
+      final response = await _client.post(uri, headers: _headers, body: json.encode(payload))
           .timeout(const Duration(seconds: 10));
       return response.statusCode == 200;
     } catch (e) {
@@ -560,8 +543,7 @@ class ApiService {
         'owner': owner,
       });
 
-      final response = await http
-          .post(uri, headers: _headers, body: body)
+      final response = await _client.post(uri, headers: _headers, body: body)
           .timeout(const Duration(seconds: 12));
 
       if (response.statusCode == 200 || response.statusCode == 201) {
@@ -590,8 +572,7 @@ class ApiService {
         'duration': durationSeconds,
         'notes': notes,
       });
-      final response = await http
-          .post(uri, headers: _headers, body: body)
+      final response = await _client.post(uri, headers: _headers, body: body)
           .timeout(const Duration(seconds: 12));
       if (response.statusCode == 200) {
         final data = _safeJsonDecode(response.body);
@@ -706,8 +687,7 @@ class ApiService {
         'message': message,
       });
 
-      final response = await http
-          .post(uri, headers: _headers, body: body)
+      final response = await _client.post(uri, headers: _headers, body: body)
           .timeout(const Duration(seconds: 10));
 
       if (response.statusCode == 200) {
@@ -737,8 +717,7 @@ class ApiService {
         'buttons': buttons,
         'footer': footer ?? 'TripCosmos.co • Har Har Mahadev',
       });
-      final response = await http
-          .post(uri, headers: _headers, body: body)
+      final response = await _client.post(uri, headers: _headers, body: body)
           .timeout(const Duration(seconds: 10));
 
       if (response.statusCode == 200) {
@@ -765,8 +744,7 @@ class ApiService {
         'phone': phone ?? '',
       });
 
-      final response = await http
-          .post(uri, headers: _headers, body: body)
+      final response = await _client.post(uri, headers: _headers, body: body)
           .timeout(const Duration(seconds: 10));
 
       if (response.statusCode == 200) {
@@ -783,8 +761,7 @@ class ApiService {
   Future<Map<String, dynamic>?> fetchEvolutionStatus() async {
     try {
       final uri = Uri.parse('$baseUrl/mobile/evolution-status');
-      final response = await http
-          .get(uri, headers: _headers)
+      final response = await _client.get(uri, headers: _headers)
           .timeout(const Duration(seconds: 8));
 
       if (response.statusCode == 200) {
@@ -818,8 +795,7 @@ class ApiService {
       }
       final body = json.encode(payloadMap);
 
-      final response = await http
-          .post(uri, headers: _headers, body: body)
+      final response = await _client.post(uri, headers: _headers, body: body)
           .timeout(const Duration(seconds: 12));
 
       if (response.statusCode == 200) {
@@ -838,8 +814,7 @@ class ApiService {
   Future<Map<String, dynamic>?> getTelephonyConfig() async {
     try {
       final uri = Uri.parse('$baseUrl/mobile/telephony-config');
-      final response = await http
-          .get(uri, headers: _headers)
+      final response = await _client.get(uri, headers: _headers)
           .timeout(const Duration(seconds: 10));
 
       if (response.statusCode == 200) {
@@ -858,8 +833,7 @@ class ApiService {
   Future<List<Map<String, dynamic>>> fetchWebChats() async {
     try {
       final uri = Uri.parse('$baseUrl/mobile/web-chats?limit=30');
-      final response = await http
-          .get(uri, headers: _headers)
+      final response = await _client.get(uri, headers: _headers)
           .timeout(const Duration(seconds: 12));
 
       if (response.statusCode == 200) {
@@ -880,8 +854,7 @@ class ApiService {
   Future<Map<String, dynamic>?> fetchWebChatDetail(String sessionId) async {
     try {
       final uri = Uri.parse('$baseUrl/mobile/web-chats/$sessionId');
-      final response = await http
-          .get(uri, headers: _headers)
+      final response = await _client.get(uri, headers: _headers)
           .timeout(const Duration(seconds: 12));
 
       if (response.statusCode == 200) {
@@ -909,8 +882,7 @@ class ApiService {
         'agent_name': agentName,
       });
 
-      final response = await http
-          .post(uri, headers: _headers, body: body)
+      final response = await _client.post(uri, headers: _headers, body: body)
           .timeout(const Duration(seconds: 12));
 
       if (response.statusCode == 200) {
@@ -932,8 +904,7 @@ class ApiService {
       final uri = Uri.parse('$baseUrl/mobile/web-chats/$sessionId/ai');
       final body = json.encode({'enabled': enableAi});
 
-      final response = await http
-          .post(uri, headers: _headers, body: body)
+      final response = await _client.post(uri, headers: _headers, body: body)
           .timeout(const Duration(seconds: 12));
 
       if (response.statusCode == 200) {
@@ -1163,8 +1134,7 @@ class ApiService {
         'force': force,
         'ignore_quiet_hours': ignoreQuietHours,
       });
-      final response = await http
-          .post(uri, headers: _headers, body: body)
+      final response = await _client.post(uri, headers: _headers, body: body)
           .timeout(const Duration(seconds: 30));
       if (response.statusCode == 200) {
         return _safeJsonDecode(response.body);
@@ -1670,8 +1640,7 @@ class ApiService {
       if (name != null) payload['name'] = name;
       if (avatarUrl != null) payload['avatar_url'] = avatarUrl;
       final body = json.encode(payload);
-      final response = await http
-          .post(uri, headers: {'Content-Type': 'application/json'}, body: body)
+      final response = await _client.post(uri, headers: {'Content-Type': 'application/json'}, body: body)
           .timeout(const Duration(seconds: 15));
       if (response.statusCode == 200) {
         final data = _safeJsonDecode(response.body);
@@ -1699,8 +1668,7 @@ class ApiService {
         'username': username,
         'password': password,
       });
-      final response = await http
-          .post(uri, headers: {'Content-Type': 'application/json'}, body: body)
+      final response = await _client.post(uri, headers: {'Content-Type': 'application/json'}, body: body)
           .timeout(const Duration(seconds: 15));
       if (response.statusCode == 200) {
         final data = _safeJsonDecode(response.body);
@@ -1851,8 +1819,7 @@ class ApiService {
         'history': ?history,
         'context': ?context,
       };
-      final response = await http
-          .post(uri, headers: _headers, body: jsonEncode(payload))
+      final response = await _client.post(uri, headers: _headers, body: jsonEncode(payload))
           .timeout(const Duration(seconds: 40));
       if (response.body.isNotEmpty) {
         return _safeJsonDecode(response.body);
@@ -1867,8 +1834,7 @@ class ApiService {
   Future<Map<String, dynamic>?> fetchMasterAssistantBriefing() async {
     try {
       final uri = Uri.parse('$baseUrl/mobile/master-assistant/briefing');
-      final response = await http
-          .get(uri, headers: _headers)
+      final response = await _client.get(uri, headers: _headers)
           .timeout(const Duration(seconds: 40));
       if (response.body.isNotEmpty) {
         return _safeJsonDecode(response.body);

@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../core/theme/app_colors.dart';
@@ -192,7 +192,20 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       children: [
         IndexedStack(
           index: safeIndex,
-          children: visibleDestinations.map((d) => d.screen).toList(),
+          children: visibleDestinations.isEmpty
+              ? [
+                  const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(24.0),
+                      child: Text(
+                        'No modules assigned to your role.\nPlease contact your administrator.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(fontSize: 16, color: Colors.grey),
+                      ),
+                    ),
+                  ),
+                ]
+              : visibleDestinations.map((d) => d.screen).toList(),
         ),
         Positioned(
           top: 0,
@@ -272,16 +285,18 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                 ),
               LiveActivityBanner(
                 onOpenLeadCrm: () {
-                  setState(() {
-                    _currentIndex = 1; // Switch to Leads CRM tab
-                  });
+                  final leadsIdx = visibleDestinations.indexWhere((d) => d.key == 'leads');
+                  if (leadsIdx != -1) {
+                    _onTabSelected(leadsIdx);
+                  }
                 },
               ),
               ActiveCallHud(
                 onOpenLeadCrm: () {
-                  setState(() {
-                    _currentIndex = 1;
-                  });
+                  final leadsIdx = visibleDestinations.indexWhere((d) => d.key == 'leads');
+                  if (leadsIdx != -1) {
+                    _onTabSelected(leadsIdx);
+                  }
                 },
               ),
             ],

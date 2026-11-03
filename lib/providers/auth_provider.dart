@@ -2,11 +2,10 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:url_launcher/url_launcher.dart';
-
 import '../models/user_model.dart';
 import '../services/api_service.dart';
 import '../services/storage_service.dart';
+import '../services/web_auth_helper.dart';
 
 class AuthProvider extends ChangeNotifier {
   final ApiService apiService;
@@ -89,10 +88,8 @@ class AuthProvider extends ChangeNotifier {
     if (kIsWeb) {
       try {
         final redirectUrl = '${Uri.base.origin}/agents/';
-        final wpLoginUrl = Uri.parse(
-          'https://tripcosmos.co/wp-login.php?redirect_to=${Uri.encodeComponent(redirectUrl)}',
-        );
-        await launchUrl(wpLoginUrl, webOnlyWindowName: '_self');
+        final wpLoginUrl = 'https://tripcosmos.co/wp-login.php?redirect_to=${Uri.encodeComponent(redirectUrl)}';
+        navigateToWebUrl(wpLoginUrl);
         return true;
       } catch (e) {
         _errorMessage = 'Failed to redirect to WordPress Google login: $e';

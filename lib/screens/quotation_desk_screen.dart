@@ -587,8 +587,8 @@ class _QuotationDeskScreenState extends State<QuotationDeskScreen> {
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(ok ? '✓ Proposal dispatched via WhatsApp!' : 'Dispatched via WhatsApp Gateway.'),
-          backgroundColor: AppColors.successGreen,
+          content: Text(ok ? '✓ Proposal dispatched via WhatsApp!' : 'Failed to dispatch WhatsApp message. Please check gateway.'),
+          backgroundColor: ok ? AppColors.successGreen : const Color(0xFFDC2626),
         ),
       );
     }
@@ -629,8 +629,8 @@ class _QuotationDeskScreenState extends State<QuotationDeskScreen> {
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(ok ? '✓ Interactive proposal buttons sent to WhatsApp!' : 'Interactive proposal queued.'),
-          backgroundColor: AppColors.successGreen,
+          content: Text(ok ? '✓ Interactive proposal buttons sent to WhatsApp!' : 'Failed to send interactive proposal buttons.'),
+          backgroundColor: ok ? AppColors.successGreen : const Color(0xFFDC2626),
         ),
       );
     }
@@ -737,7 +737,13 @@ class _QuotationDeskScreenState extends State<QuotationDeskScreen> {
           ],
         ),
       ),
-    );
+    ).whenComplete(() {
+      driverNameCtrl.dispose();
+      driverPhoneCtrl.dispose();
+      vehicleNumCtrl.dispose();
+      pickupLocCtrl.dispose();
+      balanceCtrl.dispose();
+    });
   }
 
   void _sendReviewBooster() async {

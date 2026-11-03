@@ -248,7 +248,7 @@ class LeadProvider extends ChangeNotifier {
 
     try {
       final serverLeads = await apiService.fetchLeads();
-      if (serverLeads.isNotEmpty) {
+      if (serverLeads != null) {
         if (_leads.isNotEmpty && serverLeads.length > _leads.length) {
           final newLead = serverLeads.first;
           NotificationService().showNewLeadNotification(
