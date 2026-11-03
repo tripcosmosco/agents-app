@@ -155,17 +155,19 @@ class WhatsAppThread {
           : null,
       callCount: int.tryParse(json['call_count']?.toString() ?? '0') ?? 0,
       slaBreached: () {
-        final waitMin = (json['sla_wait_minutes'] as num?)?.toInt() ?? 0;
+        final waitMin = int.tryParse(json['sla_wait_minutes']?.toString() ?? '0') ?? 0;
         if (waitMin >= 5) return true;
-        final isUnreadIncoming = ((json['unread_count'] as int? ?? 0) > 0) && (json['last_message_from_me'] != true);
+        final unreadCnt = int.tryParse(json['unread_count']?.toString() ?? '0') ?? 0;
+        final isUnreadIncoming = (unreadCnt > 0) && (json['last_message_from_me'] != true);
         if (!isUnreadIncoming) return false;
         final elapsed = DateTime.now().difference(parsedLastMessageTime).inMinutes.abs();
         return elapsed >= 5;
       }(),
       slaWaitMinutes: () {
-        final waitMin = (json['sla_wait_minutes'] as num?)?.toInt() ?? 0;
+        final waitMin = int.tryParse(json['sla_wait_minutes']?.toString() ?? '0') ?? 0;
         if (waitMin > 0) return waitMin;
-        final isUnreadIncoming = ((json['unread_count'] as int? ?? 0) > 0) && (json['last_message_from_me'] != true);
+        final unreadCnt = int.tryParse(json['unread_count']?.toString() ?? '0') ?? 0;
+        final isUnreadIncoming = (unreadCnt > 0) && (json['last_message_from_me'] != true);
         if (!isUnreadIncoming) return 0;
         return DateTime.now().difference(parsedLastMessageTime).inMinutes.abs();
       }(),

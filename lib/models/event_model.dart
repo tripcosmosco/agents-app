@@ -22,7 +22,7 @@ class EventModel {
   factory EventModel.fromJson(Map<String, dynamic> json) {
     DateTime parsedDate;
     try {
-      parsedDate = DateTime.parse(json['created_at']?.toString() ?? '');
+      parsedDate = DateTime.tryParse(json['created_at']?.toString() ?? '') ?? DateTime.now();
     } catch (_) {
       parsedDate = DateTime.now();
     }

@@ -330,23 +330,30 @@ class CallProvider extends ChangeNotifier {
       phone: phone,
     );
 
-    // Start elapsed timer while call session is active
-    _callState = CallState.connected;
-    _startTimer();
+    _callState = CallState.dialing;
     notifyListeners();
 
-    await apiService.reportCallDispatch(
-      callId: _activeCallId!,
-      status: 'connected',
-      phone: phone,
-    );
+    // Transition to connected once dial handshake completes (or when user confirms in HUD)
+    Future.delayed(const Duration(seconds: 2), () {
+      if (_callState == CallState.dialing) {
+        markCallConnected();
+      }
+    });
   }
 
   void markCallConnected() {
-    if (_callState != CallState.connected) {
+    if (_callState != CallState.connected && _callState != CallState.idle) {
       _callState = CallState.connected;
       _startTimer();
       notifyListeners();
+
+      if (_activeCallId != null && _activePhoneNumber.isNotEmpty) {
+        apiService.reportCallDispatch(
+          callId: _activeCallId!,
+          status: 'connected',
+          phone: _activePhoneNumber,
+        );
+      }
     }
   }
 
