@@ -1,7 +1,7 @@
 class AppConstants {
   static const String appName = 'X-Agents';
   static const String appFullName = 'X-Agents';
-  static const String appVersion = '2.2.0 Enterprise';
+  static const String appVersion = '2.3.0 Enterprise';
   static const String appTagline =
       'Intelligent Telephony, CRM & AI Agent Engine';
 
