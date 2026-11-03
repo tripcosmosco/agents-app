@@ -23,6 +23,7 @@ class B2bPartnersView extends StatefulWidget {
 
 class _B2bPartnersViewState extends State<B2bPartnersView> {
   bool _isLoading = false;
+  bool _isOverviewExpanded = true;
   String? _errorMessage;
   String _selectedCity = 'All';
   String _selectedStatus = 'all'; // all, new, in_crm, contacted
@@ -1206,627 +1207,685 @@ If you have confirmed client enquiries or pending groups from $city, please let 
     final callProvider = Provider.of<CallProvider>(context, listen: false);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Column(
-      children: [
-        // 1. Sleek B2B Operations Command Card (Zero Overflow Risk)
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 6, 16, 6),
-          child: Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFF1E1B4B), Color(0xFF0F172A)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFFF59E0B).withValues(alpha: 0.35)),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.25),
-                  blurRadius: 10,
-                  offset: const Offset(0, 3),
+    return RefreshIndicator(
+      color: AppColors.accentGold,
+      onRefresh: _loadAgenciesFromServer,
+      child: CustomScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        slivers: [
+          // 1. Sleek B2B Operations Command Card (Natural Fluid Scroll)
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 6),
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF1E1B4B), Color(0xFF0F172A)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: const Color(0xFFF59E0B).withValues(alpha: 0.35)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.25),
+                      blurRadius: 10,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Top Header Strip
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Top Header Strip with Overview Collapse Toggle
                     Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFF59E0B).withValues(alpha: 0.2),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: const Row(
-                            children: [
-                              Icon(Icons.hub_rounded, size: 11, color: Color(0xFFFBBF24)),
-                              SizedBox(width: 4),
-                              Text(
-                                'DMC GROUND DESK',
-                                style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w800, color: Color(0xFFFBBF24)),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        const Text(
-                          'Wholesale B2B Network',
-                          style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800, color: Colors.white),
-                        ),
-                      ],
-                    ),
-                    InkWell(
-                      onTap: () => TariffPricingManagerSheet.show(context),
-                      borderRadius: BorderRadius.circular(6),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.08),
-                          borderRadius: BorderRadius.circular(6),
-                          border: Border.all(color: Colors.white24),
-                        ),
-                        child: const Row(
+                        Row(
                           children: [
-                            Icon(Icons.copy_rounded, size: 11, color: Color(0xFFFBBF24)),
-                            SizedBox(width: 3),
-                            Text('Tariff', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Color(0xFFFBBF24))),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-
-                // 4 Interactive KPI Metric Tiles
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildMetricTile(
-                        label: 'Partners',
-                        value: '${_counts['total'] ?? _agencies.length}',
-                        color: Colors.white,
-                        icon: Icons.business_rounded,
-                        onTap: () {
-                          setState(() => _selectedStatus = 'all');
-                          _loadAgenciesFromServer();
-                        },
-                        isSelected: _selectedStatus == 'all',
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    Expanded(
-                      child: _buildMetricTile(
-                        label: 'In CRM Drip',
-                        value: '${_counts['in_crm'] ?? 0}',
-                        color: const Color(0xFF34D399),
-                        icon: Icons.cloud_done_rounded,
-                        onTap: () {
-                          setState(() => _selectedStatus = 'in_crm');
-                          _loadAgenciesFromServer();
-                        },
-                        isSelected: _selectedStatus == 'in_crm',
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    Expanded(
-                      child: _buildMetricTile(
-                        label: 'Pitched',
-                        value: '${_counts['contacted'] ?? 0}',
-                        color: const Color(0xFF38BDF8),
-                        icon: Icons.send_rounded,
-                        onTap: () {
-                          setState(() => _selectedStatus = 'contacted');
-                          _loadAgenciesFromServer();
-                        },
-                        isSelected: _selectedStatus == 'contacted',
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    Expanded(
-                      child: _buildMetricTile(
-                        label: 'New Queue',
-                        value: '${_counts['new'] ?? 0}',
-                        color: const Color(0xFFFBBF24),
-                        icon: Icons.fiber_new_rounded,
-                        onTap: () {
-                          setState(() => _selectedStatus = 'new');
-                          _loadAgenciesFromServer();
-                        },
-                        isSelected: _selectedStatus == 'new',
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-
-                // Horizontal Scrollable Action Bar (Guaranteed Zero Overflow)
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: [
-                      _buildHeaderActionPill(
-                        icon: Icons.rocket_launch_rounded,
-                        label: 'Dev Deepawali Campaign',
-                        gradientColors: const [Color(0xFFD97706), Color(0xFFF59E0B)],
-                        textColor: Colors.black,
-                        iconColor: Colors.black,
-                        onTap: () => _showDevDiwaliCampaignDialog(context),
-                      ),
-                      const SizedBox(width: 6),
-                      _buildHeaderActionPill(
-                        icon: Icons.calculate_rounded,
-                        label: 'Net Calculator',
-                        gradientColors: const [Color(0xFF0284C7), Color(0xFF0369A1)],
-                        textColor: Colors.white,
-                        iconColor: Colors.white,
-                        onTap: () => _showB2bRateCalculatorModal(context),
-                      ),
-                      const SizedBox(width: 6),
-                      _buildHeaderActionPill(
-                        icon: Icons.cloud_download_rounded,
-                        label: 'Import / CRM Sync',
-                        gradientColors: const [Color(0xFF2563EB), Color(0xFF1D4ED8)],
-                        textColor: Colors.white,
-                        iconColor: Colors.white,
-                        onTap: () => _showB2bImporterDialog(context),
-                      ),
-                      const SizedBox(width: 6),
-                      _buildHeaderActionPill(
-                        icon: Icons.add_rounded,
-                        label: 'Add Partner',
-                        gradientColors: const [Color(0xFF10B981), Color(0xFF059669)],
-                        textColor: Colors.white,
-                        iconColor: Colors.white,
-                        onTap: () => _showAddAgencyDialog(context),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-
-        // 2. Search & City Filters Bar
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
-          child: TextField(
-            controller: _searchController,
-            onChanged: _onSearchChanged,
-            style: TextStyle(color: isDark ? Colors.white : AppColors.lightTextPrimary, fontSize: 12.5),
-            decoration: InputDecoration(
-              filled: true,
-              fillColor: isDark ? AppColors.surfaceCard : Colors.white,
-              isDense: true,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              hintText: 'Search agency by name, city, or phone...',
-              hintStyle: TextStyle(color: isDark ? Colors.white38 : AppColors.lightTextMuted, fontSize: 12),
-              prefixIcon: Icon(Icons.search, color: isDark ? AppColors.textMuted : AppColors.lightTextSecondary, size: 17),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-                borderSide: BorderSide(color: isDark ? Colors.white12 : AppColors.lightBorderSubtle),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-                borderSide: BorderSide(color: AppColors.getAccentGold(context), width: 1.5),
-              ),
-              suffixIcon: _searchController.text.isNotEmpty
-                  ? IconButton(
-                      icon: Icon(Icons.clear, color: isDark ? Colors.white54 : AppColors.lightTextSecondary, size: 15),
-                      onPressed: () {
-                        _searchController.clear();
-                        _onSearchChanged('');
-                      },
-                    )
-                  : null,
-            ),
-          ),
-        ),
-
-        // 3. Horizontal City Filter Chips with Active Highlights
-        SizedBox(
-          height: 36,
-          child: ListView.separated(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            scrollDirection: Axis.horizontal,
-            itemCount: _cities.length,
-            separatorBuilder: (_, _) => const SizedBox(width: 6),
-            itemBuilder: (ctx, idx) {
-              final city = _cities[idx];
-              final isSelected = _selectedCity.toLowerCase() == city.toLowerCase();
-              return ChoiceChip(
-                label: Text(
-                  city,
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-                    color: isSelected ? Colors.white : (isDark ? Colors.white70 : const Color(0xFF334155)),
-                  ),
-                ),
-                selected: isSelected,
-                visualDensity: VisualDensity.compact,
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                selectedColor: isDark ? const Color(0xFFF59E0B) : const Color(0xFFB45309),
-                backgroundColor: isDark ? AppColors.surfaceCard : const Color(0xFFF1F5F9),
-                side: BorderSide(
-                  color: isSelected ? Colors.transparent : (isDark ? Colors.white12 : const Color(0xFFE2E8F0)),
-                ),
-                onSelected: (val) {
-                  if (val) {
-                    setState(() {
-                      _selectedCity = city;
-                    });
-                    _loadAgenciesFromServer();
-                  }
-                },
-              );
-            },
-          ),
-        ),
-        const SizedBox(height: 4),
-
-        // 4. Agencies List with RefreshIndicator & Error Handling
-        Expanded(
-          child: RefreshIndicator(
-            color: AppColors.accentGold,
-            onRefresh: _loadAgenciesFromServer,
-            child: _isLoading && _agencies.isEmpty
-                ? const Center(child: CircularProgressIndicator(color: AppColors.accentGold))
-                : _errorMessage != null && _agencies.isEmpty
-                    ? Center(
-                        child: Padding(
-                          padding: const EdgeInsets.all(24),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Icon(Icons.cloud_off_rounded, color: AppColors.errorRed, size: 40),
-                              const SizedBox(height: 10),
-                              Text(
-                                _errorMessage!,
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  color: isDark ? Colors.white70 : AppColors.lightTextPrimary,
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFF59E0B).withValues(alpha: 0.2),
+                                borderRadius: BorderRadius.circular(6),
                               ),
-                              const SizedBox(height: 14),
-                              ElevatedButton.icon(
-                                onPressed: _loadAgenciesFromServer,
-                                icon: const Icon(Icons.refresh_rounded, size: 16),
-                                label: const Text('Retry Fetching'),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFF2563EB),
-                                  foregroundColor: Colors.white,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      )
-                    : _agencies.isEmpty
-                        ? Center(
-                            child: SingleChildScrollView(
-                              physics: const AlwaysScrollableScrollPhysics(),
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
+                              child: const Row(
                                 children: [
-                                  const Icon(Icons.location_city_rounded, color: Colors.white24, size: 44),
-                                  const SizedBox(height: 10),
+                                  Icon(Icons.hub_rounded, size: 11, color: Color(0xFFFBBF24)),
+                                  SizedBox(width: 4),
                                   Text(
-                                    'No B2B agencies found for $_selectedCity.',
-                                    style: const TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w600),
-                                  ),
-                                  const SizedBox(height: 6),
-                                  const Text(
-                                    'Tap below to import verified DMC agencies for this market.',
-                                    style: TextStyle(color: Colors.white38, fontSize: 11),
-                                  ),
-                                  const SizedBox(height: 12),
-                                  ElevatedButton.icon(
-                                    onPressed: () => _showB2bImporterDialog(context),
-                                    icon: const Icon(Icons.cloud_download_rounded, size: 15),
-                                    label: Text('Import Agencies for $_selectedCity'),
-                                    style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFD97706)),
+                                    'DMC GROUND DESK',
+                                    style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w800, color: Color(0xFFFBBF24)),
                                   ),
                                 ],
                               ),
                             ),
-                          )
-                        : ListView.builder(
-                            padding: const EdgeInsets.fromLTRB(16, 4, 16, 90),
-                            itemCount: _agencies.length,
-                            itemBuilder: (ctx, idx) {
-                              final agency = _agencies[idx];
-                              final id = int.tryParse(agency['id'].toString()) ?? 1;
-                              final name = (agency['name'] ?? 'Travel Agency').toString();
-                              final city = (agency['city'] ?? 'India').toString();
-                              final phone = (agency['phone'] ?? '').toString();
-                              final email = (agency['email'] ?? '').toString();
-                              final address = (agency['address'] ?? '').toString();
-                              final status = (agency['status'] ?? 'new').toString();
-                              final rating = (agency['rating'] ?? '4.8').toString();
-
-                              // Dynamic Partner Intelligence Scoring
-                              int intelligenceScore = 75;
-                              String tierLabel = 'VERIFIED TRAVEL AGENT';
-                              Color tierColor = const Color(0xFF38BDF8);
-
-                              if (phone.isNotEmpty && email.isNotEmpty) intelligenceScore += 10;
-                              if (city == 'Mumbai' || city == 'Ahmedabad' || city == 'Delhi') intelligenceScore += 9;
-
-                              if (intelligenceScore >= 90) {
-                                tierLabel = 'GOLD DMC PARTNER ($intelligenceScore)';
-                                tierColor = const Color(0xFFFBBF24);
-                              } else if (intelligenceScore >= 80) {
-                                tierLabel = 'HIGH POTENTIAL PROSPECT ($intelligenceScore)';
-                                tierColor = const Color(0xFF34D399);
-                              }
-
-                              Color statusColor = const Color(0xFF3B82F6);
-                              String statusLabel = 'NEW PROSPECT';
-                              String nextAction = '⚡ Action: Send 1-Tap AI Pitch';
-
-                              if (status == 'in_crm') {
-                                statusColor = const Color(0xFF10B981);
-                                statusLabel = 'IN FLUENTCRM DRIP';
-                                nextAction = '📈 Action: Share Wholesale Net Rates';
-                              } else if (status == 'contacted') {
-                                statusColor = const Color(0xFF8B5CF6);
-                                statusLabel = 'PITCH SENT';
-                                nextAction = '⏰ Action: Touch 2 Follow-Up Due';
-                              }
-
-                              return Container(
-                                margin: const EdgeInsets.only(bottom: 10),
-                                padding: const EdgeInsets.all(12),
+                            const SizedBox(width: 8),
+                            const Text(
+                              'Wholesale B2B Network',
+                              style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800, color: Colors.white),
+                            ),
+                          ],
+                        ),
+                        Row(
+                          children: [
+                            InkWell(
+                              onTap: () => TariffPricingManagerSheet.show(context),
+                              borderRadius: BorderRadius.circular(6),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                                 decoration: BoxDecoration(
-                                  color: isDark ? AppColors.surfaceCard : Colors.white,
-                                  borderRadius: BorderRadius.circular(14),
-                                  border: Border.all(color: isDark ? Colors.white12 : AppColors.lightBorderSubtle),
-                                  boxShadow: [
-                                    if (!isDark)
-                                      BoxShadow(
-                                        color: Colors.black.withValues(alpha: 0.04),
-                                        blurRadius: 6,
-                                        offset: const Offset(0, 2),
-                                      ),
+                                  color: Colors.white.withValues(alpha: 0.08),
+                                  borderRadius: BorderRadius.circular(6),
+                                  border: Border.all(color: Colors.white24),
+                                ),
+                                child: const Row(
+                                  children: [
+                                    Icon(Icons.copy_rounded, size: 11, color: Color(0xFFFBBF24)),
+                                    SizedBox(width: 3),
+                                    Text('Tariff', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Color(0xFFFBBF24))),
                                   ],
                                 ),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Row(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        CircleAvatar(
-                                          radius: 19,
-                                          backgroundColor: tierColor.withValues(alpha: 0.18),
-                                          child: Icon(Icons.business_rounded, color: tierColor, size: 19),
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            InkWell(
+                              onTap: () => setState(() => _isOverviewExpanded = !_isOverviewExpanded),
+                              borderRadius: BorderRadius.circular(6),
+                              child: Container(
+                                padding: const EdgeInsets.all(4),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.08),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Icon(
+                                  _isOverviewExpanded ? Icons.keyboard_arrow_up_rounded : Icons.keyboard_arrow_down_rounded,
+                                  size: 15,
+                                  color: Colors.white70,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+
+                    if (_isOverviewExpanded) ...[
+                      const SizedBox(height: 10),
+                      // 4 Interactive KPI Metric Tiles
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildMetricTile(
+                              label: 'Partners',
+                              value: '${_counts['total'] ?? _agencies.length}',
+                              color: Colors.white,
+                              icon: Icons.business_rounded,
+                              onTap: () {
+                                setState(() => _selectedStatus = 'all');
+                                _loadAgenciesFromServer();
+                              },
+                              isSelected: _selectedStatus == 'all',
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: _buildMetricTile(
+                              label: 'In CRM Drip',
+                              value: '${_counts['in_crm'] ?? 0}',
+                              color: const Color(0xFF34D399),
+                              icon: Icons.cloud_done_rounded,
+                              onTap: () {
+                                setState(() => _selectedStatus = 'in_crm');
+                                _loadAgenciesFromServer();
+                              },
+                              isSelected: _selectedStatus == 'in_crm',
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: _buildMetricTile(
+                              label: 'Pitched',
+                              value: '${_counts['contacted'] ?? 0}',
+                              color: const Color(0xFF38BDF8),
+                              icon: Icons.send_rounded,
+                              onTap: () {
+                                setState(() => _selectedStatus = 'contacted');
+                                _loadAgenciesFromServer();
+                              },
+                              isSelected: _selectedStatus == 'contacted',
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: _buildMetricTile(
+                              label: 'New Queue',
+                              value: '${_counts['new'] ?? 0}',
+                              color: const Color(0xFFFBBF24),
+                              icon: Icons.fiber_new_rounded,
+                              onTap: () {
+                                setState(() => _selectedStatus = 'new');
+                                _loadAgenciesFromServer();
+                              },
+                              isSelected: _selectedStatus == 'new',
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+
+                      // Refined Horizontal Action Bar
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: [
+                            _buildHeaderActionPill(
+                              icon: Icons.rocket_launch_rounded,
+                              label: 'Dev Deepawali Campaign',
+                              color: const Color(0xFFF59E0B),
+                              onTap: () => _showDevDiwaliCampaignDialog(context),
+                            ),
+                            const SizedBox(width: 6),
+                            _buildHeaderActionPill(
+                              icon: Icons.calculate_rounded,
+                              label: 'Net Calculator',
+                              color: const Color(0xFF38BDF8),
+                              onTap: () => _showB2bRateCalculatorModal(context),
+                            ),
+                            const SizedBox(width: 6),
+                            _buildHeaderActionPill(
+                              icon: Icons.cloud_download_rounded,
+                              label: 'Import / CRM Sync',
+                              color: const Color(0xFF818CF8),
+                              onTap: () => _showB2bImporterDialog(context),
+                            ),
+                            const SizedBox(width: 6),
+                            _buildHeaderActionPill(
+                              icon: Icons.add_rounded,
+                              label: 'Add Partner',
+                              color: const Color(0xFF34D399),
+                              onTap: () => _showAddAgencyDialog(context),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+          ),
+
+          // 2. Search & City Filters Bar (Scrolls naturally with content!)
+          SliverToBoxAdapter(
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                  child: TextField(
+                    controller: _searchController,
+                    onChanged: _onSearchChanged,
+                    style: TextStyle(color: isDark ? Colors.white : AppColors.lightTextPrimary, fontSize: 12.5),
+                    decoration: InputDecoration(
+                      filled: true,
+                      fillColor: isDark ? AppColors.surfaceCard : Colors.white,
+                      isDense: true,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+                      hintText: 'Search agency by name, city, or phone...',
+                      hintStyle: TextStyle(color: isDark ? Colors.white38 : AppColors.lightTextMuted, fontSize: 12),
+                      prefixIcon: Icon(Icons.search, color: isDark ? AppColors.textMuted : AppColors.lightTextSecondary, size: 17),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: BorderSide(color: isDark ? Colors.white12 : AppColors.lightBorderSubtle),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: BorderSide(color: AppColors.getAccentGold(context), width: 1.5),
+                      ),
+                      suffixIcon: _searchController.text.isNotEmpty
+                          ? IconButton(
+                              icon: Icon(Icons.clear, color: isDark ? Colors.white54 : AppColors.lightTextSecondary, size: 15),
+                              onPressed: () {
+                                _searchController.clear();
+                                _onSearchChanged('');
+                              },
+                            )
+                          : null,
+                    ),
+                  ),
+                ),
+                SizedBox(
+                  height: 34,
+                  child: ListView.separated(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    scrollDirection: Axis.horizontal,
+                    itemCount: _cities.length,
+                    separatorBuilder: (_, _) => const SizedBox(width: 6),
+                    itemBuilder: (ctx, idx) {
+                      final city = _cities[idx];
+                      final isSelected = _selectedCity.toLowerCase() == city.toLowerCase();
+                      return ChoiceChip(
+                        label: Text(
+                          city,
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                            color: isSelected ? Colors.white : (isDark ? Colors.white70 : const Color(0xFF334155)),
+                          ),
+                        ),
+                        selected: isSelected,
+                        visualDensity: VisualDensity.compact,
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                        selectedColor: isDark ? const Color(0xFFF59E0B) : const Color(0xFFB45309),
+                        backgroundColor: isDark ? AppColors.surfaceCard : const Color(0xFFF1F5F9),
+                        side: BorderSide(
+                          color: isSelected ? Colors.transparent : (isDark ? Colors.white12 : const Color(0xFFE2E8F0)),
+                        ),
+                        onSelected: (val) {
+                          if (val) {
+                            setState(() {
+                              _selectedCity = city;
+                            });
+                            _loadAgenciesFromServer();
+                          }
+                        },
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(height: 6),
+              ],
+            ),
+          ),
+
+          // 3. Agencies Feed or State Handling
+          if (_isLoading && _agencies.isEmpty)
+            const SliverFillRemaining(
+              hasScrollBody: false,
+              child: Center(child: CircularProgressIndicator(color: AppColors.accentGold)),
+            )
+          else if (_errorMessage != null && _agencies.isEmpty)
+            SliverFillRemaining(
+              hasScrollBody: false,
+              child: Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.cloud_off_rounded, color: AppColors.errorRed, size: 40),
+                      const SizedBox(height: 10),
+                      Text(
+                        _errorMessage!,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: isDark ? Colors.white70 : AppColors.lightTextPrimary,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                      ElevatedButton.icon(
+                        onPressed: _loadAgenciesFromServer,
+                        icon: const Icon(Icons.refresh_rounded, size: 16),
+                        label: const Text('Retry Fetching'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF2563EB),
+                          foregroundColor: Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            )
+          else if (_agencies.isEmpty)
+            SliverFillRemaining(
+              hasScrollBody: false,
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.location_city_rounded, color: Colors.white24, size: 44),
+                    const SizedBox(height: 10),
+                    Text(
+                      'No B2B agencies found for $_selectedCity.',
+                      style: const TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(height: 6),
+                    const Text(
+                      'Tap below to import verified DMC agencies for this market.',
+                      style: TextStyle(color: Colors.white38, fontSize: 11),
+                    ),
+                    const SizedBox(height: 12),
+                    ElevatedButton.icon(
+                      onPressed: () => _showB2bImporterDialog(context),
+                      icon: const Icon(Icons.cloud_download_rounded, size: 15),
+                      label: Text('Import Agencies for $_selectedCity'),
+                      style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFD97706)),
+                    ),
+                  ],
+                ),
+              ),
+            )
+          else
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(16, 2, 16, 90),
+              sliver: SliverList.builder(
+                itemCount: _agencies.length,
+                itemBuilder: (ctx, idx) {
+                  final agency = _agencies[idx];
+                  final id = int.tryParse(agency['id'].toString()) ?? 1;
+                  final name = (agency['name'] ?? 'Travel Agency').toString();
+                  final city = (agency['city'] ?? 'India').toString();
+                  final phone = (agency['phone'] ?? '').toString();
+                  final email = (agency['email'] ?? '').toString();
+                  final address = (agency['address'] ?? '').toString();
+                  final status = (agency['status'] ?? 'new').toString();
+                  final rating = (agency['rating'] ?? '4.8').toString();
+
+                  // Dynamic Partner Intelligence Scoring
+                  int intelligenceScore = 75;
+                  String tierLabel = 'VERIFIED TRAVEL AGENT';
+                  Color tierColor = const Color(0xFF38BDF8);
+
+                  if (phone.isNotEmpty && email.isNotEmpty) intelligenceScore += 10;
+                  if (city == 'Mumbai' || city == 'Ahmedabad' || city == 'Delhi') intelligenceScore += 9;
+
+                  if (intelligenceScore >= 90) {
+                    tierLabel = 'GOLD DMC PARTNER ($intelligenceScore)';
+                    tierColor = const Color(0xFFFBBF24);
+                  } else if (intelligenceScore >= 80) {
+                    tierLabel = 'HIGH POTENTIAL PROSPECT ($intelligenceScore)';
+                    tierColor = const Color(0xFF34D399);
+                  }
+
+                  Color statusColor = const Color(0xFF3B82F6);
+                  String statusLabel = 'NEW PROSPECT';
+                  String nextAction = '⚡ Action: Send 1-Tap AI Pitch';
+
+                  if (status == 'in_crm') {
+                    statusColor = const Color(0xFF10B981);
+                    statusLabel = 'IN FLUENTCRM DRIP';
+                    nextAction = '📈 Action: Share Wholesale Net Rates';
+                  } else if (status == 'contacted') {
+                    statusColor = const Color(0xFF8B5CF6);
+                    statusLabel = 'PITCH SENT';
+                    nextAction = '⏰ Action: Touch 2 Follow-Up Due';
+                  }
+
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 10),
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: isDark ? AppColors.surfaceCard : Colors.white,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: isDark ? Colors.white12 : AppColors.lightBorderSubtle),
+                      boxShadow: [
+                        if (!isDark)
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.04),
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
+                          ),
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            CircleAvatar(
+                              radius: 18,
+                              backgroundColor: tierColor.withValues(alpha: 0.18),
+                              child: Icon(Icons.business_rounded, color: tierColor, size: 18),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          name,
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w800,
+                                            color: isDark ? Colors.white : AppColors.lightTextPrimary,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
                                         ),
-                                        const SizedBox(width: 10),
+                                      ),
+                                      const SizedBox(width: 6),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                        decoration: BoxDecoration(
+                                          color: statusColor.withValues(alpha: 0.18),
+                                          borderRadius: BorderRadius.circular(6),
+                                          border: Border.all(color: statusColor.withValues(alpha: 0.5)),
+                                        ),
+                                        child: Text(
+                                          statusLabel,
+                                          style: TextStyle(fontSize: 8.5, fontWeight: FontWeight.w800, color: statusColor),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 3),
+
+                                  // Partner Intelligence Tier & Rating
+                                  Row(
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                                        decoration: BoxDecoration(
+                                          color: tierColor.withValues(alpha: 0.15),
+                                          borderRadius: BorderRadius.circular(4),
+                                        ),
+                                        child: Text(
+                                          tierLabel,
+                                          style: TextStyle(fontSize: 8, fontWeight: FontWeight.w900, color: tierColor),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 6),
+                                      Row(
+                                        children: [
+                                          const Icon(Icons.star_rounded, size: 12, color: Color(0xFFFBBF24)),
+                                          Text(
+                                            rating,
+                                            style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Colors.white70),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 4),
+
+                                  Row(
+                                    children: [
+                                      const Icon(Icons.location_on, size: 11, color: Color(0xFFF59E0B)),
+                                      const SizedBox(width: 3),
+                                      Text(
+                                        city.toUpperCase(),
+                                        style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Color(0xFFFBBF24)),
+                                      ),
+                                      if (address.isNotEmpty) ...[
+                                        const SizedBox(width: 5),
                                         Expanded(
-                                          child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            children: [
-                                              Row(
-                                                children: [
-                                                  Expanded(
-                                                    child: Text(
-                                                      name,
-                                                      style: TextStyle(
-                                                        fontSize: 14,
-                                                        fontWeight: FontWeight.w800,
-                                                        color: isDark ? Colors.white : AppColors.lightTextPrimary,
-                                                      ),
-                                                      maxLines: 1,
-                                                      overflow: TextOverflow.ellipsis,
-                                                    ),
-                                                  ),
-                                                  const SizedBox(width: 6),
-                                                  Container(
-                                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                                    decoration: BoxDecoration(
-                                                      color: statusColor.withValues(alpha: 0.18),
-                                                      borderRadius: BorderRadius.circular(6),
-                                                      border: Border.all(color: statusColor.withValues(alpha: 0.5)),
-                                                    ),
-                                                    child: Text(
-                                                      statusLabel,
-                                                      style: TextStyle(fontSize: 8.5, fontWeight: FontWeight.w800, color: statusColor),
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                              const SizedBox(height: 3),
-
-                                              // Partner Intelligence Tier & Rating
-                                              Row(
-                                                children: [
-                                                  Container(
-                                                    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
-                                                    decoration: BoxDecoration(
-                                                      color: tierColor.withValues(alpha: 0.15),
-                                                      borderRadius: BorderRadius.circular(4),
-                                                    ),
-                                                    child: Text(
-                                                      tierLabel,
-                                                      style: TextStyle(fontSize: 8, fontWeight: FontWeight.w900, color: tierColor),
-                                                    ),
-                                                  ),
-                                                  const SizedBox(width: 6),
-                                                  Row(
-                                                    children: [
-                                                      const Icon(Icons.star_rounded, size: 12, color: Color(0xFFFBBF24)),
-                                                      Text(
-                                                        rating,
-                                                        style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Colors.white70),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                ],
-                                              ),
-                                              const SizedBox(height: 4),
-
-                                              Row(
-                                                children: [
-                                                  const Icon(Icons.location_on, size: 11, color: Color(0xFFF59E0B)),
-                                                  const SizedBox(width: 3),
-                                                  Text(
-                                                    city.toUpperCase(),
-                                                    style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: Color(0xFFFBBF24)),
-                                                  ),
-                                                  if (address.isNotEmpty) ...[
-                                                    const SizedBox(width: 5),
-                                                    Expanded(
-                                                      child: Text(
-                                                        '• $address',
-                                                        style: const TextStyle(fontSize: 10, color: Colors.white54),
-                                                        overflow: TextOverflow.ellipsis,
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ],
-                                              ),
-                                              const SizedBox(height: 3),
-                                              Text(
-                                                '$phone ${email.isNotEmpty ? "• $email" : ""}',
-                                                style: const TextStyle(fontSize: 10.5, color: Colors.white70),
-                                              ),
-                                            ],
+                                          child: Text(
+                                            '• $address',
+                                            style: const TextStyle(fontSize: 10, color: Colors.white54),
+                                            overflow: TextOverflow.ellipsis,
                                           ),
                                         ),
                                       ],
-                                    ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 3),
+                                  Text(
+                                    '$phone ${email.isNotEmpty ? "• $email" : ""}',
+                                    style: const TextStyle(fontSize: 10.5, color: Colors.white70),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
 
-                                    // Next-Best-Action Recommendation Banner
-                                    const SizedBox(height: 6),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-                                      decoration: BoxDecoration(
-                                        color: Colors.white.withValues(alpha: 0.05),
-                                        borderRadius: BorderRadius.circular(5),
-                                      ),
-                                      child: Row(
-                                        children: [
-                                          const Icon(Icons.lightbulb_outline_rounded, size: 11, color: Color(0xFFFBBF24)),
-                                          const SizedBox(width: 4),
-                                          Text(
-                                            nextAction,
-                                            style: const TextStyle(fontSize: 9.5, fontWeight: FontWeight.w700, color: Color(0xFFFBBF24)),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-
-                                    const Divider(color: Colors.white10, height: 14),
-
-                                    // 5 Mobile Action Buttons (Guaranteed Zero Overflow)
-                                    SingleChildScrollView(
-                                      scrollDirection: Axis.horizontal,
-                                      child: Row(
-                                        children: [
-                                          // 1. AI Pitch Assistant (Prominent!)
-                                          _buildAgencyActionButton(
-                                            icon: Icons.auto_awesome_rounded,
-                                            label: 'AI Pitch',
-                                            color: const Color(0xFFF59E0B),
-                                            isHighlight: true,
-                                            onTap: () => _showAiPitchModal(context, agency),
-                                          ),
-                                          const SizedBox(width: 6),
-
-                                          // 2. Call Agency
-                                          _buildAgencyActionButton(
-                                            icon: Icons.call,
-                                            label: 'Call',
-                                            color: const Color(0xFF2563EB),
-                                            onTap: () {
-                                              callProvider.startOutboundCall(
-                                                phone: phone,
-                                                name: '$name ($city)',
-                                                tourInterest: 'B2B DMC Partnership',
-                                              );
-                                            },
-                                          ),
-                                          const SizedBox(width: 6),
-
-                                          // 3. Open WhatsApp Chat
-                                          _buildAgencyActionButton(
-                                            icon: Icons.chat_bubble_rounded,
-                                            label: 'WhatsApp',
-                                            color: const Color(0xFF10B981),
-                                            onTap: () => _openAgencyWhatsAppChat(context, agency),
-                                          ),
-                                          const SizedBox(width: 6),
-
-                                          // 4. White-Label / Net B2B Quote
-                                          _buildAgencyActionButton(
-                                            icon: Icons.bolt,
-                                            label: 'B2B Quote',
-                                            color: const Color(0xFFD97706),
-                                            onTap: () {
-                                              final agencyLead = LeadModel(
-                                                id: 'b2b_$id',
-                                                name: name,
-                                                phone: phone,
-                                                email: email,
-                                                companyOrCity: city,
-                                                destination: 'Kashi - Ayodhya - Prayagraj 4D3N Circuit',
-                                                pax: 12,
-                                                stage: 'contacted',
-                                                source: 'b2b_partner',
-                                                createdAt: DateTime.now(),
-                                              );
-                                              TravelQuoteDialog.show(context, agencyLead, initialB2bMode: true);
-                                            },
-                                          ),
-                                          const SizedBox(width: 6),
-
-                                          // 5. Enroll in FluentCRM Funnel
-                                          _buildAgencyActionButton(
-                                            icon: Icons.cloud_upload_rounded,
-                                            label: 'CRM Drip',
-                                            color: const Color(0xFF0284C7),
-                                            onTap: () async {
-                                              setState(() {
-                                                agency['status'] = 'in_crm';
-                                              });
-                                              final leadProvider = Provider.of<LeadProvider>(context, listen: false);
-                                              final synced = await leadProvider.apiService.syncB2bAgencyToCrm(agencyId: id);
-                                              if (context.mounted) {
-                                                ScaffoldMessenger.of(context).showSnackBar(
-                                                  SnackBar(
-                                                    content: Text(
-                                                      synced
-                                                          ? '✓ $name synced to FluentCRM List 8 & enrolled in Dev Deepawali Funnel!'
-                                                          : '✓ $name marked for FluentCRM B2B Funnel sync.',
-                                                    ),
-                                                    backgroundColor: const Color(0xFF0284C7),
-                                                  ),
-                                                );
-                                              }
-                                            },
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              );
-                            },
+                        // Next-Best-Action Recommendation Banner
+                        const SizedBox(height: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.05),
+                            borderRadius: BorderRadius.circular(5),
                           ),
-          ),
-        ),
-      ],
+                          child: Row(
+                            children: [
+                              const Icon(Icons.lightbulb_outline_rounded, size: 11, color: Color(0xFFFBBF24)),
+                              const SizedBox(width: 4),
+                              Text(
+                                nextAction,
+                                style: const TextStyle(fontSize: 9.5, fontWeight: FontWeight.w700, color: Color(0xFFFBBF24)),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        const Divider(color: Colors.white10, height: 12),
+
+                        // Streamlined Intelligent Action Row (1 Primary AI Pill + 4 Ergonomic Icon Actions)
+                        Row(
+                          children: [
+                            // 1. Primary AI Intelligence Pill
+                            Expanded(
+                              child: InkWell(
+                                onTap: () => _showAiPitchModal(context, agency),
+                                borderRadius: BorderRadius.circular(8),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6.5),
+                                  decoration: BoxDecoration(
+                                    gradient: const LinearGradient(
+                                      colors: [Color(0xFFD97706), Color(0xFFF59E0B)],
+                                    ),
+                                    borderRadius: BorderRadius.circular(8),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: const Color(0xFFD97706).withValues(alpha: 0.28),
+                                        blurRadius: 5,
+                                        offset: const Offset(0, 2),
+                                      ),
+                                    ],
+                                  ),
+                                  child: const Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(Icons.auto_awesome_rounded, size: 12.5, color: Colors.black),
+                                      SizedBox(width: 4),
+                                      Text(
+                                        'AI Pitch',
+                                        style: TextStyle(
+                                          fontSize: 11.5,
+                                          fontWeight: FontWeight.w900,
+                                          color: Colors.black,
+                                          letterSpacing: -0.2,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+
+                            // 2. Direct Call
+                            _buildActionIconButton(
+                              icon: Icons.call_rounded,
+                              tooltip: 'Call $name ($phone)',
+                              color: const Color(0xFF3B82F6),
+                              onTap: () {
+                                callProvider.startOutboundCall(
+                                  phone: phone,
+                                  name: '$name ($city)',
+                                  tourInterest: 'B2B DMC Partnership',
+                                );
+                              },
+                            ),
+                            const SizedBox(width: 6),
+
+                            // 3. Open WhatsApp Chat
+                            _buildActionIconButton(
+                              icon: Icons.chat_bubble_rounded,
+                              tooltip: 'WhatsApp $name',
+                              color: const Color(0xFF10B981),
+                              onTap: () => _openAgencyWhatsAppChat(context, agency),
+                            ),
+                            const SizedBox(width: 6),
+
+                            // 4. White-Label / Net B2B Quote
+                            _buildActionIconButton(
+                              icon: Icons.request_quote_rounded,
+                              tooltip: 'Create Net B2B Quote',
+                              color: const Color(0xFFF59E0B),
+                              onTap: () {
+                                final agencyLead = LeadModel(
+                                  id: 'b2b_$id',
+                                  name: name,
+                                  phone: phone,
+                                  email: email,
+                                  companyOrCity: city,
+                                  destination: 'Kashi - Ayodhya - Prayagraj 4D3N Circuit',
+                                  pax: 12,
+                                  stage: 'contacted',
+                                  source: 'b2b_partner',
+                                  createdAt: DateTime.now(),
+                                );
+                                TravelQuoteDialog.show(context, agencyLead, initialB2bMode: true);
+                              },
+                            ),
+                            const SizedBox(width: 6),
+
+                            // 5. CRM Funnel Drip
+                            _buildActionIconButton(
+                              icon: status == 'in_crm' ? Icons.cloud_done_rounded : Icons.cloud_upload_outlined,
+                              tooltip: status == 'in_crm' ? 'Synced to FluentCRM Drip' : 'Enroll in CRM Drip',
+                              color: status == 'in_crm' ? const Color(0xFF34D399) : const Color(0xFF94A3B8),
+                              bgColor: status == 'in_crm' ? const Color(0xFF10B981).withValues(alpha: 0.15) : null,
+                              onTap: () async {
+                                setState(() {
+                                  agency['status'] = 'in_crm';
+                                });
+                                final leadProvider = Provider.of<LeadProvider>(context, listen: false);
+                                final synced = await leadProvider.apiService.syncB2bAgencyToCrm(agencyId: id);
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        synced
+                                            ? '✓ $name synced to FluentCRM List 8 & enrolled in Dev Deepawali Funnel!'
+                                            : '✓ $name marked for FluentCRM B2B Funnel sync.',
+                                      ),
+                                      backgroundColor: const Color(0xFF0284C7),
+                                    ),
+                                  );
+                                }
+                              },
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
+        ],
+      ),
     );
   }
 
@@ -1842,7 +1901,7 @@ If you have confirmed client enquiries or pending groups from $city, please let 
       onTap: onTap,
       borderRadius: BorderRadius.circular(10),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 7),
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
         decoration: BoxDecoration(
           color: isSelected ? color.withValues(alpha: 0.18) : Colors.white.withValues(alpha: 0.05),
           borderRadius: BorderRadius.circular(10),
@@ -1860,14 +1919,14 @@ If you have confirmed client enquiries or pending groups from $city, please let 
                 const SizedBox(width: 3),
                 Text(
                   value,
-                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: color),
+                  style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w900, color: color),
                 ),
               ],
             ),
             const SizedBox(height: 2),
             Text(
               label,
-              style: TextStyle(fontSize: 9, fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500, color: isSelected ? color : Colors.white60),
+              style: TextStyle(fontSize: 8.5, fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500, color: isSelected ? color : Colors.white60),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
@@ -1880,60 +1939,20 @@ If you have confirmed client enquiries or pending groups from $city, please let 
   Widget _buildHeaderActionPill({
     required IconData icon,
     required String label,
-    required List<Color> gradientColors,
-    required Color textColor,
-    required Color iconColor,
-    required VoidCallback onTap,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(colors: gradientColors),
-          borderRadius: BorderRadius.circular(8),
-          boxShadow: [
-            BoxShadow(
-              color: gradientColors.first.withValues(alpha: 0.3),
-              blurRadius: 5,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 12, color: iconColor),
-            const SizedBox(width: 4),
-            Text(
-              label,
-              style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w800, color: textColor),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildAgencyActionButton({
-    required IconData icon,
-    required String label,
     required Color color,
     required VoidCallback onTap,
-    bool isHighlight = false,
   }) {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(8),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4.5),
         decoration: BoxDecoration(
-          color: isHighlight ? color.withValues(alpha: 0.25) : color.withValues(alpha: 0.15),
+          color: color.withValues(alpha: 0.15),
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
-            color: isHighlight ? color : color.withValues(alpha: 0.45),
-            width: isHighlight ? 1.3 : 1.0,
+            color: color.withValues(alpha: 0.35),
+            width: 1.0,
           ),
         ),
         child: Row(
@@ -1943,13 +1962,40 @@ If you have confirmed client enquiries or pending groups from $city, please let 
             const SizedBox(width: 4),
             Text(
               label,
-              style: TextStyle(
-                fontSize: 10,
-                fontWeight: isHighlight ? FontWeight.w900 : FontWeight.w700,
-                color: isHighlight ? Colors.white : color,
-              ),
+              style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Colors.white.withValues(alpha: 0.9)),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActionIconButton({
+    required IconData icon,
+    required String tooltip,
+    required Color color,
+    required VoidCallback onTap,
+    Color? bgColor,
+  }) {
+    return Tooltip(
+      message: tooltip,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: Container(
+          width: 32,
+          height: 32,
+          decoration: BoxDecoration(
+            color: bgColor ?? color.withValues(alpha: 0.14),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: color.withValues(alpha: 0.35),
+              width: 1.0,
+            ),
+          ),
+          child: Center(
+            child: Icon(icon, size: 15, color: color),
+          ),
         ),
       ),
     );
