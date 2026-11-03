@@ -59,9 +59,26 @@ class AuthProvider extends ChangeNotifier {
         }
       }
     } else {
-      // 2. On Web: Check if browser already has an active WordPress session (e.g. signed in via Google Site Kit One-Click on wp-login.php)
+      // 2. On Web: Check if browser already has an active WordPress session or returned with an id_token
       if (kIsWeb) {
         try {
+          // Check if redirected from Google OAuth with an id_token
+          final uri = Uri.base;
+          String? idToken = uri.queryParameters['id_token'];
+          if (idToken == null && uri.fragment.isNotEmpty) {
+            final frag = Uri.splitQueryString(uri.fragment);
+            idToken = frag['id_token'];
+          }
+          if (idToken != null && idToken.isNotEmpty) {
+            final gRes = await apiService.loginWithGoogle(idToken: idToken);
+            if (gRes != null && gRes['ok'] == true && gRes['user'] != null) {
+              _user = UserModel.fromJson(Map<String, dynamic>.from(gRes['user'] as Map));
+              await _saveUserLocally(_user!);
+              notifyListeners();
+              return;
+            }
+          }
+
           final res = await apiService.fetchMe();
           if (res != null && res['authenticated'] == true && res['user'] != null) {
             _user = UserModel.fromJson(Map<String, dynamic>.from(res['user'] as Map));

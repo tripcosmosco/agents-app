@@ -39,6 +39,28 @@
       });
     }
 
+    window.tcProcessGoogleCredential = function(idToken) {
+      if (!idToken) return;
+      fetch('https://tripcosmos.co/wp-json/tc-agents/v1/mobile/auth/google', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id_token: idToken })
+      })
+      .then(function(res) { return res.json(); })
+      .then(function(data) {
+        if (data.ok && data.user) {
+          if (data.token) localStorage.setItem('tc_mobile_token', data.token);
+          localStorage.setItem('tc_auth_user', JSON.stringify(data.user));
+          window.location.reload();
+        } else {
+          window.location.href = 'https://tripcosmos.co/wp-login.php?redirect_to=' + encodeURIComponent(window.location.origin + '/agents/');
+        }
+      })
+      .catch(function() {
+        window.location.href = 'https://tripcosmos.co/wp-login.php?redirect_to=' + encodeURIComponent(window.location.origin + '/agents/');
+      });
+    };
+
     window.tcInitGoogle = function() {
       try {
         if (window.google && window.google.accounts && window.google.accounts.id) {
@@ -51,8 +73,11 @@
           window.google.accounts.id.initialize({
             client_id: '77399722057-6o97tf20jmhjaaid60gks1ajn5k1029s.apps.googleusercontent.com',
             nonce: nonce,
-            ux_mode: 'redirect',
-            login_uri: 'https://tripcosmos.co/wp-login.php?action=googlesitekit_auth'
+            callback: function(response) {
+              if (response && response.credential) {
+                window.tcProcessGoogleCredential(response.credential);
+              }
+            }
           });
         }
       } catch(e) {
@@ -76,6 +101,20 @@
         window.location.href = 'https://tripcosmos.co/wp-login.php?redirect_to=' + encodeURIComponent(window.location.origin + '/agents/');
       }
     };
+
+    // Auto-initialize One Tap prompt like Claude and ChatGPT
+    window.addEventListener('load', function() {
+      setTimeout(function() {
+        if (typeof window.tcInitGoogle === 'function') {
+          window.tcInitGoogle();
+          try {
+            if (window.google && window.google.accounts && window.google.accounts.id) {
+              window.google.accounts.id.prompt();
+            }
+          } catch(_) {}
+        }
+      }, 800);
+    });
   </script>
 
   <!-- iOS meta tags & icons -->

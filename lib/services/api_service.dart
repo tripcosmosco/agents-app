@@ -1628,15 +1628,16 @@ class ApiService {
 
   /// 35. 1-Click Google Sign-In Authentication
   Future<Map<String, dynamic>?> loginWithGoogle({
-    required String email,
+    String? email,
     String? idToken,
     String? name,
     String? avatarUrl,
   }) async {
     try {
       final uri = Uri.parse('$baseUrl/mobile/auth/google');
-      final payload = <String, dynamic>{'email': email};
-      if (idToken != null) payload['id_token'] = idToken;
+      final payload = <String, dynamic>{};
+      if (email != null && email.isNotEmpty) payload['email'] = email;
+      if (idToken != null && idToken.isNotEmpty) payload['id_token'] = idToken;
       if (name != null) payload['name'] = name;
       if (avatarUrl != null) payload['avatar_url'] = avatarUrl;
       final body = json.encode(payload);
