@@ -1214,36 +1214,22 @@ class _WhatsAppHubScreenState extends State<WhatsAppHubScreen> {
       channelColor = AppColors.accentGold;
     }
 
-    return InkWell(
-      onTap: () => _openThread(th),
-      borderRadius: BorderRadius.circular(14),
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? AppColors.getElevated(context)
-              : (th.unreadCount > 0
-                  ? (isLight ? const Color(0xFFF0FDF4) : const Color(0xFF13233F))
-                  : AppColors.getCard(context)),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: isSelected
-                ? AppColors.accentGold
-                : (th.unreadCount > 0
-                    ? AppColors.whatsappGreen.withValues(alpha: 0.6)
-                    : AppColors.getBorder(context)),
-            width: isSelected ? 1.6 : (th.unreadCount > 0 ? 1.3 : 1.0),
-          ),
-          boxShadow: isSelected
-              ? [
-                  BoxShadow(
-                    color: AppColors.accentGold.withValues(alpha: 0.15),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ]
-              : null,
-        ),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: GlassCard(
+        borderRadius: 13,
+        padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 9),
+        backgroundColor: isSelected
+            ? AppColors.accentGold.withValues(alpha: 0.15)
+            : (th.unreadCount > 0
+                ? (isLight ? const Color(0xFFF0FDF4) : const Color(0xFF13233F)).withValues(alpha: 0.8)
+                : null),
+        borderColor: isSelected
+            ? AppColors.accentGold
+            : (th.unreadCount > 0
+                ? AppColors.whatsappGreen.withValues(alpha: 0.5)
+                : null),
+        onTap: () => _openThread(th),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

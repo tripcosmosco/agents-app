@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
@@ -824,16 +825,22 @@ class _WhatsAppTeamChatViewState extends State<WhatsAppTeamChatView> {
 
     return Scaffold(
       backgroundColor: isLight ? const Color(0xFFEFEAE2) : const Color(0xFF0B132B),
-      appBar: AppBar(
-        backgroundColor: isLight ? Colors.white : const Color(0xFF1E293B),
-        iconTheme: IconThemeData(color: isLight ? AppColors.lightTextPrimary : Colors.white),
-        elevation: 1,
-        leading: widget.onBack != null
-            ? IconButton(
-                icon: const Icon(Icons.arrow_back, color: Colors.white),
-                onPressed: widget.onBack,
-              )
-            : null,
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(kToolbarHeight),
+        child: ClipRect(
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+            child: AppBar(
+              backgroundColor: (isLight ? Colors.white : const Color(0xFF0F172A)).withValues(alpha: 0.85),
+              iconTheme: IconThemeData(color: isLight ? AppColors.lightTextPrimary : Colors.white),
+              elevation: 0,
+              scrolledUnderElevation: 0,
+              leading: widget.onBack != null
+                  ? IconButton(
+                      icon: Icon(Icons.arrow_back_ios_new_rounded, size: 18, color: isLight ? AppColors.lightTextPrimary : Colors.white),
+                      onPressed: widget.onBack,
+                    )
+                  : null,
         title: Row(
           children: [
             CircleAvatar(
@@ -991,6 +998,9 @@ class _WhatsAppTeamChatViewState extends State<WhatsAppTeamChatView> {
             ],
           ),
         ],
+      ),
+      ),
+      ),
       ),
       body: Column(
         children: [
@@ -1709,36 +1719,35 @@ class _WhatsAppTeamChatViewState extends State<WhatsAppTeamChatView> {
     final shouldShowText = cleanText.isNotEmpty || (!hasImage && !hasVideo && !hasDocument);
 
     final bubble = Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      constraints: const BoxConstraints(maxWidth: 320),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      margin: const EdgeInsets.only(bottom: 6),
+      constraints: const BoxConstraints(maxWidth: 310),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
         color: Theme.of(context).brightness == Brightness.light
-            ? (isCustomer ? Colors.white : const Color(0xFFD9FDD3))
+            ? (isCustomer ? Colors.white : const Color(0xFFE7FFDB))
             : (isCustomer
                 ? (isWebChat ? const Color(0xFF0C4A6E) : const Color(0xFF1E293B))
-                : const Color(0xFF065F46)),
+                : const Color(0xFF005C4B)),
         borderRadius: BorderRadius.only(
-          topLeft: const Radius.circular(16),
-          topRight: const Radius.circular(16),
-          bottomLeft: Radius.circular(isCustomer ? 2 : 16),
-          bottomRight: Radius.circular(isCustomer ? 16 : 2),
+          topLeft: const Radius.circular(15),
+          topRight: const Radius.circular(15),
+          bottomLeft: Radius.circular(isCustomer ? 3 : 15),
+          bottomRight: Radius.circular(isCustomer ? 15 : 3),
         ),
         border: Border.all(
           color: isFailed
               ? AppColors.errorRed.withValues(alpha: 0.6)
               : (Theme.of(context).brightness == Brightness.light
-                  ? (isCustomer ? const Color(0xFFE2E8F0) : const Color(0xFFBBF7D0))
-                  : Colors.white10),
-          width: isFailed ? 1.5 : 1.0,
+                  ? (isCustomer ? const Color(0xFFE2E8F0) : const Color(0xFFC7F9CC))
+                  : Colors.white.withValues(alpha: 0.08)),
+          width: 0.5,
         ),
         boxShadow: [
-          if (Theme.of(context).brightness == Brightness.light)
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
-              blurRadius: 4,
-              offset: const Offset(0, 1),
-            ),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: Theme.of(context).brightness == Brightness.light ? 0.04 : 0.18),
+            blurRadius: 4,
+            offset: const Offset(0, 1),
+          ),
         ],
       ),
       child: Column(

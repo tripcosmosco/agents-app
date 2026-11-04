@@ -15,6 +15,7 @@ import '../providers/whatsapp_provider.dart';
 import '../widgets/cab_fare_dialog.dart';
 import '../widgets/whatsapp_team_chat_view.dart';
 import 'quotation_desk_screen.dart';
+import '../widgets/glass_card.dart';
 
 class LeadDetailScreen extends StatefulWidget {
   final LeadModel lead;
@@ -1927,74 +1928,76 @@ class _LeadDetailScreenState extends State<LeadDetailScreen> with SingleTickerPr
 
         if (lead.stage == 'new' || lead.stage == 'inquiry') ...[
           // Lead is New: Priority is First Contact & Needs Discovery
-          Card(
-            color: AppColors.getCard(context),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14), side: const BorderSide(color: Color(0xFFF59E0B), width: 1.5)),
+          GlassCard(
+            borderRadius: 13,
+            padding: EdgeInsets.zero,
+            borderColor: const Color(0xFFF59E0B).withValues(alpha: 0.6),
             child: ListTile(
-              contentPadding: const EdgeInsets.all(14),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               leading: Container(
-                padding: const EdgeInsets.all(10),
+                padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(color: const Color(0xFFF59E0B).withValues(alpha: 0.2), borderRadius: BorderRadius.circular(10)),
-                child: const Icon(Icons.flash_on_rounded, color: Color(0xFFF59E0B), size: 24),
+                child: const Icon(Icons.flash_on_rounded, color: Color(0xFFF59E0B), size: 22),
               ),
-              title: Text('1-Tap First Contact & Needs Intake ⚡', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: AppColors.getTextPrimary(context))),
-              subtitle: Text('Lock 15-minute golden SLA window with instant greeting & trip requirement intake', style: TextStyle(fontSize: 11.5, color: AppColors.getTextSecondary(context))),
-              trailing: const Icon(Icons.arrow_forward_ios, size: 14, color: Color(0xFFF59E0B)),
+              title: Text('1-Tap First Contact & Needs Intake ⚡', style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w800, color: AppColors.getTextPrimary(context))),
+              subtitle: Text('Lock 15-minute golden SLA window with instant greeting & trip requirement intake', style: TextStyle(fontSize: 11, color: AppColors.getTextSecondary(context))),
+              trailing: const Icon(Icons.arrow_forward_ios, size: 13, color: Color(0xFFF59E0B)),
               onTap: () => _sendQuickMessage(
                 lead,
                 customText: 'Namaste ${lead.name}! 🙏 Thank you for connecting with TripCosmos (Varanasi Desk). Please share your travel dates and number of guests so I can prepare your customized Kashi itinerary.',
               ),
             ),
           ),
-          const SizedBox(height: 10),
-          Card(
-            color: AppColors.getCard(context),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14), side: BorderSide(color: AppColors.getBorder(context))),
+          const SizedBox(height: 8),
+          GlassCard(
+            borderRadius: 13,
+            padding: EdgeInsets.zero,
             child: ListTile(
-              contentPadding: const EdgeInsets.all(14),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               leading: Container(
-                padding: const EdgeInsets.all(10),
+                padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(color: const Color(0xFFD97706).withValues(alpha: 0.2), borderRadius: BorderRadius.circular(10)),
-                child: const Icon(Icons.bolt, color: Color(0xFFD97706), size: 24),
+                child: const Icon(Icons.bolt, color: Color(0xFFD97706), size: 22),
               ),
-              title: Text('Generate Tour Package Quote 💰', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.getTextPrimary(context))),
-              subtitle: Text('Create customized itinerary quote with hotels, boats & VIP darshan', style: TextStyle(fontSize: 11.5, color: AppColors.getTextSecondary(context))),
-              trailing: Icon(Icons.arrow_forward_ios, size: 14, color: AppColors.getTextMuted(context)),
+              title: Text('Generate Tour Package Quote 💰', style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: AppColors.getTextPrimary(context))),
+              subtitle: Text('Create customized itinerary quote with hotels, boats & VIP darshan', style: TextStyle(fontSize: 11, color: AppColors.getTextSecondary(context))),
+              trailing: Icon(Icons.arrow_forward_ios, size: 13, color: AppColors.getTextMuted(context)),
               onTap: () => QuotationDeskScreen.open(context, lead),
             ),
           ),
         ] else if (lead.stage == 'quote_sent' || lead.stage == 'proposal') ...[
           // Lead already received quote: Priority is closing advance token!
-          Card(
-            color: AppColors.getCard(context),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14), side: const BorderSide(color: Color(0xFF10B981), width: 1.5)),
+          GlassCard(
+            borderRadius: 13,
+            padding: EdgeInsets.zero,
+            borderColor: const Color(0xFF10B981).withValues(alpha: 0.6),
             child: ListTile(
-              contentPadding: const EdgeInsets.all(14),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               leading: Container(
-                padding: const EdgeInsets.all(10),
+                padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(color: const Color(0xFF10B981).withValues(alpha: 0.2), borderRadius: BorderRadius.circular(10)),
-                child: const Icon(Icons.payment_rounded, color: Color(0xFF10B981), size: 24),
+                child: const Icon(Icons.payment_rounded, color: Color(0xFF10B981), size: 22),
               ),
-              title: Text('Secure Booking Advance Token (UPI) 💳', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: AppColors.getTextPrimary(context))),
-              subtitle: Text('Send Cashfree UPI / QR payment link (₹1,500 token) to lock vehicle & dates', style: TextStyle(fontSize: 11.5, color: AppColors.getTextSecondary(context))),
-              trailing: const Icon(Icons.arrow_forward_ios, size: 14, color: Color(0xFF10B981)),
+              title: Text('Secure Booking Advance Token (UPI) 💳', style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w800, color: AppColors.getTextPrimary(context))),
+              subtitle: Text('Send Cashfree UPI / QR payment link (₹1,500 token) to lock vehicle & dates', style: TextStyle(fontSize: 11, color: AppColors.getTextSecondary(context))),
+              trailing: const Icon(Icons.arrow_forward_ios, size: 13, color: Color(0xFF10B981)),
               onTap: () => _showPaymentLinkSheet(context, lead),
             ),
           ),
-          const SizedBox(height: 10),
-          Card(
-            color: AppColors.getCard(context),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14), side: BorderSide(color: AppColors.getBorder(context))),
+          const SizedBox(height: 8),
+          GlassCard(
+            borderRadius: 13,
+            padding: EdgeInsets.zero,
             child: ListTile(
-              contentPadding: const EdgeInsets.all(14),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               leading: Container(
-                padding: const EdgeInsets.all(10),
+                padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(color: const Color(0xFF38BDF8).withValues(alpha: 0.2), borderRadius: BorderRadius.circular(10)),
-                child: const Icon(Icons.chat_bubble_rounded, color: Color(0xFF38BDF8), size: 24),
+                child: const Icon(Icons.chat_bubble_rounded, color: Color(0xFF38BDF8), size: 22),
               ),
-              title: Text('Follow-Up on Quotation Decision 💬', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.getTextPrimary(context))),
-              subtitle: Text('Send gentle follow-up checking if hotels or cab options need fine-tuning', style: TextStyle(fontSize: 11.5, color: AppColors.getTextSecondary(context))),
-              trailing: Icon(Icons.arrow_forward_ios, size: 14, color: AppColors.getTextMuted(context)),
+              title: Text('Follow-Up on Quotation Decision 💬', style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: AppColors.getTextPrimary(context))),
+              subtitle: Text('Send gentle follow-up checking if hotels or cab options need fine-tuning', style: TextStyle(fontSize: 11, color: AppColors.getTextSecondary(context))),
+              trailing: Icon(Icons.arrow_forward_ios, size: 13, color: AppColors.getTextMuted(context)),
               onTap: () => _sendQuickMessage(
                 lead,
                 customText: 'Namaste ${lead.name}! 🙏 Just checking if you had a chance to review the Varanasi tour proposal we shared. Would you like us to customize the hotel category or vehicle timing?',
@@ -2003,36 +2006,37 @@ class _LeadDetailScreenState extends State<LeadDetailScreen> with SingleTickerPr
           ),
         ] else if (lead.stage == 'won' || lead.stage == 'converted') ...[
           // Lead is Won: Priority is Operations, Driver Slip & Review Booster
-          Card(
-            color: AppColors.getCard(context),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14), side: const BorderSide(color: Color(0xFF6366F1), width: 1.5)),
+          GlassCard(
+            borderRadius: 13,
+            padding: EdgeInsets.zero,
+            borderColor: const Color(0xFF6366F1).withValues(alpha: 0.6),
             child: ListTile(
-              contentPadding: const EdgeInsets.all(14),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               leading: Container(
-                padding: const EdgeInsets.all(10),
+                padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(color: const Color(0xFF6366F1).withValues(alpha: 0.2), borderRadius: BorderRadius.circular(10)),
-                child: const Icon(Icons.directions_car_rounded, color: Color(0xFF6366F1), size: 24),
+                child: const Icon(Icons.directions_car_rounded, color: Color(0xFF6366F1), size: 22),
               ),
-              title: Text('Dispatch Driver Slip & Fleet Assignment 🚗', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: AppColors.getTextPrimary(context))),
-              subtitle: Text('Auto-generate driver contact, vehicle number, and airport pickup voucher', style: TextStyle(fontSize: 11.5, color: AppColors.getTextSecondary(context))),
-              trailing: const Icon(Icons.arrow_forward_ios, size: 14, color: Color(0xFF6366F1)),
+              title: Text('Dispatch Driver Slip & Fleet Assignment 🚗', style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w800, color: AppColors.getTextPrimary(context))),
+              subtitle: Text('Auto-generate driver contact, vehicle number, and airport pickup voucher', style: TextStyle(fontSize: 11, color: AppColors.getTextSecondary(context))),
+              trailing: const Icon(Icons.arrow_forward_ios, size: 13, color: Color(0xFF6366F1)),
               onTap: () => CabFareDialog.show(context, lead: lead),
             ),
           ),
-          const SizedBox(height: 10),
-          Card(
-            color: AppColors.getCard(context),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14), side: BorderSide(color: AppColors.getBorder(context))),
+          const SizedBox(height: 8),
+          GlassCard(
+            borderRadius: 13,
+            padding: EdgeInsets.zero,
             child: ListTile(
-              contentPadding: const EdgeInsets.all(14),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               leading: Container(
-                padding: const EdgeInsets.all(10),
+                padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(color: const Color(0xFFF59E0B).withValues(alpha: 0.2), borderRadius: BorderRadius.circular(10)),
-                child: const Icon(Icons.star_rate_rounded, color: Color(0xFFF59E0B), size: 24),
+                child: const Icon(Icons.star_rate_rounded, color: Color(0xFFF59E0B), size: 22),
               ),
-              title: Text('5★ Google Review Booster ⭐', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.getTextPrimary(context))),
-              subtitle: Text('Send 1-tap review link on WhatsApp to boost TripCosmos reputation', style: TextStyle(fontSize: 11.5, color: AppColors.getTextSecondary(context))),
-              trailing: Icon(Icons.arrow_forward_ios, size: 14, color: AppColors.getTextMuted(context)),
+              title: Text('5★ Google Review Booster ⭐', style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: AppColors.getTextPrimary(context))),
+              subtitle: Text('Send 1-tap review link on WhatsApp to boost TripCosmos reputation', style: TextStyle(fontSize: 11, color: AppColors.getTextSecondary(context))),
+              trailing: Icon(Icons.arrow_forward_ios, size: 13, color: AppColors.getTextMuted(context)),
               onTap: () => _sendQuickMessage(
                 lead,
                 customText: 'Namaste ${lead.name}! 🙏 It was our honor hosting your sacred tour in Kashi. If you enjoyed our service, could you take 30 seconds to leave us a 5-star review? https://g.page/r/tripcosmos/review',
@@ -2041,53 +2045,54 @@ class _LeadDetailScreenState extends State<LeadDetailScreen> with SingleTickerPr
           ),
         ] else ...[
           // Qualified or in Negotiation
-          Card(
-            color: AppColors.getCard(context),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14), side: const BorderSide(color: Color(0xFFD97706), width: 1.5)),
+          GlassCard(
+            borderRadius: 13,
+            padding: EdgeInsets.zero,
+            borderColor: const Color(0xFFD97706).withValues(alpha: 0.6),
             child: ListTile(
-              contentPadding: const EdgeInsets.all(14),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               leading: Container(
-                padding: const EdgeInsets.all(10),
+                padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(color: const Color(0xFFD97706).withValues(alpha: 0.2), borderRadius: BorderRadius.circular(10)),
-                child: const Icon(Icons.bolt, color: Color(0xFFD97706), size: 24),
+                child: const Icon(Icons.bolt, color: Color(0xFFD97706), size: 22),
               ),
-              title: Text('Generate Tour Package Quote ⚡', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: AppColors.getTextPrimary(context))),
-              subtitle: Text('Create customized itinerary quote with hotels, boats & VIP darshan', style: TextStyle(fontSize: 11.5, color: AppColors.getTextSecondary(context))),
-              trailing: const Icon(Icons.arrow_forward_ios, size: 14, color: Color(0xFFD97706)),
+              title: Text('Generate Tour Package Quote ⚡', style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w800, color: AppColors.getTextPrimary(context))),
+              subtitle: Text('Create customized itinerary quote with hotels, boats & VIP darshan', style: TextStyle(fontSize: 11, color: AppColors.getTextSecondary(context))),
+              trailing: const Icon(Icons.arrow_forward_ios, size: 13, color: Color(0xFFD97706)),
               onTap: () => QuotationDeskScreen.open(context, lead),
             ),
           ),
-          const SizedBox(height: 10),
-          Card(
-            color: AppColors.getCard(context),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14), side: BorderSide(color: AppColors.getBorder(context))),
+          const SizedBox(height: 8),
+          GlassCard(
+            borderRadius: 13,
+            padding: EdgeInsets.zero,
             child: ListTile(
-              contentPadding: const EdgeInsets.all(14),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               leading: Container(
-                padding: const EdgeInsets.all(10),
+                padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(color: const Color(0xFF0284C7).withValues(alpha: 0.2), borderRadius: BorderRadius.circular(10)),
-                child: const Icon(Icons.local_taxi_rounded, color: Color(0xFF0284C7), size: 24),
+                child: const Icon(Icons.local_taxi_rounded, color: Color(0xFF0284C7), size: 22),
               ),
-              title: Text('Calculate Outstation Cab Fare 🚕', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.getTextPrimary(context))),
-              subtitle: Text('Verified km tariffs for Sedan, Innova Crysta, and Tempo Travellers', style: TextStyle(fontSize: 11.5, color: AppColors.getTextSecondary(context))),
-              trailing: Icon(Icons.arrow_forward_ios, size: 14, color: AppColors.getTextMuted(context)),
+              title: Text('Calculate Outstation Cab Fare 🚕', style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: AppColors.getTextPrimary(context))),
+              subtitle: Text('Verified km tariffs for Sedan, Innova Crysta, and Tempo Travellers', style: TextStyle(fontSize: 11, color: AppColors.getTextSecondary(context))),
+              trailing: Icon(Icons.arrow_forward_ios, size: 13, color: AppColors.getTextMuted(context)),
               onTap: () => CabFareDialog.show(context, lead: lead),
             ),
           ),
-          const SizedBox(height: 10),
-          Card(
-            color: AppColors.getCard(context),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14), side: BorderSide(color: AppColors.getBorder(context))),
+          const SizedBox(height: 8),
+          GlassCard(
+            borderRadius: 13,
+            padding: EdgeInsets.zero,
             child: ListTile(
-              contentPadding: const EdgeInsets.all(14),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               leading: Container(
-                padding: const EdgeInsets.all(10),
+                padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(color: const Color(0xFF10B981).withValues(alpha: 0.2), borderRadius: BorderRadius.circular(10)),
-                child: const Icon(Icons.payment_rounded, color: Color(0xFF10B981), size: 24),
+                child: const Icon(Icons.payment_rounded, color: Color(0xFF10B981), size: 22),
               ),
-              title: Text('1-Tap Advance UPI & Payment Link 💳', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.getTextPrimary(context))),
-              subtitle: Text('Instant Cashfree payment gateway link with auto WhatsApp dispatch', style: TextStyle(fontSize: 11.5, color: AppColors.getTextSecondary(context))),
-              trailing: Icon(Icons.arrow_forward_ios, size: 14, color: AppColors.getTextMuted(context)),
+              title: Text('1-Tap Advance UPI & Payment Link 💳', style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: AppColors.getTextPrimary(context))),
+              subtitle: Text('Instant Cashfree payment gateway link with auto WhatsApp dispatch', style: TextStyle(fontSize: 11, color: AppColors.getTextSecondary(context))),
+              trailing: Icon(Icons.arrow_forward_ios, size: 13, color: AppColors.getTextMuted(context)),
               onTap: () => _showPaymentLinkSheet(context, lead),
             ),
           ),

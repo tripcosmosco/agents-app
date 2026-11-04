@@ -1,4 +1,5 @@
 import 'tariff_pricing_manager_sheet.dart';
+import 'glass_card.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
@@ -1571,25 +1572,14 @@ If you have confirmed client enquiries or pending groups from $city, please let 
                     nextAction = '⏰ AI Action: Touch-2 Follow-Up Due Today';
                   }
 
-                  return Container(
-                    margin: const EdgeInsets.only(bottom: 10),
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: isDark ? AppColors.surfaceCard : Colors.white,
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: isDark ? Colors.white12 : AppColors.lightBorderSubtle),
-                      boxShadow: [
-                        if (!isDark)
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.04),
-                            blurRadius: 6,
-                            offset: const Offset(0, 2),
-                          ),
-                      ],
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: GlassCard(
+                      borderRadius: 13,
+                      padding: const EdgeInsets.all(11),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -1836,7 +1826,8 @@ If you have confirmed client enquiries or pending groups from $city, please let 
                         ),
                       ],
                     ),
-                  );
+                  ),
+                );
                 },
               ),
             ),

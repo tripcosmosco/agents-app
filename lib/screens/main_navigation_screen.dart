@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -355,60 +356,63 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       );
     }).toList();
 
-    return Container(
-      height: 66,
-      decoration: BoxDecoration(
-        color: isLight ? Colors.white : AppColors.surface,
-        border: Border(
-          top: BorderSide(
-            color: isLight ? AppColors.lightBorderSubtle : AppColors.borderSubtle,
-            width: 1,
-          ),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.15),
-            blurRadius: 10,
-            offset: const Offset(0, -2),
-          ),
-        ],
-      ),
-      child: SafeArea(
-        top: false,
-        child: ListView.separated(
-          controller: _sliderNavScrollController,
-          scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-          itemCount: navItems.length,
-          separatorBuilder: (_, _) => const SizedBox(width: 4),
-          itemBuilder: (context, index) {
-            final item = navItems[index];
-            final isSelected = currentIndex == index;
-            final activeGold = AppColors.getAccentGold(context);
+    final glassBg = isLight
+        ? Colors.white.withValues(alpha: 0.82)
+        : const Color(0xFF070D1E).withValues(alpha: 0.78);
+    final glassBorder = isLight
+        ? Colors.black.withValues(alpha: 0.08)
+        : Colors.white.withValues(alpha: 0.12);
 
-            return InkWell(
-              onTap: () => _onTabSelected(index),
-              borderRadius: BorderRadius.circular(12),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                width: 78,
-                padding: const EdgeInsets.symmetric(vertical: 4),
-                decoration: BoxDecoration(
-                  color: isSelected
-                      ? activeGold.withValues(alpha: isLight ? 0.12 : 0.16)
-                      : Colors.transparent,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: isSelected
-                        ? activeGold.withValues(alpha: isLight ? 0.35 : 0.45)
-                        : Colors.transparent,
-                    width: 1.2,
-                  ),
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
+    return ClipRect(
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+        child: Container(
+          height: 60,
+          decoration: BoxDecoration(
+            color: glassBg,
+            border: Border(
+              top: BorderSide(
+                color: glassBorder,
+                width: 0.6,
+              ),
+            ),
+          ),
+          child: SafeArea(
+            top: false,
+            child: ListView.separated(
+              controller: _sliderNavScrollController,
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              itemCount: navItems.length,
+              separatorBuilder: (_, _) => const SizedBox(width: 4),
+              itemBuilder: (context, index) {
+                final item = navItems[index];
+                final isSelected = currentIndex == index;
+                final activeGold = AppColors.getAccentGold(context);
+
+                return InkWell(
+                  onTap: () => _onTabSelected(index),
+                  borderRadius: BorderRadius.circular(10),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 180),
+                    width: 72,
+                    padding: const EdgeInsets.symmetric(vertical: 3),
+                    decoration: BoxDecoration(
+                      color: isSelected
+                          ? activeGold.withValues(alpha: isLight ? 0.14 : 0.18)
+                          : Colors.transparent,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: isSelected
+                            ? activeGold.withValues(alpha: isLight ? 0.35 : 0.45)
+                            : Colors.transparent,
+                        width: 1.0,
+                      ),
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
                     Stack(
                       clipBehavior: Clip.none,
                       children: [
@@ -465,6 +469,8 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
           },
         ),
       ),
+    ),
+    ),
     );
   }
 }
