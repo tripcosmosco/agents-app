@@ -893,6 +893,7 @@ class _LeadDetailScreenState extends State<LeadDetailScreen> with SingleTickerPr
   }
 
   void _sendQuickMessage(LeadModel lead) async {
+    if (_isSendingReply) return;
     final text = _quickReplyController.text.trim();
     if (text.isEmpty) return;
 

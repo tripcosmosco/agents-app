@@ -58,6 +58,8 @@ class _QuotationDeskScreenState extends State<QuotationDeskScreen> {
   bool _isB2bMode = false;
   final bool _isManualPrice = false;
   bool _showLivePreview = false;
+  bool _isSendingProposal = false;
+  bool _isSendingButtons = false;
 
   // Circuit catalog by duration
   final Map<int, List<String>> _circuitsByDays = {
@@ -572,6 +574,7 @@ class _QuotationDeskScreenState extends State<QuotationDeskScreen> {
   }
 
   void _sendWhatsAppProposal() async {
+    if (_isSendingProposal) return;
     final phone = _customerPhoneCtrl.text.trim();
     if (phone.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -580,21 +583,29 @@ class _QuotationDeskScreenState extends State<QuotationDeskScreen> {
       return;
     }
 
-    final apiService = Provider.of<LeadProvider>(context, listen: false).apiService;
-    final proposal = _generateProposalText();
-    final ok = await apiService.sendWhatsAppMessage(phone: phone, message: proposal);
+    setState(() => _isSendingProposal = true);
+    try {
+      final apiService = Provider.of<LeadProvider>(context, listen: false).apiService;
+      final proposal = _generateProposalText();
+      final ok = await apiService.sendWhatsAppMessage(phone: phone, message: proposal);
 
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(ok ? '✓ Proposal dispatched via WhatsApp!' : 'Failed to dispatch WhatsApp message. Please check gateway.'),
-          backgroundColor: ok ? AppColors.successGreen : const Color(0xFFDC2626),
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(ok ? '✓ Proposal dispatched via WhatsApp!' : 'Failed to dispatch WhatsApp message. Please check gateway.'),
+            backgroundColor: ok ? AppColors.successGreen : const Color(0xFFDC2626),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSendingProposal = false);
+      }
     }
   }
 
   void _sendInteractiveButtonsProposal() async {
+    if (_isSendingButtons) return;
     final phone = _customerPhoneCtrl.text.trim();
     if (phone.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -603,36 +614,43 @@ class _QuotationDeskScreenState extends State<QuotationDeskScreen> {
       return;
     }
 
-    final apiService = Provider.of<LeadProvider>(context, listen: false).apiService;
-    final guestName = _customerNameCtrl.text.trim().isNotEmpty ? _customerNameCtrl.text.trim() : 'Traveler';
-    final itinTitle = _selectedCircuit;
-    final grandTotal = _calculatedTotal.toInt();
-    final vehicle = _cabType;
-    final duration = '${_selectedDays}D/${_selectedNights}N';
+    setState(() => _isSendingButtons = true);
+    try {
+      final apiService = Provider.of<LeadProvider>(context, listen: false).apiService;
+      final guestName = _customerNameCtrl.text.trim().isNotEmpty ? _customerNameCtrl.text.trim() : 'Traveler';
+      final itinTitle = _selectedCircuit;
+      final grandTotal = _calculatedTotal.toInt();
+      final vehicle = _cabType;
+      final duration = '${_selectedDays}D/${_selectedNights}N';
 
-    final title = '🙏 *$itinTitle*';
-    final description = 'Namaste $guestName ji! Here is your custom quotation for ₹$grandTotal.\n\n📅 $duration • 🚗 $vehicle\n🏨 $_hotelCategory\n\nTap an instant action button below:';
-    final buttons = [
-      {'id': 'btn_confirm', 'text': '1️⃣ Confirm & Block Cab'},
-      {'id': 'btn_plan', 'text': '2️⃣ View Day-wise Plan'},
-      {'id': 'btn_pay', 'text': '💳 Pay Token ₹1,500'},
-    ];
+      final title = '🙏 *$itinTitle*';
+      final description = 'Namaste $guestName ji! Here is your custom quotation for ₹$grandTotal.\n\n📅 $duration • 🚗 $vehicle\n🏨 $_hotelCategory\n\nTap an instant action button below:';
+      final buttons = [
+        {'id': 'btn_confirm', 'text': '1️⃣ Confirm & Block Cab'},
+        {'id': 'btn_plan', 'text': '2️⃣ View Day-wise Plan'},
+        {'id': 'btn_pay', 'text': '💳 Pay Token ₹1,500'},
+      ];
 
-    final ok = await apiService.sendWhatsAppButtons(
-      phone: phone,
-      title: title,
-      description: description,
-      buttons: buttons,
-      footer: 'TripCosmos.co • Official Varanasi Desk (+91 93361 16210)',
-    );
-
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(ok ? '✓ Interactive proposal buttons sent to WhatsApp!' : 'Failed to send interactive proposal buttons.'),
-          backgroundColor: ok ? AppColors.successGreen : const Color(0xFFDC2626),
-        ),
+      final ok = await apiService.sendWhatsAppButtons(
+        phone: phone,
+        title: title,
+        description: description,
+        buttons: buttons,
+        footer: 'TripCosmos.co • Official Varanasi Desk (+91 93361 16210)',
       );
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(ok ? '✓ Interactive proposal buttons sent to WhatsApp!' : 'Failed to send interactive proposal buttons.'),
+            backgroundColor: ok ? AppColors.successGreen : const Color(0xFFDC2626),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSendingButtons = false);
+      }
     }
   }
 
@@ -827,9 +845,11 @@ class _QuotationDeskScreenState extends State<QuotationDeskScreen> {
             onPressed: _copyProposal,
           ),
           IconButton(
-            icon: const Icon(Icons.share_rounded, size: 20),
+            icon: _isSendingProposal
+                ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                : const Icon(Icons.share_rounded, size: 20),
             tooltip: 'Send WhatsApp',
-            onPressed: _sendWhatsAppProposal,
+            onPressed: _isSendingProposal ? null : _sendWhatsAppProposal,
           ),
         ],
       ),
@@ -1296,10 +1316,19 @@ class _QuotationDeskScreenState extends State<QuotationDeskScreen> {
                       children: [
                         Expanded(
                           child: ElevatedButton.icon(
-                            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF10B981), padding: const EdgeInsets.symmetric(vertical: 14)),
-                            icon: const Icon(Icons.send_rounded, size: 16, color: Colors.white),
-                            label: const Text('Send WhatsApp Proposal', style: TextStyle(fontWeight: FontWeight.w800, color: Colors.white)),
-                            onPressed: _sendWhatsAppProposal,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF10B981),
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              disabledBackgroundColor: const Color(0xFF065F46),
+                            ),
+                            icon: _isSendingProposal
+                                ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                                : const Icon(Icons.send_rounded, size: 16, color: Colors.white),
+                            label: Text(
+                              _isSendingProposal ? 'Dispatching...' : 'Send WhatsApp Proposal',
+                              style: const TextStyle(fontWeight: FontWeight.w800, color: Colors.white),
+                            ),
+                            onPressed: _isSendingProposal ? null : _sendWhatsAppProposal,
                           ),
                         ),
                         const SizedBox(width: 8),
@@ -1319,13 +1348,16 @@ class _QuotationDeskScreenState extends State<QuotationDeskScreen> {
                           backgroundColor: const Color(0xFF4F46E5),
                           padding: const EdgeInsets.symmetric(vertical: 13),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          disabledBackgroundColor: const Color(0xFF312E81),
                         ),
-                        icon: const Icon(Icons.touch_app_rounded, size: 16, color: Colors.white),
-                        label: const Text(
-                          '⚡ Send 1-Tap Interactive Quick Buttons',
-                          style: TextStyle(fontWeight: FontWeight.w800, color: Colors.white, fontSize: 13),
+                        icon: _isSendingButtons
+                            ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                            : const Icon(Icons.touch_app_rounded, size: 16, color: Colors.white),
+                        label: Text(
+                          _isSendingButtons ? 'Dispatching 1-Tap Buttons...' : '⚡ Send 1-Tap Interactive Quick Buttons',
+                          style: const TextStyle(fontWeight: FontWeight.w800, color: Colors.white, fontSize: 13),
                         ),
-                        onPressed: _sendInteractiveButtonsProposal,
+                        onPressed: _isSendingButtons ? null : _sendInteractiveButtonsProposal,
                       ),
                     ),
                   ],

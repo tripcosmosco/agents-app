@@ -49,6 +49,8 @@ class WhatsAppProvider extends ChangeNotifier {
   String _currentAgentName = 'Nishkarsh';
   String get currentAgentName => _currentAgentName;
 
+  final Set<String> _inFlightSends = {};
+
   int get totalUnreadCount => _threads.fold(0, (sum, th) => sum + th.unreadCount);
   int get whatsappActiveCount => _threads.where((th) => th.hasWhatsappChat || th.sourceChannel == 'whatsapp').length;
   int get followUpDueCount => _threads.where((th) => th.nextFollowUpAt != null).length;
@@ -320,59 +322,76 @@ class WhatsAppProvider extends ChangeNotifier {
   }
 
   Future<bool> sendMessage(String threadId, String text) async {
-    final index = _threads.indexWhere((th) => th.id == threadId);
-    if (index == -1 || text.trim().isEmpty) return false;
+    final cleanText = text.trim();
+    if (cleanText.isEmpty) return false;
 
-    final targetThread = _threads[index];
-    final tempId = 'msg_${DateTime.now().millisecondsSinceEpoch}';
-    final newMsg = WhatsAppMessage(
-      id: tempId,
-      text: text.trim(),
-      isFromCustomer: false,
-      timestamp: DateTime.now(),
-      status: 'sent',
-      channel: 'whatsapp',
-    );
-
-    final updatedMessages = List<WhatsAppMessage>.from(targetThread.messages)..add(newMsg);
-    _threads[index] = targetThread.copyWith(
-      lastMessage: text.trim(),
-      lastMessageTime: DateTime.now(),
-      lastMessageFromMe: true,
-      lastMessageStatus: 'sent',
-      timeAgo: 'Just now',
-      hasWhatsappChat: true,
-      messages: updatedMessages,
-    );
-    notifyListeners();
-
-    final ok = await apiService.sendWhatsAppMessage(
-      phone: targetThread.customerPhone,
-      message: text.trim(),
-    );
-
-    final updatedIdx = _threads.indexWhere((th) => th.id == threadId);
-    if (updatedIdx != -1) {
-      final msgs = List<WhatsAppMessage>.from(_threads[updatedIdx].messages);
-      final msgIdx = msgs.indexWhere((m) => m.id == tempId);
-      if (msgIdx != -1) {
-        msgs[msgIdx] = WhatsAppMessage(
-          id: tempId,
-          text: text.trim(),
-          isFromCustomer: false,
-          timestamp: msgs[msgIdx].timestamp,
-          status: ok ? 'delivered' : 'failed',
-          channel: 'whatsapp',
-        );
-        _threads[updatedIdx] = _threads[updatedIdx].copyWith(
-          messages: msgs,
-          lastMessageStatus: ok ? 'delivered' : 'failed',
-        );
-        _saveThreadsToCache();
-        notifyListeners();
-      }
+    // Idempotency: debounce duplicate sends within 4s window
+    final inFlightKey = '$threadId:$cleanText';
+    if (_inFlightSends.contains(inFlightKey)) {
+      debugPrint('WhatsAppProvider: suppressed duplicate in-flight send for $inFlightKey');
+      return true;
     }
-    return ok;
+    _inFlightSends.add(inFlightKey);
+
+    try {
+      final index = _threads.indexWhere((th) => th.id == threadId);
+      if (index == -1) return false;
+
+      final targetThread = _threads[index];
+      final tempId = 'msg_${DateTime.now().millisecondsSinceEpoch}';
+      final newMsg = WhatsAppMessage(
+        id: tempId,
+        text: cleanText,
+        isFromCustomer: false,
+        timestamp: DateTime.now(),
+        status: 'sent',
+        channel: 'whatsapp',
+      );
+
+      final updatedMessages = List<WhatsAppMessage>.from(targetThread.messages)..add(newMsg);
+      _threads[index] = targetThread.copyWith(
+        lastMessage: cleanText,
+        lastMessageTime: DateTime.now(),
+        lastMessageFromMe: true,
+        lastMessageStatus: 'sent',
+        timeAgo: 'Just now',
+        hasWhatsappChat: true,
+        messages: updatedMessages,
+      );
+      notifyListeners();
+
+      final ok = await apiService.sendWhatsAppMessage(
+        phone: targetThread.customerPhone,
+        message: cleanText,
+      );
+
+      final updatedIdx = _threads.indexWhere((th) => th.id == threadId);
+      if (updatedIdx != -1) {
+        final msgs = List<WhatsAppMessage>.from(_threads[updatedIdx].messages);
+        final msgIdx = msgs.indexWhere((m) => m.id == tempId);
+        if (msgIdx != -1) {
+          msgs[msgIdx] = WhatsAppMessage(
+            id: tempId,
+            text: cleanText,
+            isFromCustomer: false,
+            timestamp: msgs[msgIdx].timestamp,
+            status: ok ? 'delivered' : 'failed',
+            channel: 'whatsapp',
+          );
+          _threads[updatedIdx] = _threads[updatedIdx].copyWith(
+            messages: msgs,
+            lastMessageStatus: ok ? 'delivered' : 'failed',
+          );
+          _saveThreadsToCache();
+          notifyListeners();
+        }
+      }
+      return ok;
+    } finally {
+      Future.delayed(const Duration(seconds: 4), () {
+        _inFlightSends.remove(inFlightKey);
+      });
+    }
   }
 
   /// Delete a sent WhatsApp message for everyone

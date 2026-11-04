@@ -15,7 +15,8 @@ import 'travel_quote_dialog.dart';
 import 'whatsapp_team_chat_view.dart';
 
 class B2bPartnersView extends StatefulWidget {
-  const B2bPartnersView({super.key});
+  final bool embedded;
+  const B2bPartnersView({super.key, this.embedded = false});
 
   @override
   State<B2bPartnersView> createState() => _B2bPartnersViewState();
@@ -23,7 +24,6 @@ class B2bPartnersView extends StatefulWidget {
 
 class _B2bPartnersViewState extends State<B2bPartnersView> {
   bool _isLoading = false;
-  bool _isOverviewExpanded = true;
   String? _errorMessage;
   String _selectedCity = 'All';
   String _selectedStatus = 'all'; // all, new, in_crm, contacted
@@ -1213,204 +1213,209 @@ If you have confirmed client enquiries or pending groups from $city, please let 
       child: CustomScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
         slivers: [
-          // 1. Sleek B2B Operations Command Card (Natural Fluid Scroll)
+          // 0. Intelligent Floating SliverAppBar (Scrolls away seamlessly, snaps back on scroll up)
+          if (!widget.embedded)
+            SliverAppBar(
+              floating: true,
+              snap: true,
+              pinned: false,
+              elevation: 0,
+              backgroundColor: isDark ? AppColors.surface : Colors.white,
+              titleSpacing: 16,
+              title: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(5),
+                    decoration: BoxDecoration(
+                      color: AppColors.accentGold.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(Icons.hub_rounded, color: AppColors.accentGold, size: 16),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Row(
+                          children: [
+                            Text(
+                              'B2B Agency Network',
+                              style: TextStyle(
+                                color: AppColors.getTextPrimary(context),
+                                fontSize: 15,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                              decoration: BoxDecoration(
+                                color: AppColors.accentGold.withValues(alpha: 0.15),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                '${_counts['total'] ?? _agencies.length} Agencies',
+                                style: const TextStyle(fontSize: 9.5, fontWeight: FontWeight.w800, color: AppColors.accentGold),
+                              ),
+                            ),
+                          ],
+                        ),
+                        Text(
+                          'Pan-India DMC & Wholesale Ground Tariffs',
+                          style: TextStyle(
+                            color: AppColors.getTextSecondary(context),
+                            fontSize: 10,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                IconButton(
+                  tooltip: 'Tariff Sheet',
+                  icon: const Icon(Icons.receipt_long_rounded, color: AppColors.accentGold, size: 20),
+                  onPressed: () => TariffPricingManagerSheet.show(context),
+                ),
+                IconButton(
+                  tooltip: 'Net Margin Calculator',
+                  icon: const Icon(Icons.calculate_rounded, color: Color(0xFF38BDF8), size: 20),
+                  onPressed: () => _showB2bRateCalculatorModal(context),
+                ),
+                IconButton(
+                  tooltip: 'Import / CRM Sync',
+                  icon: const Icon(Icons.cloud_download_rounded, color: Color(0xFF818CF8), size: 20),
+                  onPressed: () => _showB2bImporterDialog(context),
+                ),
+                IconButton(
+                  tooltip: 'Add B2B Partner',
+                  icon: const Icon(Icons.add_circle_outline_rounded, color: Color(0xFF34D399), size: 21),
+                  onPressed: () => _showAddAgencyDialog(context),
+                ),
+              ],
+            ),
+
+          // 1. Sleek Compact Command Bar (Fluid, non-intrusive)
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 6),
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
               child: Container(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
                     colors: [Color(0xFF1E1B4B), Color(0xFF0F172A)],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0xFFF59E0B).withValues(alpha: 0.35)),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.25),
-                      blurRadius: 10,
-                      offset: const Offset(0, 3),
-                    ),
-                  ],
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFFF59E0B).withValues(alpha: 0.25)),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Top Header Strip with Overview Collapse Toggle
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFF59E0B).withValues(alpha: 0.2),
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              child: const Row(
-                                children: [
-                                  Icon(Icons.hub_rounded, size: 11, color: Color(0xFFFBBF24)),
-                                  SizedBox(width: 4),
-                                  Text(
-                                    'DMC GROUND DESK',
-                                    style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w800, color: Color(0xFFFBBF24)),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            const Text(
-                              'Wholesale B2B Network',
-                              style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800, color: Colors.white),
-                            ),
-                          ],
-                        ),
-                        Row(
-                          children: [
-                            InkWell(
-                              onTap: () => TariffPricingManagerSheet.show(context),
-                              borderRadius: BorderRadius.circular(6),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withValues(alpha: 0.08),
-                                  borderRadius: BorderRadius.circular(6),
-                                  border: Border.all(color: Colors.white24),
-                                ),
-                                child: const Row(
-                                  children: [
-                                    Icon(Icons.copy_rounded, size: 11, color: Color(0xFFFBBF24)),
-                                    SizedBox(width: 3),
-                                    Text('Tariff', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Color(0xFFFBBF24))),
-                                  ],
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 6),
-                            InkWell(
-                              onTap: () => setState(() => _isOverviewExpanded = !_isOverviewExpanded),
-                              borderRadius: BorderRadius.circular(6),
-                              child: Container(
-                                padding: const EdgeInsets.all(4),
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withValues(alpha: 0.08),
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                                child: Icon(
-                                  _isOverviewExpanded ? Icons.keyboard_arrow_up_rounded : Icons.keyboard_arrow_down_rounded,
-                                  size: 15,
-                                  color: Colors.white70,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-
-                    if (_isOverviewExpanded) ...[
-                      const SizedBox(height: 10),
-                      // 4 Interactive KPI Metric Tiles
-                      Row(
+                    // Dynamic Filter Metric Pills (Single Sleek Row)
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
                         children: [
-                          Expanded(
-                            child: _buildMetricTile(
-                              label: 'Partners',
-                              value: '${_counts['total'] ?? _agencies.length}',
-                              color: Colors.white,
-                              icon: Icons.business_rounded,
-                              onTap: () {
-                                setState(() => _selectedStatus = 'all');
-                                _loadAgenciesFromServer();
-                              },
-                              isSelected: _selectedStatus == 'all',
-                            ),
+                          _buildMetricTile(
+                            label: 'All Partners',
+                            value: '${_counts['total'] ?? _agencies.length}',
+                            color: Colors.white,
+                            icon: Icons.business_rounded,
+                            onTap: () {
+                              setState(() => _selectedStatus = 'all');
+                              _loadAgenciesFromServer();
+                            },
+                            isSelected: _selectedStatus == 'all',
                           ),
                           const SizedBox(width: 6),
-                          Expanded(
-                            child: _buildMetricTile(
-                              label: 'In CRM Drip',
-                              value: '${_counts['in_crm'] ?? 0}',
-                              color: const Color(0xFF34D399),
-                              icon: Icons.cloud_done_rounded,
-                              onTap: () {
-                                setState(() => _selectedStatus = 'in_crm');
-                                _loadAgenciesFromServer();
-                              },
-                              isSelected: _selectedStatus == 'in_crm',
-                            ),
+                          _buildMetricTile(
+                            label: 'In CRM Drip',
+                            value: '${_counts['in_crm'] ?? 0}',
+                            color: const Color(0xFF34D399),
+                            icon: Icons.cloud_done_rounded,
+                            onTap: () {
+                              setState(() => _selectedStatus = 'in_crm');
+                              _loadAgenciesFromServer();
+                            },
+                            isSelected: _selectedStatus == 'in_crm',
                           ),
                           const SizedBox(width: 6),
-                          Expanded(
-                            child: _buildMetricTile(
-                              label: 'Pitched',
-                              value: '${_counts['contacted'] ?? 0}',
-                              color: const Color(0xFF38BDF8),
-                              icon: Icons.send_rounded,
-                              onTap: () {
-                                setState(() => _selectedStatus = 'contacted');
-                                _loadAgenciesFromServer();
-                              },
-                              isSelected: _selectedStatus == 'contacted',
-                            ),
+                          _buildMetricTile(
+                            label: 'Pitched',
+                            value: '${_counts['contacted'] ?? 0}',
+                            color: const Color(0xFF38BDF8),
+                            icon: Icons.send_rounded,
+                            onTap: () {
+                              setState(() => _selectedStatus = 'contacted');
+                              _loadAgenciesFromServer();
+                            },
+                            isSelected: _selectedStatus == 'contacted',
                           ),
                           const SizedBox(width: 6),
-                          Expanded(
-                            child: _buildMetricTile(
-                              label: 'New Queue',
-                              value: '${_counts['new'] ?? 0}',
-                              color: const Color(0xFFFBBF24),
-                              icon: Icons.fiber_new_rounded,
-                              onTap: () {
-                                setState(() => _selectedStatus = 'new');
-                                _loadAgenciesFromServer();
-                              },
-                              isSelected: _selectedStatus == 'new',
-                            ),
+                          _buildMetricTile(
+                            label: 'New Queue',
+                            value: '${_counts['new'] ?? 0}',
+                            color: const Color(0xFFFBBF24),
+                            icon: Icons.fiber_new_rounded,
+                            onTap: () {
+                              setState(() => _selectedStatus = 'new');
+                              _loadAgenciesFromServer();
+                            },
+                            isSelected: _selectedStatus == 'new',
                           ),
                         ],
                       ),
-                      const SizedBox(height: 10),
+                    ),
+                    const SizedBox(height: 6),
 
-                      // Refined Horizontal Action Bar
-                      SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: Row(
-                          children: [
-                            _buildHeaderActionPill(
-                              icon: Icons.rocket_launch_rounded,
-                              label: 'Dev Deepawali Campaign',
-                              color: const Color(0xFFF59E0B),
-                              onTap: () => _showDevDiwaliCampaignDialog(context),
-                            ),
-                            const SizedBox(width: 6),
-                            _buildHeaderActionPill(
-                              icon: Icons.calculate_rounded,
-                              label: 'Net Calculator',
-                              color: const Color(0xFF38BDF8),
-                              onTap: () => _showB2bRateCalculatorModal(context),
-                            ),
-                            const SizedBox(width: 6),
-                            _buildHeaderActionPill(
-                              icon: Icons.cloud_download_rounded,
-                              label: 'Import / CRM Sync',
-                              color: const Color(0xFF818CF8),
-                              onTap: () => _showB2bImporterDialog(context),
-                            ),
-                            const SizedBox(width: 6),
-                            _buildHeaderActionPill(
-                              icon: Icons.add_rounded,
-                              label: 'Add Partner',
-                              color: const Color(0xFF34D399),
-                              onTap: () => _showAddAgencyDialog(context),
-                            ),
-                          ],
-                        ),
+                    // Quick Action Pills
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: [
+                          _buildHeaderActionPill(
+                            icon: Icons.rocket_launch_rounded,
+                            label: 'Dev Deepawali Campaign',
+                            color: const Color(0xFFF59E0B),
+                            onTap: () => _showDevDiwaliCampaignDialog(context),
+                          ),
+                          const SizedBox(width: 6),
+                          _buildHeaderActionPill(
+                            icon: Icons.calculate_rounded,
+                            label: 'Net Calculator',
+                            color: const Color(0xFF38BDF8),
+                            onTap: () => _showB2bRateCalculatorModal(context),
+                          ),
+                          const SizedBox(width: 6),
+                          _buildHeaderActionPill(
+                            icon: Icons.cloud_download_rounded,
+                            label: 'Import / CRM Sync',
+                            color: const Color(0xFF818CF8),
+                            onTap: () => _showB2bImporterDialog(context),
+                          ),
+                          const SizedBox(width: 6),
+                          _buildHeaderActionPill(
+                            icon: Icons.add_rounded,
+                            label: 'Add Partner',
+                            color: const Color(0xFF34D399),
+                            onTap: () => _showAddAgencyDialog(context),
+                          ),
+                          const SizedBox(width: 6),
+                          _buildHeaderActionPill(
+                            icon: Icons.receipt_long_rounded,
+                            label: 'Wholesale Tariffs',
+                            color: const Color(0xFFFBBF24),
+                            onTap: () => TariffPricingManagerSheet.show(context),
+                          ),
+                        ],
                       ),
-                    ],
+                    ),
                   ],
                 ),
               ),
@@ -1422,46 +1427,49 @@ If you have confirmed client enquiries or pending groups from $city, please let 
             child: Column(
               children: [
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                  child: TextField(
-                    controller: _searchController,
-                    onChanged: _onSearchChanged,
-                    style: TextStyle(color: isDark ? Colors.white : AppColors.lightTextPrimary, fontSize: 12.5),
-                    decoration: InputDecoration(
-                      filled: true,
-                      fillColor: isDark ? AppColors.surfaceCard : Colors.white,
-                      isDense: true,
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-                      hintText: 'Search agency by name, city, or phone...',
-                      hintStyle: TextStyle(color: isDark ? Colors.white38 : AppColors.lightTextMuted, fontSize: 12),
-                      prefixIcon: Icon(Icons.search, color: isDark ? AppColors.textMuted : AppColors.lightTextSecondary, size: 17),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: BorderSide(color: isDark ? Colors.white12 : AppColors.lightBorderSubtle),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 3),
+                  child: SizedBox(
+                    height: 38,
+                    child: TextField(
+                      controller: _searchController,
+                      onChanged: _onSearchChanged,
+                      style: TextStyle(color: isDark ? Colors.white : AppColors.lightTextPrimary, fontSize: 12),
+                      decoration: InputDecoration(
+                        filled: true,
+                        fillColor: isDark ? AppColors.surfaceCard : Colors.white,
+                        isDense: true,
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                        hintText: 'Search agency by name, city, or phone...',
+                        hintStyle: TextStyle(color: isDark ? Colors.white38 : AppColors.lightTextMuted, fontSize: 11.5),
+                        prefixIcon: Icon(Icons.search, color: isDark ? AppColors.textMuted : AppColors.lightTextSecondary, size: 16),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(9),
+                          borderSide: BorderSide(color: isDark ? Colors.white12 : AppColors.lightBorderSubtle),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(9),
+                          borderSide: BorderSide(color: AppColors.getAccentGold(context), width: 1.5),
+                        ),
+                        suffixIcon: _searchController.text.isNotEmpty
+                            ? IconButton(
+                                icon: Icon(Icons.clear, color: isDark ? Colors.white54 : AppColors.lightTextSecondary, size: 14),
+                                onPressed: () {
+                                  _searchController.clear();
+                                  _onSearchChanged('');
+                                },
+                              )
+                            : null,
                       ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: BorderSide(color: AppColors.getAccentGold(context), width: 1.5),
-                      ),
-                      suffixIcon: _searchController.text.isNotEmpty
-                          ? IconButton(
-                              icon: Icon(Icons.clear, color: isDark ? Colors.white54 : AppColors.lightTextSecondary, size: 15),
-                              onPressed: () {
-                                _searchController.clear();
-                                _onSearchChanged('');
-                              },
-                            )
-                          : null,
                     ),
                   ),
                 ),
                 SizedBox(
-                  height: 34,
+                  height: 30,
                   child: ListView.separated(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     scrollDirection: Axis.horizontal,
                     itemCount: _cities.length,
-                    separatorBuilder: (_, _) => const SizedBox(width: 6),
+                    separatorBuilder: (_, _) => const SizedBox(width: 5),
                     itemBuilder: (ctx, idx) {
                       final city = _cities[idx];
                       final isSelected = _selectedCity.toLowerCase() == city.toLowerCase();
@@ -1469,14 +1477,14 @@ If you have confirmed client enquiries or pending groups from $city, please let 
                         label: Text(
                           city,
                           style: TextStyle(
-                            fontSize: 11,
+                            fontSize: 10.5,
                             fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
                             color: isSelected ? Colors.white : (isDark ? Colors.white70 : const Color(0xFF334155)),
                           ),
                         ),
                         selected: isSelected,
                         visualDensity: VisualDensity.compact,
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 0),
                         selectedColor: isDark ? const Color(0xFFF59E0B) : const Color(0xFFB45309),
                         backgroundColor: isDark ? AppColors.surfaceCard : const Color(0xFFF1F5F9),
                         side: BorderSide(
@@ -1494,7 +1502,7 @@ If you have confirmed client enquiries or pending groups from $city, please let 
                     },
                   ),
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: 4),
               ],
             ),
           ),
@@ -1899,36 +1907,35 @@ If you have confirmed client enquiries or pending groups from $city, please let 
   }) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(10),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+      borderRadius: BorderRadius.circular(8),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4.5),
         decoration: BoxDecoration(
-          color: isSelected ? color.withValues(alpha: 0.18) : Colors.white.withValues(alpha: 0.05),
-          borderRadius: BorderRadius.circular(10),
+          color: isSelected ? color.withValues(alpha: 0.22) : Colors.white.withValues(alpha: 0.05),
+          borderRadius: BorderRadius.circular(8),
           border: Border.all(
             color: isSelected ? color : Colors.white12,
             width: isSelected ? 1.2 : 0.8,
           ),
         ),
-        child: Column(
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(icon, size: 11, color: color),
-                const SizedBox(width: 3),
-                Text(
-                  value,
-                  style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w900, color: color),
-                ),
-              ],
+            Icon(icon, size: 12, color: color),
+            const SizedBox(width: 4),
+            Text(
+              value,
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: color),
             ),
-            const SizedBox(height: 2),
+            const SizedBox(width: 4),
             Text(
               label,
-              style: TextStyle(fontSize: 8.5, fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500, color: isSelected ? color : Colors.white60),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
+                color: isSelected ? color : Colors.white70,
+              ),
             ),
           ],
         ),
@@ -1944,15 +1951,15 @@ If you have confirmed client enquiries or pending groups from $city, please let 
   }) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
+      borderRadius: BorderRadius.circular(7),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4.5),
+        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3.5),
         decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.15),
-          borderRadius: BorderRadius.circular(8),
+          color: color.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(7),
           border: Border.all(
             color: color.withValues(alpha: 0.35),
-            width: 1.0,
+            width: 0.9,
           ),
         ),
         child: Row(
@@ -1962,7 +1969,7 @@ If you have confirmed client enquiries or pending groups from $city, please let 
             const SizedBox(width: 4),
             Text(
               label,
-              style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Colors.white.withValues(alpha: 0.9)),
+              style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w700, color: Colors.white.withValues(alpha: 0.9)),
             ),
           ],
         ),

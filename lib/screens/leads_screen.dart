@@ -341,7 +341,7 @@ class _LeadsScreenState extends State<LeadsScreen> {
             ? Column(
                 children: [
                   _buildModeSwitcher(),
-                  const Expanded(child: B2bPartnersView()),
+                  const Expanded(child: B2bPartnersView(embedded: true)),
                 ],
               )
             : CustomScrollView(
@@ -362,9 +362,9 @@ class _LeadsScreenState extends State<LeadsScreen> {
                     delegate: _StageFilterHeaderDelegate(
                       child: Container(
                         color: Theme.of(context).scaffoldBackgroundColor,
-                        padding: const EdgeInsets.symmetric(vertical: 4),
+                        padding: const EdgeInsets.symmetric(vertical: 2),
                         child: SizedBox(
-                          height: 38,
+                          height: 32,
                           child: ListView.builder(
                             scrollDirection: Axis.horizontal,
                             padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -373,7 +373,7 @@ class _LeadsScreenState extends State<LeadsScreen> {
                               final stage = AppConstants.pipelineStages[index];
                               final isSelected = leadProvider.selectedStage == stage;
                               return Padding(
-                                padding: const EdgeInsets.only(right: 8.0),
+                                padding: const EdgeInsets.only(right: 6.0),
                                 child: ChoiceChip(
                                   label: Text(_formatStage(stage)),
                                   selected: isSelected,
@@ -382,7 +382,7 @@ class _LeadsScreenState extends State<LeadsScreen> {
                                   backgroundColor: AppColors.getCard(context),
                                   visualDensity: VisualDensity.compact,
                                   materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+                                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 1),
                                   labelStyle: TextStyle(
                                     color: isSelected
                                         ? AppColors.primaryDark
@@ -390,7 +390,7 @@ class _LeadsScreenState extends State<LeadsScreen> {
                                     fontWeight: isSelected
                                         ? FontWeight.w700
                                         : FontWeight.w500,
-                                    fontSize: 11.5,
+                                    fontSize: 11,
                                   ),
                                 ),
                               );
@@ -398,7 +398,7 @@ class _LeadsScreenState extends State<LeadsScreen> {
                           ),
                         ),
                       ),
-                      height: 46.0,
+                      height: 36.0,
                     ),
                   ),
                   if (leadProvider.filteredLeads.isEmpty)
@@ -862,12 +862,12 @@ class _LeadsScreenState extends State<LeadsScreen> {
 
   Widget _buildModeSwitcher() {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 2),
       child: Container(
-        padding: const EdgeInsets.all(4),
+        padding: const EdgeInsets.all(3),
         decoration: BoxDecoration(
           color: AppColors.getElevated(context),
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(10),
           border: Border.all(color: AppColors.getBorder(context)),
         ),
         child: Row(
@@ -875,26 +875,26 @@ class _LeadsScreenState extends State<LeadsScreen> {
             Expanded(
               child: InkWell(
                 onTap: () => setState(() => _isB2bMode = false),
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(7),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(vertical: 9),
+                  padding: const EdgeInsets.symmetric(vertical: 5),
                   decoration: BoxDecoration(
                     color: !_isB2bMode ? AppColors.accentGold : Colors.transparent,
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(7),
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Icon(
                         Icons.person_pin_circle_rounded,
-                        size: 15,
+                        size: 14,
                         color: !_isB2bMode ? AppColors.primaryDark : AppColors.getTextMuted(context),
                       ),
-                      const SizedBox(width: 6),
+                      const SizedBox(width: 5),
                       Text(
                         'Direct Travelers (B2C)',
                         style: TextStyle(
-                          fontSize: 12,
+                          fontSize: 11,
                           fontWeight: FontWeight.w800,
                           color: !_isB2bMode ? AppColors.primaryDark : AppColors.getTextMuted(context),
                         ),
@@ -907,26 +907,26 @@ class _LeadsScreenState extends State<LeadsScreen> {
             Expanded(
               child: InkWell(
                 onTap: () => setState(() => _isB2bMode = true),
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(7),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(vertical: 9),
+                  padding: const EdgeInsets.symmetric(vertical: 5),
                   decoration: BoxDecoration(
                     color: _isB2bMode ? const Color(0xFF8B5CF6) : Colors.transparent,
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(7),
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Icon(
                         Icons.business_rounded,
-                        size: 15,
+                        size: 14,
                         color: _isB2bMode ? Colors.white : AppColors.getTextMuted(context),
                       ),
-                      const SizedBox(width: 6),
+                      const SizedBox(width: 5),
                       Text(
                         'B2B Partners (DMC)',
                         style: TextStyle(
-                          fontSize: 12,
+                          fontSize: 11,
                           fontWeight: FontWeight.w800,
                           color: _isB2bMode ? Colors.white : AppColors.getTextMuted(context),
                         ),
@@ -944,12 +944,12 @@ class _LeadsScreenState extends State<LeadsScreen> {
 
   Widget _buildSegmentBar(BuildContext context, LeadProvider leadProvider) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
+      padding: const EdgeInsets.fromLTRB(16, 2, 16, 2),
       child: Container(
-        padding: const EdgeInsets.all(4),
+        padding: const EdgeInsets.all(3),
         decoration: BoxDecoration(
           color: AppColors.getCard(context),
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(10),
           border: Border.all(color: AppColors.getBorder(context)),
         ),
         child: Row(

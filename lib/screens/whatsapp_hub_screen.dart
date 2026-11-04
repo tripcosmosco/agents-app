@@ -854,7 +854,7 @@ class _WhatsAppHubScreenState extends State<WhatsAppHubScreen> {
               ),
             // Top Mode Switcher Bar
             Padding(
-              padding: const EdgeInsets.fromLTRB(14, 10, 14, 6),
+              padding: const EdgeInsets.fromLTRB(14, 4, 14, 3),
               child: Row(
                 children: [
                   Expanded(
@@ -865,7 +865,7 @@ class _WhatsAppHubScreenState extends State<WhatsAppHubScreen> {
                       icon: Icons.chat_bubble_rounded,
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 6),
                   Expanded(
                     child: _buildTabPill(
                       index: 1,
@@ -874,7 +874,7 @@ class _WhatsAppHubScreenState extends State<WhatsAppHubScreen> {
                       icon: Icons.language,
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 6),
                   Expanded(
                     child: _buildTabPill(
                       index: 2,
@@ -999,36 +999,39 @@ class _WhatsAppHubScreenState extends State<WhatsAppHubScreen> {
       children: [
         // 1. Search Bar
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-          child: TextField(
-            controller: _searchController,
-            onChanged: wp.setSearchQuery,
-            style: TextStyle(color: AppColors.getTextPrimary(context), fontSize: 13),
-            decoration: InputDecoration(
-              hintText: 'Search by name, +91 phone, circuit, or message...',
-              hintStyle: const TextStyle(color: AppColors.textMuted, fontSize: 12.5),
-              prefixIcon: const Icon(Icons.search, size: 18, color: AppColors.accentGold),
-              suffixIcon: wp.searchQuery.isNotEmpty
-                  ? IconButton(
-                      icon: Icon(Icons.clear, size: 16, color: AppColors.getTextSecondary(context)),
-                      onPressed: () {
-                        _searchController.clear();
-                        wp.setSearchQuery('');
-                      },
-                    )
-                  : null,
-              isDense: true,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
+          child: SizedBox(
+            height: 36,
+            child: TextField(
+              controller: _searchController,
+              onChanged: wp.setSearchQuery,
+              style: TextStyle(color: AppColors.getTextPrimary(context), fontSize: 12),
+              decoration: InputDecoration(
+                hintText: 'Search by name, +91 phone, circuit, or message...',
+                hintStyle: const TextStyle(color: AppColors.textMuted, fontSize: 11.5),
+                prefixIcon: const Icon(Icons.search, size: 16, color: AppColors.accentGold),
+                suffixIcon: wp.searchQuery.isNotEmpty
+                    ? IconButton(
+                        icon: Icon(Icons.clear, size: 15, color: AppColors.getTextSecondary(context)),
+                        onPressed: () {
+                          _searchController.clear();
+                          wp.setSearchQuery('');
+                        },
+                      )
+                    : null,
+                isDense: true,
+                contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              ),
             ),
           ),
         ),
 
         // 2. Superfone Instant Filter Pills
         SizedBox(
-          height: 38,
+          height: 32,
           child: ListView(
             scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
             children: [
               _buildFilterChip(wp, 'all', 'All (${wp.threads.length})'),
               if (wp.slaBreachedCount > 0)
