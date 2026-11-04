@@ -69,6 +69,72 @@ class _WhatsAppTeamChatViewState extends State<WhatsAppTeamChatView> {
     },
   ];
 
+  List<Map<String, String>> _getPredictiveReplies(WhatsAppThread thread) {
+    final text = thread.lastMessage.toLowerCase();
+    final List<Map<String, String>> suggestions = [];
+
+    // 1. Pricing & Packages Intent
+    if (text.contains('rate') || text.contains('price') || text.contains('cost') || text.contains('kitna') || text.contains('package') || text.contains('budget')) {
+      suggestions.add({
+        'label': '✨ 💰 3D2N Kashi: ₹6,800/pax',
+        'text': 'Namaste ${thread.customerName}! 🙏 Our most popular 3D2N Kashi Spiritual Package is ₹6,800/pax (includes AC Hotel, Airport/Station Transfers, Evening Ganga Aarti Boat & VIP Kashi Vishwanath Darshan). Would you like me to send the complete day-by-day plan?',
+      });
+      suggestions.add({
+        'label': '✨ 📄 4D3N Circuit Tariff',
+        'text': 'Namaste! Sharing our verified 4D3N Kashi-Ayodhya-Prayagraj Triveni Sangam circuit tariff. Hotel category: 3★/4★ available with breakfast & private AC cab.',
+      });
+    }
+
+    // 2. Darshan & Aarti Intent
+    if (text.contains('darshan') || text.contains('mandir') || text.contains('temple') || text.contains('aarti') || text.contains('vip') || text.contains('entry')) {
+      suggestions.add({
+        'label': '✨ 🕉️ VIP Sugam Darshan',
+        'text': 'Namaste! We arrange confirmed VIP Sugam Darshan passes for Shri Kashi Vishwanath Temple with priority entry from Gate 4 and dedicated local escort so you don\'t have to wait in queues.',
+      });
+      suggestions.add({
+        'label': '✨ 🚤 Bajra Ganga Aarti',
+        'text': 'Namaste! We can reserve confirmed front-row seats on our traditional wooden Bajra Boat for the world-famous evening Dashashwamedh Ghat Ganga Aarti.',
+      });
+    }
+
+    // 3. Cab & Transfer Intent
+    if (text.contains('cab') || text.contains('taxi') || text.contains('airport') || text.contains('innova') || text.contains('car') || text.contains('pickup')) {
+      suggestions.add({
+        'label': '✨ 🚗 Airport Drop ₹1,100',
+        'text': 'Pickup from Varanasi Airport (VNS) to Ghats / Godowlia: AC Sedan (Dzire) ₹1,100 | Innova Crysta ₹1,800. Sanitized vehicle with experienced UP65 driver.',
+      });
+      suggestions.add({
+        'label': '✨ 🚕 Ayodhya Same-Day',
+        'text': 'Varanasi to Ayodhya Ram Mandir same-day round trip: AC Sedan ₹3,800 | Innova Crysta ₹5,500 including toll, parking, and driver allowance.',
+      });
+    }
+
+    // 4. Payment & UPI Intent
+    if (text.contains('pay') || text.contains('advance') || text.contains('token') || text.contains('upi') || text.contains('account') || text.contains('qr') || text.contains('gpay')) {
+      suggestions.add({
+        'label': '✨ 💳 Advance Token ₹1,500',
+        'text': 'To lock your confirmed Varanasi darshan dates & AC vehicle, an advance token of ₹1,500 can be paid via UPI to our official TripCosmos desk: 9336116210@upi (+91 93361 16210). Balance payable on arrival.',
+      });
+    }
+
+    // 5. B2B DMC Intent
+    if (thread.isB2b || text.contains('agent') || text.contains('b2b') || text.contains('partner') || text.contains('commission')) {
+      suggestions.add({
+        'label': '✨ 🏢 Wholesale Net Rates',
+        'text': 'Namaste Partner! 🙏 Sharing TripCosmos Varanasi B2B Net DMC Tariffs:\n• 3D2N Kashi Spiritual: ₹7,100/pax net\n• 4D3N Kashi-Ayodhya-Prayagraj: ₹10,500/pax net\n• 100% White-Label Vouchers (Your Branding) & Dedicated UP65 Fleet.',
+      });
+    }
+
+    // Merge with standard quick replies
+    for (final def in _cannedQuickReplies) {
+      if (!suggestions.any((s) => s['text'] == def['text'])) {
+        suggestions.add(def);
+      }
+    }
+
+    return suggestions;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -1202,22 +1268,34 @@ class _WhatsAppTeamChatViewState extends State<WhatsAppTeamChatView> {
                   },
                 ),
                 const SizedBox(width: 8),
-                ..._cannedQuickReplies.map((reply) => Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: ActionChip(
-                    label: Text(
-                      reply['label']!,
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: isLight ? const Color(0xFF1E293B) : Colors.white,
+                ..._getPredictiveReplies(currentThread).map((reply) {
+                  final isPredictive = reply['label']!.startsWith('✨');
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: ActionChip(
+                      label: Text(
+                        reply['label']!,
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: isPredictive ? FontWeight.w800 : FontWeight.w600,
+                          color: isPredictive
+                              ? (isLight ? const Color(0xFFB45309) : const Color(0xFFFBBF24))
+                              : (isLight ? const Color(0xFF1E293B) : Colors.white),
+                        ),
                       ),
+                      backgroundColor: isPredictive
+                          ? (isLight ? const Color(0xFFFEF3C7) : const Color(0xFF78350F).withValues(alpha: 0.35))
+                          : (isLight ? const Color(0xFFF1F5F9) : const Color(0xFF0F172A)),
+                      side: BorderSide(
+                        color: isPredictive
+                            ? const Color(0xFFF59E0B).withValues(alpha: 0.6)
+                            : (isLight ? const Color(0xFFCBD5E1) : Colors.white12),
+                        width: isPredictive ? 1.2 : 0.8,
+                      ),
+                      onPressed: () => _sendMessage(provider, reply['text']),
                     ),
-                    backgroundColor: isLight ? const Color(0xFFF1F5F9) : const Color(0xFF0F172A),
-                    side: BorderSide(color: isLight ? const Color(0xFFCBD5E1) : Colors.white12),
-                    onPressed: () => _sendMessage(provider, reply['text']),
-                  ),
-                )),
+                  );
+                }),
               ],
             ),
           ),

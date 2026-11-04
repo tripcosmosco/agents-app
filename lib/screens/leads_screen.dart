@@ -254,88 +254,6 @@ class _LeadsScreenState extends State<LeadsScreen> {
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              _isB2bMode ? 'B2B Travel Partners (DMC)' : 'Leads & CRM Hub',
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
-            ),
-            Text(
-              _isB2bMode
-                  ? 'Pan-India Agencies • 16% Net Rates'
-                  : 'Multi-Source Pipeline • 10k CRM',
-              style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
-        ),
-        actions: [
-          Consumer<EventProvider>(
-            builder: (context, eventProvider, _) {
-              final visitorCount = eventProvider.liveVisitorCount;
-              return TextButton.icon(
-                onPressed: () => LiveActivitySheet.show(context),
-                icon: Container(
-                  width: 8,
-                  height: 8,
-                  decoration: const BoxDecoration(
-                    color: AppColors.successGreen,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-                label: Text(
-                  '$visitorCount Live',
-                  style: TextStyle(
-                    color: AppColors.getTextPrimary(context),
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                style: TextButton.styleFrom(
-                  backgroundColor: AppColors.getCard(context),
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    side: BorderSide(
-                      color: AppColors.successGreen.withValues(alpha: 0.3),
-                    ),
-                  ),
-                ),
-              );
-            },
-          ),
-          IconButton(
-            onPressed: () => QuotationDeskScreen.open(context),
-            icon: const Icon(Icons.request_quote_rounded, color: AppColors.accentGold, size: 21),
-            tooltip: 'Quotation Desk',
-          ),
-          IconButton(
-            onPressed: () => LeadsScreen.showAddLeadDialog(context),
-            icon: const Icon(Icons.add_circle_outline_rounded, color: AppColors.accentGold, size: 22),
-            tooltip: 'Capture New Lead (+)',
-          ),
-          IconButton(
-            onPressed: () => leadProvider.refreshLeadsFromServer(),
-            icon: const Icon(Icons.refresh, color: AppColors.accentGold, size: 20),
-            tooltip: 'Sync with Server',
-          ),
-          IconButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => SettingsScreen(apiService: leadProvider.apiService),
-                ),
-              );
-            },
-            icon: const Icon(Icons.settings_outlined, color: AppColors.accentGold, size: 20),
-            tooltip: 'Server & Companion Settings',
-          ),
-        ],
-      ),
       body: SafeArea(
         child: _isB2bMode
             ? Column(
@@ -345,60 +263,218 @@ class _LeadsScreenState extends State<LeadsScreen> {
                 ],
               )
             : CustomScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
                 slivers: [
-                  SliverToBoxAdapter(
-                    child: Column(
+                  // 0. Fluid Floating Header (Scrolls away, snaps back on scroll up)
+                  SliverAppBar(
+                    floating: true,
+                    snap: true,
+                    pinned: false,
+                    elevation: 0,
+                    backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+                    titleSpacing: 14,
+                    title: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _buildModeSwitcher(),
-                        _buildSegmentBar(context, leadProvider),
-                        _buildSearchBar(leadProvider),
-                        _buildPowerDialerBanner(context, leadProvider),
+                        Text(
+                          _isB2bMode ? 'B2B Travel Partners' : 'Leads & CRM Hub',
+                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+                        ),
+                        Text(
+                          _isB2bMode
+                              ? 'Pan-India Agencies • 16% Net Rates'
+                              : 'Multi-Source Pipeline • 10k CRM',
+                          style: const TextStyle(fontSize: 10, color: AppColors.textMuted),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ],
                     ),
-                  ),
-                  SliverPersistentHeader(
-                    pinned: true,
-                    delegate: _StageFilterHeaderDelegate(
-                      child: Container(
-                        color: Theme.of(context).scaffoldBackgroundColor,
-                        padding: const EdgeInsets.symmetric(vertical: 2),
-                        child: SizedBox(
-                          height: 32,
-                          child: ListView.builder(
-                            scrollDirection: Axis.horizontal,
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
-                            itemCount: AppConstants.pipelineStages.length,
-                            itemBuilder: (context, index) {
-                              final stage = AppConstants.pipelineStages[index];
-                              final isSelected = leadProvider.selectedStage == stage;
-                              return Padding(
-                                padding: const EdgeInsets.only(right: 6.0),
-                                child: ChoiceChip(
-                                  label: Text(_formatStage(stage)),
-                                  selected: isSelected,
-                                  onSelected: (_) => leadProvider.setStageFilter(stage),
-                                  selectedColor: AppColors.accentGold,
-                                  backgroundColor: AppColors.getCard(context),
-                                  visualDensity: VisualDensity.compact,
-                                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 1),
-                                  labelStyle: TextStyle(
-                                    color: isSelected
-                                        ? AppColors.primaryDark
-                                        : AppColors.getTextSecondary(context),
-                                    fontWeight: isSelected
-                                        ? FontWeight.w700
-                                        : FontWeight.w500,
-                                    fontSize: 11,
-                                  ),
+                    actions: [
+                      Consumer<EventProvider>(
+                        builder: (context, eventProvider, _) {
+                          final visitorCount = eventProvider.liveVisitorCount;
+                          return TextButton.icon(
+                            onPressed: () => LiveActivitySheet.show(context),
+                            icon: Container(
+                              width: 7,
+                              height: 7,
+                              decoration: const BoxDecoration(
+                                color: AppColors.successGreen,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                            label: Text(
+                              '$visitorCount Live',
+                              style: TextStyle(
+                                color: AppColors.getTextPrimary(context),
+                                fontSize: 10.5,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            style: TextButton.styleFrom(
+                              backgroundColor: AppColors.getCard(context),
+                              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                                side: BorderSide(
+                                  color: AppColors.successGreen.withValues(alpha: 0.3),
                                 ),
-                              );
-                            },
-                          ),
-                        ),
+                              ),
+                            ),
+                          );
+                        },
                       ),
-                      height: 36.0,
+                      IconButton(
+                        onPressed: () => QuotationDeskScreen.open(context),
+                        icon: const Icon(Icons.request_quote_rounded, color: AppColors.accentGold, size: 20),
+                        tooltip: 'Quotation Desk',
+                      ),
+                      IconButton(
+                        onPressed: () => LeadsScreen.showAddLeadDialog(context),
+                        icon: const Icon(Icons.add_circle_outline_rounded, color: AppColors.accentGold, size: 21),
+                        tooltip: 'Capture New Lead (+)',
+                      ),
+                      IconButton(
+                        onPressed: () => leadProvider.refreshLeadsFromServer(),
+                        icon: const Icon(Icons.refresh, color: AppColors.accentGold, size: 19),
+                        tooltip: 'Sync with Server',
+                      ),
+                      IconButton(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => SettingsScreen(apiService: leadProvider.apiService),
+                            ),
+                          );
+                        },
+                        icon: const Icon(Icons.settings_outlined, color: AppColors.accentGold, size: 19),
+                        tooltip: 'Server & Companion Settings',
+                      ),
+                    ],
+                  ),
+
+                  // 1. Ultra-Compact Command Strip (Mode Switcher + Search + Unified Filter Pills)
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(14, 2, 14, 4),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildModeSwitcher(),
+                          const SizedBox(height: 4),
+
+                          // Compact Search Bar (34px)
+                          SizedBox(
+                            height: 34,
+                            child: TextField(
+                              onChanged: (val) => leadProvider.setSearchQuery(val),
+                              style: const TextStyle(fontSize: 12),
+                              decoration: InputDecoration(
+                                hintText: 'Search leads by name, phone or circuit...',
+                                hintStyle: const TextStyle(fontSize: 11),
+                                prefixIcon: const Icon(Icons.search, size: 16),
+                                suffixIcon: leadProvider.searchQuery.isNotEmpty
+                                    ? IconButton(
+                                        onPressed: () => leadProvider.setSearchQuery(''),
+                                        icon: const Icon(Icons.clear, size: 14),
+                                      )
+                                    : null,
+                                isDense: true,
+                                contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                  borderSide: BorderSide(color: AppColors.getBorder(context)),
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 5),
+
+                          // Unified Filter Strip: Urgency + Ownership + Pipeline Stages
+                          SizedBox(
+                            height: 27,
+                            child: ListView(
+                              scrollDirection: Axis.horizontal,
+                              children: [
+                                _buildFilterChip(
+                                  label: '⚡ SLA Urgent',
+                                  count: leadProvider.urgentSlaCount,
+                                  isSelected: leadProvider.ownerFilter == 'urgent',
+                                  color: const Color(0xFFF59E0B),
+                                  onTap: () => leadProvider.setOwnerFilter('urgent'),
+                                ),
+                                const SizedBox(width: 5),
+                                _buildFilterChip(
+                                  label: 'All Leads',
+                                  count: leadProvider.leads.length,
+                                  isSelected: leadProvider.ownerFilter == 'all',
+                                  color: AppColors.accentGold,
+                                  onTap: () => leadProvider.setOwnerFilter('all'),
+                                ),
+                                const SizedBox(width: 5),
+                                _buildFilterChip(
+                                  label: 'My Leads',
+                                  count: leadProvider.myLeadsCount,
+                                  isSelected: leadProvider.ownerFilter == 'my_leads',
+                                  color: const Color(0xFF38BDF8),
+                                  onTap: () => leadProvider.setOwnerFilter('my_leads'),
+                                ),
+                                const SizedBox(width: 5),
+                                _buildFilterChip(
+                                  label: 'Due Follow-Ups',
+                                  count: leadProvider.followUpsDueCount,
+                                  isSelected: leadProvider.ownerFilter == 'follow_ups',
+                                  color: const Color(0xFFEC4899),
+                                  onTap: () => leadProvider.setOwnerFilter('follow_ups'),
+                                ),
+                                const SizedBox(width: 5),
+                                _buildFilterChip(
+                                  label: 'Unassigned',
+                                  count: leadProvider.unassignedLeadsCount,
+                                  isSelected: leadProvider.ownerFilter == 'unassigned',
+                                  color: const Color(0xFF34D399),
+                                  onTap: () => leadProvider.setOwnerFilter('unassigned'),
+                                ),
+                                Container(
+                                  margin: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                                  width: 1,
+                                  color: AppColors.getBorder(context),
+                                ),
+                                ...AppConstants.pipelineStages.map((stage) {
+                                  final isSelected = leadProvider.selectedStage == stage;
+                                  return Padding(
+                                    padding: const EdgeInsets.only(right: 5),
+                                    child: ChoiceChip(
+                                      label: Text(
+                                        _formatStage(stage),
+                                        style: TextStyle(
+                                          fontSize: 10,
+                                          fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
+                                          color: isSelected
+                                              ? AppColors.primaryDark
+                                              : AppColors.getTextSecondary(context),
+                                        ),
+                                      ),
+                                      selected: isSelected,
+                                      visualDensity: VisualDensity.compact,
+                                      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 0),
+                                      selectedColor: AppColors.accentGold,
+                                      backgroundColor: AppColors.getCard(context),
+                                      side: BorderSide(
+                                        color: isSelected ? Colors.transparent : AppColors.getBorder(context),
+                                      ),
+                                      onSelected: (_) => leadProvider.setStageFilter(stage),
+                                    ),
+                                  );
+                                }),
+                              ],
+                            ),
+                          ),
+                          _buildPowerDialerBanner(context, leadProvider),
+                        ],
+                      ),
                     ),
                   ),
                   if (leadProvider.filteredLeads.isEmpty)
@@ -523,23 +599,42 @@ class _LeadsScreenState extends State<LeadsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Top Row: Name, Stage Chip, Source Badge
+            // Top Row: Name, Urgency Badge, Stage Chip
             Row(
               children: [
                 Expanded(
                   child: Text(
                     lead.name,
                     style: TextStyle(
-                      fontSize: 16,
+                      fontSize: 15.5,
                       fontWeight: FontWeight.w700,
                       color: AppColors.getTextPrimary(context),
                     ),
                   ),
                 ),
+                if (lead.urgencyTag != null) ...[
+                  Container(
+                    margin: const EdgeInsets.only(right: 6),
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF59E0B).withValues(alpha: 0.16),
+                      borderRadius: BorderRadius.circular(5),
+                      border: Border.all(color: const Color(0xFFF59E0B).withValues(alpha: 0.5), width: 0.8),
+                    ),
+                    child: Text(
+                      lead.urgencyTag!,
+                      style: const TextStyle(
+                        color: Color(0xFFF59E0B),
+                        fontSize: 9.5,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                ],
                 Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 3,
+                    horizontal: 7,
+                    vertical: 2.5,
                   ),
                   decoration: BoxDecoration(
                     color: stageColor.withValues(alpha: 0.15),
@@ -550,7 +645,7 @@ class _LeadsScreenState extends State<LeadsScreen> {
                     _formatStage(lead.stage).toUpperCase(),
                     style: TextStyle(
                       color: stageColor,
-                      fontSize: 10,
+                      fontSize: 9.5,
                       fontWeight: FontWeight.w700,
                       letterSpacing: 0.5,
                     ),
@@ -685,7 +780,27 @@ class _LeadsScreenState extends State<LeadsScreen> {
                 overflow: TextOverflow.ellipsis,
               ),
             ],
-            const SizedBox(height: 12),
+            // Context-Aware Next-Best-Action Recommendation
+            const SizedBox(height: 6),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+              decoration: BoxDecoration(
+                color: AppColors.accentGold.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(5),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.psychology_outlined, size: 12, color: AppColors.accentGold),
+                  const SizedBox(width: 4),
+                  Text(
+                    'AI Next Action: ${lead.nextBestActionLabel}',
+                    style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.accentGold),
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 8),
             const Divider(height: 1, color: AppColors.borderSubtle),
             const SizedBox(height: 8),
 
@@ -790,76 +905,6 @@ class _LeadsScreenState extends State<LeadsScreen> {
     );
   }
 
-  Widget _buildSegmentButton({
-    required BuildContext context,
-    required String title,
-    required int count,
-    required bool isSelected,
-    required VoidCallback onTap,
-  }) {
-    return Expanded(
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(10),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 180),
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          decoration: BoxDecoration(
-            color: isSelected ? const Color(0xFF2563EB) : Colors.transparent,
-            borderRadius: BorderRadius.circular(10),
-            boxShadow: isSelected
-                ? [
-                    BoxShadow(
-                      color: const Color(0xFF2563EB).withValues(alpha: 0.35),
-                      blurRadius: 6,
-                      offset: const Offset(0, 2),
-                    ),
-                  ]
-                : null,
-          ),
-          child: FittedBox(
-            fit: BoxFit.scaleDown,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 4),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    title,
-                    style: TextStyle(
-                      fontSize: 11.5,
-                      fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-                      color: isSelected ? Colors.white : AppColors.textMuted,
-                    ),
-                  ),
-                  const SizedBox(width: 4),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
-                    decoration: BoxDecoration(
-                      color: isSelected
-                          ? Colors.white.withValues(alpha: 0.28)
-                          : Colors.white.withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      '$count',
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w800,
-                        color: isSelected ? Colors.white : AppColors.textMuted,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
   Widget _buildModeSwitcher() {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 4, 16, 2),
@@ -942,72 +987,55 @@ class _LeadsScreenState extends State<LeadsScreen> {
     );
   }
 
-  Widget _buildSegmentBar(BuildContext context, LeadProvider leadProvider) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 2, 16, 2),
+  Widget _buildFilterChip({
+    required String label,
+    required int count,
+    required bool isSelected,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
       child: Container(
-        padding: const EdgeInsets.all(3),
+        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
         decoration: BoxDecoration(
-          color: AppColors.getCard(context),
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: AppColors.getBorder(context)),
+          color: isSelected ? color.withValues(alpha: 0.2) : (isDark ? Colors.white.withValues(alpha: 0.04) : Colors.black.withValues(alpha: 0.03)),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: isSelected ? color : (isDark ? Colors.white12 : AppColors.lightBorderSubtle),
+            width: isSelected ? 1.2 : 0.8,
+          ),
         ),
         child: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            _buildSegmentButton(
-              context: context,
-              title: 'All',
-              count: leadProvider.leads.length,
-              isSelected: leadProvider.ownerFilter == 'all',
-              onTap: () => leadProvider.setOwnerFilter('all'),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
+                color: isSelected ? color : (isDark ? Colors.white70 : const Color(0xFF334155)),
+              ),
             ),
-            _buildSegmentButton(
-              context: context,
-              title: 'Mine',
-              count: leadProvider.myLeadsCount,
-              isSelected: leadProvider.ownerFilter == 'my_leads',
-              onTap: () => leadProvider.setOwnerFilter('my_leads'),
-            ),
-            _buildSegmentButton(
-              context: context,
-              title: 'Due',
-              count: leadProvider.followUpsDueCount,
-              isSelected: leadProvider.ownerFilter == 'follow_ups',
-              onTap: () => leadProvider.setOwnerFilter('follow_ups'),
-            ),
-            _buildSegmentButton(
-              context: context,
-              title: 'Open',
-              count: leadProvider.unassignedLeadsCount,
-              isSelected: leadProvider.ownerFilter == 'unassigned',
-              onTap: () => leadProvider.setOwnerFilter('unassigned'),
+            const SizedBox(width: 4),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+              decoration: BoxDecoration(
+                color: isSelected ? color : (isDark ? Colors.white24 : Colors.black12),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Text(
+                '$count',
+                style: TextStyle(
+                  fontSize: 8.5,
+                  fontWeight: FontWeight.w900,
+                  color: isSelected ? Colors.black : (isDark ? Colors.white : Colors.black87),
+                ),
+              ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSearchBar(LeadProvider leadProvider) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 4, 16, 6),
-      child: TextField(
-        onChanged: (val) => leadProvider.setSearchQuery(val),
-        decoration: InputDecoration(
-          hintText: 'Search leads by name, phone or circuit...',
-          prefixIcon: const Icon(
-            Icons.search,
-            color: AppColors.textMuted,
-            size: 20,
-          ),
-          suffixIcon: leadProvider.searchQuery.isNotEmpty
-              ? IconButton(
-                  onPressed: () => leadProvider.setSearchQuery(''),
-                  icon: const Icon(Icons.clear, size: 18),
-                )
-              : null,
-          isDense: true,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         ),
       ),
     );
@@ -1142,32 +1170,5 @@ class _LeadsScreenState extends State<LeadsScreen> {
         );
       },
     );
-  }
-}
-
-class _StageFilterHeaderDelegate extends SliverPersistentHeaderDelegate {
-  final Widget child;
-  final double height;
-
-  _StageFilterHeaderDelegate({required this.child, this.height = 48.0});
-
-  @override
-  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
-    return Container(
-      color: Theme.of(context).scaffoldBackgroundColor,
-      alignment: Alignment.centerLeft,
-      child: child,
-    );
-  }
-
-  @override
-  double get maxExtent => height;
-
-  @override
-  double get minExtent => height;
-
-  @override
-  bool shouldRebuild(covariant _StageFilterHeaderDelegate oldDelegate) {
-    return oldDelegate.child != child || oldDelegate.height != height;
   }
 }

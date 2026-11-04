@@ -1277,182 +1277,65 @@ If you have confirmed client enquiries or pending groups from $city, please let 
               ),
               actions: [
                 IconButton(
+                  tooltip: 'Dev Deepawali Campaign',
+                  icon: const Icon(Icons.rocket_launch_rounded, color: Color(0xFFF59E0B), size: 19),
+                  onPressed: () => _showDevDiwaliCampaignDialog(context),
+                ),
+                IconButton(
                   tooltip: 'Tariff Sheet',
-                  icon: const Icon(Icons.receipt_long_rounded, color: AppColors.accentGold, size: 20),
+                  icon: const Icon(Icons.receipt_long_rounded, color: AppColors.accentGold, size: 19),
                   onPressed: () => TariffPricingManagerSheet.show(context),
                 ),
                 IconButton(
                   tooltip: 'Net Margin Calculator',
-                  icon: const Icon(Icons.calculate_rounded, color: Color(0xFF38BDF8), size: 20),
+                  icon: const Icon(Icons.calculate_rounded, color: Color(0xFF38BDF8), size: 19),
                   onPressed: () => _showB2bRateCalculatorModal(context),
                 ),
                 IconButton(
                   tooltip: 'Import / CRM Sync',
-                  icon: const Icon(Icons.cloud_download_rounded, color: Color(0xFF818CF8), size: 20),
+                  icon: const Icon(Icons.cloud_download_rounded, color: Color(0xFF818CF8), size: 19),
                   onPressed: () => _showB2bImporterDialog(context),
                 ),
                 IconButton(
                   tooltip: 'Add B2B Partner',
-                  icon: const Icon(Icons.add_circle_outline_rounded, color: Color(0xFF34D399), size: 21),
+                  icon: const Icon(Icons.add_circle_outline_rounded, color: Color(0xFF34D399), size: 20),
                   onPressed: () => _showAddAgencyDialog(context),
                 ),
               ],
             ),
 
-          // 1. Sleek Compact Command Bar (Fluid, non-intrusive)
+          // 1. Ultra-Compact Command & Search Strip (~68px total, fluid and non-intrusive)
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF1E1B4B), Color(0xFF0F172A)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFFF59E0B).withValues(alpha: 0.25)),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Dynamic Filter Metric Pills (Single Sleek Row)
-                    SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
-                        children: [
-                          _buildMetricTile(
-                            label: 'All Partners',
-                            value: '${_counts['total'] ?? _agencies.length}',
-                            color: Colors.white,
-                            icon: Icons.business_rounded,
-                            onTap: () {
-                              setState(() => _selectedStatus = 'all');
-                              _loadAgenciesFromServer();
-                            },
-                            isSelected: _selectedStatus == 'all',
-                          ),
-                          const SizedBox(width: 6),
-                          _buildMetricTile(
-                            label: 'In CRM Drip',
-                            value: '${_counts['in_crm'] ?? 0}',
-                            color: const Color(0xFF34D399),
-                            icon: Icons.cloud_done_rounded,
-                            onTap: () {
-                              setState(() => _selectedStatus = 'in_crm');
-                              _loadAgenciesFromServer();
-                            },
-                            isSelected: _selectedStatus == 'in_crm',
-                          ),
-                          const SizedBox(width: 6),
-                          _buildMetricTile(
-                            label: 'Pitched',
-                            value: '${_counts['contacted'] ?? 0}',
-                            color: const Color(0xFF38BDF8),
-                            icon: Icons.send_rounded,
-                            onTap: () {
-                              setState(() => _selectedStatus = 'contacted');
-                              _loadAgenciesFromServer();
-                            },
-                            isSelected: _selectedStatus == 'contacted',
-                          ),
-                          const SizedBox(width: 6),
-                          _buildMetricTile(
-                            label: 'New Queue',
-                            value: '${_counts['new'] ?? 0}',
-                            color: const Color(0xFFFBBF24),
-                            icon: Icons.fiber_new_rounded,
-                            onTap: () {
-                              setState(() => _selectedStatus = 'new');
-                              _loadAgenciesFromServer();
-                            },
-                            isSelected: _selectedStatus == 'new',
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-
-                    // Quick Action Pills
-                    SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
-                        children: [
-                          _buildHeaderActionPill(
-                            icon: Icons.rocket_launch_rounded,
-                            label: 'Dev Deepawali Campaign',
-                            color: const Color(0xFFF59E0B),
-                            onTap: () => _showDevDiwaliCampaignDialog(context),
-                          ),
-                          const SizedBox(width: 6),
-                          _buildHeaderActionPill(
-                            icon: Icons.calculate_rounded,
-                            label: 'Net Calculator',
-                            color: const Color(0xFF38BDF8),
-                            onTap: () => _showB2bRateCalculatorModal(context),
-                          ),
-                          const SizedBox(width: 6),
-                          _buildHeaderActionPill(
-                            icon: Icons.cloud_download_rounded,
-                            label: 'Import / CRM Sync',
-                            color: const Color(0xFF818CF8),
-                            onTap: () => _showB2bImporterDialog(context),
-                          ),
-                          const SizedBox(width: 6),
-                          _buildHeaderActionPill(
-                            icon: Icons.add_rounded,
-                            label: 'Add Partner',
-                            color: const Color(0xFF34D399),
-                            onTap: () => _showAddAgencyDialog(context),
-                          ),
-                          const SizedBox(width: 6),
-                          _buildHeaderActionPill(
-                            icon: Icons.receipt_long_rounded,
-                            label: 'Wholesale Tariffs',
-                            color: const Color(0xFFFBBF24),
-                            onTap: () => TariffPricingManagerSheet.show(context),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-
-          // 2. Search & City Filters Bar (Scrolls naturally with content!)
-          SliverToBoxAdapter(
-            child: Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 3),
-                  child: SizedBox(
-                    height: 38,
+              padding: const EdgeInsets.fromLTRB(14, 4, 14, 4),
+              child: Column(
+                children: [
+                  // Search Bar (Compact 34px)
+                  SizedBox(
+                    height: 34,
                     child: TextField(
                       controller: _searchController,
                       onChanged: _onSearchChanged,
-                      style: TextStyle(color: isDark ? Colors.white : AppColors.lightTextPrimary, fontSize: 12),
+                      style: TextStyle(color: isDark ? Colors.white : AppColors.lightTextPrimary, fontSize: 11.5),
                       decoration: InputDecoration(
                         filled: true,
                         fillColor: isDark ? AppColors.surfaceCard : Colors.white,
                         isDense: true,
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                        hintText: 'Search agency by name, city, or phone...',
-                        hintStyle: TextStyle(color: isDark ? Colors.white38 : AppColors.lightTextMuted, fontSize: 11.5),
-                        prefixIcon: Icon(Icons.search, color: isDark ? AppColors.textMuted : AppColors.lightTextSecondary, size: 16),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        hintText: 'Search agencies by name, city, or phone...',
+                        hintStyle: TextStyle(color: isDark ? Colors.white38 : AppColors.lightTextMuted, fontSize: 11),
+                        prefixIcon: Icon(Icons.search, color: isDark ? AppColors.textMuted : AppColors.lightTextSecondary, size: 15),
                         enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(9),
+                          borderRadius: BorderRadius.circular(8),
                           borderSide: BorderSide(color: isDark ? Colors.white12 : AppColors.lightBorderSubtle),
                         ),
                         focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(9),
-                          borderSide: BorderSide(color: AppColors.getAccentGold(context), width: 1.5),
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(color: AppColors.getAccentGold(context), width: 1.2),
                         ),
                         suffixIcon: _searchController.text.isNotEmpty
                             ? IconButton(
-                                icon: Icon(Icons.clear, color: isDark ? Colors.white54 : AppColors.lightTextSecondary, size: 14),
+                                icon: Icon(Icons.clear, color: isDark ? Colors.white54 : AppColors.lightTextSecondary, size: 13),
                                 onPressed: () {
                                   _searchController.clear();
                                   _onSearchChanged('');
@@ -1462,48 +1345,103 @@ If you have confirmed client enquiries or pending groups from $city, please let 
                       ),
                     ),
                   ),
-                ),
-                SizedBox(
-                  height: 30,
-                  child: ListView.separated(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    scrollDirection: Axis.horizontal,
-                    itemCount: _cities.length,
-                    separatorBuilder: (_, _) => const SizedBox(width: 5),
-                    itemBuilder: (ctx, idx) {
-                      final city = _cities[idx];
-                      final isSelected = _selectedCity.toLowerCase() == city.toLowerCase();
-                      return ChoiceChip(
-                        label: Text(
-                          city,
-                          style: TextStyle(
-                            fontSize: 10.5,
-                            fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-                            color: isSelected ? Colors.white : (isDark ? Colors.white70 : const Color(0xFF334155)),
-                          ),
-                        ),
-                        selected: isSelected,
-                        visualDensity: VisualDensity.compact,
-                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 0),
-                        selectedColor: isDark ? const Color(0xFFF59E0B) : const Color(0xFFB45309),
-                        backgroundColor: isDark ? AppColors.surfaceCard : const Color(0xFFF1F5F9),
-                        side: BorderSide(
-                          color: isSelected ? Colors.transparent : (isDark ? Colors.white12 : const Color(0xFFE2E8F0)),
-                        ),
-                        onSelected: (val) {
-                          if (val) {
-                            setState(() {
-                              _selectedCity = city;
-                            });
+                  const SizedBox(height: 5),
+
+                  // Unified Filter Strip: Status Metrics + City Pills (Single Fast Horizontal Scroll)
+                  SizedBox(
+                    height: 27,
+                    child: ListView(
+                      scrollDirection: Axis.horizontal,
+                      children: [
+                        _buildMetricTile(
+                          label: 'All',
+                          value: '${_counts['total'] ?? _agencies.length}',
+                          color: Colors.white,
+                          icon: Icons.business_rounded,
+                          onTap: () {
+                            setState(() => _selectedStatus = 'all');
                             _loadAgenciesFromServer();
-                          }
-                        },
-                      );
-                    },
+                          },
+                          isSelected: _selectedStatus == 'all',
+                        ),
+                        const SizedBox(width: 5),
+                        _buildMetricTile(
+                          label: 'CRM Drip',
+                          value: '${_counts['in_crm'] ?? 0}',
+                          color: const Color(0xFF34D399),
+                          icon: Icons.cloud_done_rounded,
+                          onTap: () {
+                            setState(() => _selectedStatus = 'in_crm');
+                            _loadAgenciesFromServer();
+                          },
+                          isSelected: _selectedStatus == 'in_crm',
+                        ),
+                        const SizedBox(width: 5),
+                        _buildMetricTile(
+                          label: 'Pitched',
+                          value: '${_counts['contacted'] ?? 0}',
+                          color: const Color(0xFF38BDF8),
+                          icon: Icons.send_rounded,
+                          onTap: () {
+                            setState(() => _selectedStatus = 'contacted');
+                            _loadAgenciesFromServer();
+                          },
+                          isSelected: _selectedStatus == 'contacted',
+                        ),
+                        const SizedBox(width: 5),
+                        _buildMetricTile(
+                          label: 'New',
+                          value: '${_counts['new'] ?? 0}',
+                          color: const Color(0xFFFBBF24),
+                          icon: Icons.fiber_new_rounded,
+                          onTap: () {
+                            setState(() => _selectedStatus = 'new');
+                            _loadAgenciesFromServer();
+                          },
+                          isSelected: _selectedStatus == 'new',
+                        ),
+                        Container(
+                          margin: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                          width: 1,
+                          color: isDark ? Colors.white12 : Colors.black12,
+                        ),
+                        ..._cities.map((city) {
+                          final isSelected = _selectedCity.toLowerCase() == city.toLowerCase();
+                          return Padding(
+                            padding: const EdgeInsets.only(right: 5),
+                            child: ChoiceChip(
+                              label: Text(
+                                city,
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
+                                  color: isSelected ? Colors.white : (isDark ? Colors.white70 : const Color(0xFF334155)),
+                                ),
+                              ),
+                              selected: isSelected,
+                              visualDensity: VisualDensity.compact,
+                              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 0),
+                              selectedColor: isDark ? const Color(0xFFF59E0B) : const Color(0xFFB45309),
+                              backgroundColor: isDark ? AppColors.surfaceCard : const Color(0xFFF1F5F9),
+                              side: BorderSide(
+                                color: isSelected ? Colors.transparent : (isDark ? Colors.white12 : const Color(0xFFE2E8F0)),
+                              ),
+                              onSelected: (val) {
+                                if (val) {
+                                  setState(() {
+                                    _selectedCity = city;
+                                  });
+                                  _loadAgenciesFromServer();
+                                }
+                              },
+                            ),
+                          );
+                        }),
+                      ],
+                    ),
                   ),
-                ),
-                const SizedBox(height: 4),
-              ],
+                ],
+              ),
             ),
           ),
 
@@ -1593,34 +1531,44 @@ If you have confirmed client enquiries or pending groups from $city, please let 
                   final status = (agency['status'] ?? 'new').toString();
                   final rating = (agency['rating'] ?? '4.8').toString();
 
-                  // Dynamic Partner Intelligence Scoring
-                  int intelligenceScore = 75;
-                  String tierLabel = 'VERIFIED TRAVEL AGENT';
-                  Color tierColor = const Color(0xFF38BDF8);
+                  // Genuine Dynamic Partner Intelligence Scoring
+                  final double agencyRating = double.tryParse(rating) ?? 4.5;
+                  int intelligenceScore = (agencyRating * 15).round(); // 67-75 base
 
                   if (phone.isNotEmpty && email.isNotEmpty) intelligenceScore += 10;
-                  if (city == 'Mumbai' || city == 'Ahmedabad' || city == 'Delhi') intelligenceScore += 9;
+                  if (address.isNotEmpty) intelligenceScore += 5;
+
+                  // High-yield feeder markets get direct routing priority
+                  final highPriorityMarkets = ['mumbai', 'ahmedabad', 'surat', 'delhi', 'bengaluru', 'hyderabad', 'kolkata', 'pune', 'chennai', 'varanasi'];
+                  if (highPriorityMarkets.contains(city.toLowerCase().trim())) {
+                    intelligenceScore += 10;
+                  }
+
+                  String tierLabel = '🏢 VERIFIED TRAVEL AGENT';
+                  Color tierColor = const Color(0xFF38BDF8);
 
                   if (intelligenceScore >= 90) {
-                    tierLabel = 'GOLD DMC PARTNER ($intelligenceScore)';
+                    tierLabel = '💎 ELITE DMC PARTNER ($intelligenceScore)';
                     tierColor = const Color(0xFFFBBF24);
                   } else if (intelligenceScore >= 80) {
-                    tierLabel = 'HIGH POTENTIAL PROSPECT ($intelligenceScore)';
+                    tierLabel = '🔥 HIGH CONVERSION PROSPECT ($intelligenceScore)';
                     tierColor = const Color(0xFF34D399);
+                  } else {
+                    tierLabel = '🏢 VERIFIED AGENT ($intelligenceScore)';
                   }
 
                   Color statusColor = const Color(0xFF3B82F6);
                   String statusLabel = 'NEW PROSPECT';
-                  String nextAction = '⚡ Action: Send 1-Tap AI Pitch';
+                  String nextAction = '⚡ AI Action: Send 1-Tap Net Tariff Pitch';
 
                   if (status == 'in_crm') {
                     statusColor = const Color(0xFF10B981);
                     statusLabel = 'IN FLUENTCRM DRIP';
-                    nextAction = '📈 Action: Share Wholesale Net Rates';
+                    nextAction = '📈 AI Action: Share Dev Deepawali & Kumbh Allotment';
                   } else if (status == 'contacted') {
                     statusColor = const Color(0xFF8B5CF6);
                     statusLabel = 'PITCH SENT';
-                    nextAction = '⏰ Action: Touch 2 Follow-Up Due';
+                    nextAction = '⏰ AI Action: Touch-2 Follow-Up Due Today';
                   }
 
                   return Container(
@@ -1936,40 +1884,6 @@ If you have confirmed client enquiries or pending groups from $city, please let 
                 fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
                 color: isSelected ? color : Colors.white70,
               ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHeaderActionPill({
-    required IconData icon,
-    required String label,
-    required Color color,
-    required VoidCallback onTap,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(7),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3.5),
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.12),
-          borderRadius: BorderRadius.circular(7),
-          border: Border.all(
-            color: color.withValues(alpha: 0.35),
-            width: 0.9,
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 11, color: color),
-            const SizedBox(width: 4),
-            Text(
-              label,
-              style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w700, color: Colors.white.withValues(alpha: 0.9)),
             ),
           ],
         ),

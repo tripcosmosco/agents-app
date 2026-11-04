@@ -184,6 +184,10 @@ class LeadProvider extends ChangeNotifier {
     ).length;
   }
 
+  int get urgentSlaCount {
+    return _leads.where((l) => l.intelligentUrgencyScore >= 60).length;
+  }
+
   int get followUpsDueCount {
     final now = DateTime.now();
     return _leads.where((l) =>
@@ -193,7 +197,7 @@ class LeadProvider extends ChangeNotifier {
   }
 
   List<LeadModel> get filteredLeads {
-    return _leads.where((lead) {
+    final result = _leads.where((lead) {
       final matchesStage =
           _selectedStage == 'all' ||
           lead.stage.toLowerCase() == _selectedStage.toLowerCase();
@@ -215,13 +219,19 @@ class LeadProvider extends ChangeNotifier {
       final hasFollowUpDue = lead.nextFollowUpAt != null &&
           lead.nextFollowUpAt!.isBefore(DateTime.now().add(const Duration(hours: 24)));
 
+      final isUrgent = lead.intelligentUrgencyScore >= 60;
       final matchesOwner = _ownerFilter == 'all' ||
           (_ownerFilter == 'my_leads' && isMyLead) ||
           (_ownerFilter == 'unassigned' && isUnassigned) ||
-          (_ownerFilter == 'follow_ups' && hasFollowUpDue);
+          (_ownerFilter == 'follow_ups' && hasFollowUpDue) ||
+          (_ownerFilter == 'urgent' && isUrgent);
 
       return matchesStage && matchesSource && matchesSearch && matchesOwner;
     }).toList();
+
+    // Dynamically sort leads by Real-Time Intelligent Urgency Score
+    result.sort((a, b) => b.intelligentUrgencyScore.compareTo(a.intelligentUrgencyScore));
+    return result;
   }
 
   void setStageFilter(String stage) {

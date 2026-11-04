@@ -59,6 +59,95 @@ class LeadModel {
     return 'AV';
   }
 
+  /// Dynamic Real-Time Urgency Score (0 - 150)
+  int get intelligentUrgencyScore {
+    int total = score > 0 ? (score / 3).round() : 20;
+    final now = DateTime.now();
+
+    // 1. Golden Response Window for New Leads (< 15 min SLA)
+    if (stage == 'new' || stage == 'inquiry') {
+      final ageMinutes = now.difference(createdAt).inMinutes;
+      if (ageMinutes <= 15) {
+        total += 55; // Extreme Priority
+      } else if (ageMinutes <= 60) {
+        total += 35;
+      } else if (ageMinutes <= 240) {
+        total += 20;
+      }
+    }
+
+    // 2. Follow-Up Deadlines
+    if (nextFollowUpAt != null) {
+      if (nextFollowUpAt!.isBefore(now)) {
+        total += 45; // Overdue task!
+      } else if (nextFollowUpAt!.isBefore(now.add(const Duration(hours: 4)))) {
+        total += 30; // Due within 4 hours
+      } else if (nextFollowUpAt!.isBefore(now.add(const Duration(hours: 24)))) {
+        total += 15;
+      }
+    }
+
+    // 3. High Deal Value / Large Group
+    if (pax >= 5) total += 15;
+    final numericBudget = int.tryParse(budget.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;
+    if (numericBudget >= 40000) total += 20;
+
+    // 4. Buying Decision Stage
+    if (stage == 'quote_sent' || stage == 'proposal') {
+      total += 25; // In decision loop
+    } else if (stage == 'contacted' || stage == 'qualified') {
+      total += 15;
+    } else if (stage == 'won' || stage == 'lost') {
+      total -= 35; // Already concluded
+    }
+
+    return total;
+  }
+
+  /// Dynamic Urgency Tag for Badges
+  String? get urgencyTag {
+    final now = DateTime.now();
+    if ((stage == 'new' || stage == 'inquiry') && now.difference(createdAt).inMinutes <= 20) {
+      return '⚡ SLA 15M (Golden)';
+    }
+    if (nextFollowUpAt != null && nextFollowUpAt!.isBefore(now)) {
+      return '🚨 Follow-Up Overdue';
+    }
+    if (nextFollowUpAt != null && nextFollowUpAt!.isBefore(now.add(const Duration(hours: 4)))) {
+      return '⏳ Due Today';
+    }
+    final numericBudget = int.tryParse(budget.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;
+    if (numericBudget >= 40000 || pax >= 6) {
+      return '💎 High Value';
+    }
+    if (stage == 'quote_sent' || stage == 'proposal') {
+      return '🔥 Decision Pending';
+    }
+    return null;
+  }
+
+  /// Next-Best-Action Label tailored to Lead Stage
+  String get nextBestActionLabel {
+    switch (stage.toLowerCase()) {
+      case 'new':
+      case 'inquiry':
+        return '⚡ 1-Tap First Call & Intro';
+      case 'contacted':
+      case 'qualified':
+        return '💰 Build Custom Quotation';
+      case 'quote_sent':
+      case 'proposal':
+        return '💳 Secure Booking Token (UPI)';
+      case 'won':
+      case 'converted':
+        return '🚗 Dispatch Fleet & Driver Slip';
+      case 'lost':
+        return '🔄 Re-engagement Drip';
+      default:
+        return '📞 Call & Follow-Up';
+    }
+  }
+
   factory LeadModel.fromJson(Map<String, dynamic> json) {
     // Parse tags safely from string or list
     List<String> parsedTags = [];
