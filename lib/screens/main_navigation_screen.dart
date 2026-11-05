@@ -6,7 +6,7 @@ import '../core/theme/app_colors.dart';
 import '../providers/auth_provider.dart';
 import '../providers/call_provider.dart';
 import '../providers/whatsapp_provider.dart';
-import 'ai_agents_screen.dart';
+import 'agents_screen.dart';
 import 'b2b_network_screen.dart';
 import 'blog_seo_screen.dart';
 import 'dialer_screen.dart';
@@ -65,10 +65,10 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     _NavDestination(
       key: 'ai_agents',
       permission: 'ai_agents',
-      label: 'AI Agents',
-      icon: Icons.smart_toy_outlined,
-      activeIcon: Icons.smart_toy_rounded,
-      screen: AiAgentsScreen(),
+      label: 'Agents',
+      icon: Icons.hub_outlined,
+      activeIcon: Icons.hub_rounded,
+      screen: AgentsScreen(),
     ),
     _NavDestination(
       key: 'b2b_hub',

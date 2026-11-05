@@ -7,6 +7,7 @@ import '../providers/ai_agent_provider.dart';
 import '../providers/lead_provider.dart';
 import '../widgets/glass_card.dart';
 import '../widgets/master_ai_assistant_view.dart';
+import 'agents_screen.dart';
 
 class AiAgentsScreen extends StatefulWidget {
   const AiAgentsScreen({super.key});
@@ -532,6 +533,73 @@ class _AiAgentsScreenState extends State<AiAgentsScreen> with SingleTickerProvid
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+              // Sovereign Paperclip Fleet Console Banner
+              InkWell(
+                onTap: () => AgentsScreen.open(context),
+                borderRadius: BorderRadius.circular(16),
+                child: Container(
+                  margin: const EdgeInsets.only(bottom: 14),
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        const Color(0xFF2563EB).withValues(alpha: 0.18),
+                        const Color(0xFF38BDF8).withValues(alpha: 0.12),
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: const Color(0xFF38BDF8).withValues(alpha: 0.4)),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(9),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF2563EB).withValues(alpha: 0.25),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.hub_rounded, color: Color(0xFF38BDF8), size: 20),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Text(
+                                  'Paperclip Sovereign Fleet',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 13.5,
+                                    color: AppColors.getTextPrimary(context),
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF10B981).withValues(alpha: 0.2),
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: const Text('5 AGENTS', style: TextStyle(color: Color(0xFF10B981), fontSize: 8.5, fontWeight: FontWeight.bold)),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              'Open live multi-agent orchestration for TripCosmos.co',
+                              style: TextStyle(fontSize: 10.5, color: AppColors.getTextSecondary(context)),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const Icon(Icons.arrow_forward_ios_rounded, size: 13, color: Color(0xFF38BDF8)),
+                    ],
+                  ),
+                ),
+              ),
+
               // 0. Human + AI Co-Pilot Team Duo Card
               Container(
                 margin: const EdgeInsets.only(bottom: 20),

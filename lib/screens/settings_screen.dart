@@ -16,6 +16,7 @@ import '../services/api_service.dart';
 import '../services/storage_service.dart';
 import '../services/telephony_service.dart';
 import '../widgets/glass_card.dart';
+import 'agents_screen.dart';
 import 'finance_hub_screen.dart';
 import 'google_ads_cockpit_screen.dart';
 
@@ -1070,6 +1071,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       icon: const Icon(Icons.auto_awesome_rounded, size: 18),
                       label: const Text('Open AI Google Ads Cockpit (Shown.io)'),
                       onPressed: () => GoogleAdsCockpitScreen.open(context),
+                    ),
+                    const SizedBox(height: 8),
+                    OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: const Color(0xFF38BDF8),
+                        side: BorderSide(color: const Color(0xFF38BDF8).withValues(alpha: 0.5)),
+                        minimumSize: const Size.fromHeight(40),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                      icon: const Icon(Icons.hub_rounded, size: 18),
+                      label: const Text('Open Sovereign Paperclip Fleet (Agents)'),
+                      onPressed: () => AgentsScreen.open(context),
                     ),
                   ],
                 ),
