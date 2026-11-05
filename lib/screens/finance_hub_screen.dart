@@ -11,6 +11,7 @@ import '../providers/auth_provider.dart';
 import '../providers/lead_provider.dart';
 import '../services/api_service.dart';
 import '../widgets/glass_card.dart';
+import 'google_ads_cockpit_screen.dart';
 
 class FinanceHubScreen extends StatefulWidget {
   final int initialTabIndex;
@@ -1891,6 +1892,73 @@ class _FinanceHubScreenState extends State<FinanceHubScreen> with SingleTickerPr
       child: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          // Shown.io Autonomous AI Cockpit Banner
+          InkWell(
+            onTap: () => GoogleAdsCockpitScreen.open(context),
+            borderRadius: BorderRadius.circular(16),
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    const Color(0xFF1A73E8).withValues(alpha: 0.18),
+                    const Color(0xFF34A853).withValues(alpha: 0.14),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: const Color(0xFF1A73E8).withValues(alpha: 0.35)),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF1A73E8).withValues(alpha: 0.25),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.auto_awesome_rounded, color: Color(0xFF1A73E8), size: 22),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Text(
+                              'Shown.io AI Cockpit',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                                color: AppColors.getTextPrimary(context),
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF34A853).withValues(alpha: 0.2),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: const Text('24/7 AI AUTONOMOUS', style: TextStyle(color: Color(0xFF34A853), fontSize: 9, fontWeight: FontWeight.w700)),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 3),
+                        Text(
+                          'Tap to launch smart pacing, 60s campaign creator & keyword guard',
+                          style: TextStyle(fontSize: 11, color: AppColors.getTextSecondary(context)),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: Color(0xFF1A73E8)),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+
           // Conversion Tracking Health Banner
           GlassCard(
             child: Padding(
