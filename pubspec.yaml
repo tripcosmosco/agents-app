@@ -2,7 +2,7 @@ name: x_agents
 description: "X-Agents by TripCosmos.co — Premium AI Telephony, CRM, & Multi-Source Lead Management App."
 publish_to: 'none'
 
-version: 2.4.0+46
+version: 2.4.0+47
 
 environment:
   sdk: ^3.13.2
