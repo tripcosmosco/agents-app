@@ -10,8 +10,9 @@ import '../providers/event_provider.dart';
 import '../providers/lead_provider.dart';
 import '../widgets/b2b_partners_view.dart';
 import '../widgets/glass_card.dart';
-import '../widgets/live_activity_sheet.dart';
+import '../widgets/website_radar_dialog.dart';
 import '../widgets/whatsapp_team_chat_view.dart';
+import '../providers/website_radar_provider.dart';
 import '../providers/whatsapp_provider.dart';
 import '../services/telephony_service.dart';
 import 'lead_detail_screen.dart';
@@ -291,11 +292,13 @@ class _LeadsScreenState extends State<LeadsScreen> {
                       ],
                     ),
                     actions: [
-                      Consumer<EventProvider>(
-                        builder: (context, eventProvider, _) {
-                          final visitorCount = eventProvider.liveVisitorCount;
+                      Consumer2<EventProvider, WebsiteRadarProvider>(
+                        builder: (context, eventProvider, radarProvider, _) {
+                          final visitorCount = radarProvider.activeCount > 0
+                              ? radarProvider.activeCount
+                              : eventProvider.liveVisitorCount;
                           return TextButton.icon(
-                            onPressed: () => LiveActivitySheet.show(context),
+                            onPressed: () => WebsiteRadarDialog.show(context),
                             icon: Container(
                               width: 7,
                               height: 7,
@@ -305,7 +308,7 @@ class _LeadsScreenState extends State<LeadsScreen> {
                               ),
                             ),
                             label: Text(
-                              '$visitorCount Live',
+                              '$visitorCount Live Radar',
                               style: TextStyle(
                                 color: AppColors.getTextPrimary(context),
                                 fontSize: 10.5,

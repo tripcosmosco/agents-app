@@ -1147,19 +1147,23 @@ class ApiService {
 
   /// 23c. Fetch Live Tour Package Catalog from WordPress (33+ Packages)
   Future<List<Map<String, dynamic>>> fetchCatalog() async {
-    try {
-      final uri = Uri.parse('$baseUrl/catalog');
-      final response = await _client.get(uri, headers: _headers).timeout(const Duration(seconds: 30));
-      if (response.statusCode == 200) {
-        final decoded = _safeJsonDecode(response.body);
-        if (decoded is Map && decoded['items'] is List) {
-          return List<Map<String, dynamic>>.from(
-            (decoded['items'] as List).map((e) => Map<String, dynamic>.from(e as Map)),
-          );
+    final endpoints = [
+      '$baseUrl/catalog',
+      '$baseUrl/mobile/catalog',
+      'https://tripcosmos.co/wp-json/tc-agents/v1/mobile/catalog',
+    ];
+    for (final ep in endpoints) {
+      try {
+        final res = await _client.get(Uri.parse(ep), headers: _headers).timeout(const Duration(seconds: 6));
+        if (res.statusCode == 200) {
+          final decoded = _safeJsonDecode(res.body);
+          if (decoded is List) {
+            return List<Map<String, dynamic>>.from(decoded.map((e) => Map<String, dynamic>.from(e as Map)));
+          } else if (decoded is Map && decoded['items'] is List) {
+            return List<Map<String, dynamic>>.from((decoded['items'] as List).map((e) => Map<String, dynamic>.from(e as Map)));
+          }
         }
-      }
-    } catch (e) {
-      debugPrint('Error fetching tour catalog: $e');
+      } catch (_) {}
     }
     return [];
   }
@@ -1914,5 +1918,59 @@ class ApiService {
       debugPrint('Error fetching Social AI overview: $e');
     }
     return null;
+  }
+
+  /// 47. Live Website Visitor Radar Telemetry
+  Future<List<Map<String, dynamic>>> fetchLiveRadarVisitors() async {
+    try {
+      final endpoints = [
+        '$baseUrl/mobile/live-radar',
+        '$baseUrl/live-radar',
+        'https://tripcosmos.co/wp-json/tc-agents/v1/mobile/live-radar',
+      ];
+      for (final ep in endpoints) {
+        try {
+          final res = await _client.get(Uri.parse(ep), headers: _headers).timeout(const Duration(seconds: 4));
+          if (res.statusCode == 200) {
+            final decoded = _safeJsonDecode(res.body);
+            if (decoded is List) {
+              return List<Map<String, dynamic>>.from(decoded.map((e) => Map<String, dynamic>.from(e as Map)));
+            } else if (decoded is Map && decoded['visitors'] is List) {
+              return List<Map<String, dynamic>>.from((decoded['visitors'] as List).map((e) => Map<String, dynamic>.from(e as Map)));
+            }
+          }
+        } catch (_) {}
+      }
+    } catch (e) {
+      debugPrint('Error fetching radar visitors: $e');
+    }
+    return [];
+  }
+
+  /// 48. Send Proactive Chat Ping to Website Visitor
+  Future<bool> sendProactivePing({
+    required String visitorId,
+    required String message,
+  }) async {
+    try {
+      final endpoints = [
+        '$baseUrl/mobile/proactive-ping',
+        '$baseUrl/proactive-ping',
+        'https://tripcosmos.co/wp-json/tc-agents/v1/mobile/proactive-ping',
+      ];
+      final body = jsonEncode({
+        'visitor_id': visitorId,
+        'message': message,
+      });
+      for (final ep in endpoints) {
+        try {
+          final res = await _client.post(Uri.parse(ep), headers: _headers, body: body).timeout(const Duration(seconds: 4));
+          if (res.statusCode == 200 || res.statusCode == 201) return true;
+        } catch (_) {}
+      }
+    } catch (e) {
+      debugPrint('Error sending proactive ping: $e');
+    }
+    return false;
   }
 }

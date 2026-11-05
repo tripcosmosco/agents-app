@@ -7,6 +7,7 @@ import '../core/theme/app_colors.dart';
 import '../models/lead_model.dart';
 import '../providers/lead_provider.dart';
 import '../widgets/glass_card.dart';
+import 'catalog_screen.dart';
 
 class QuotationDeskScreen extends StatefulWidget {
   final LeadModel? initialLead;
@@ -834,6 +835,11 @@ class _QuotationDeskScreenState extends State<QuotationDeskScreen> {
       appBar: AppBar(
         title: const Text('⚡ Quotation & Proposal Desk', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17)),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.menu_book_rounded, size: 20),
+            tooltip: 'Browse Tour & Package Catalog',
+            onPressed: () => CatalogScreen.open(context),
+          ),
           IconButton(
             icon: Icon(_showLivePreview ? Icons.visibility_off_rounded : Icons.visibility_rounded, size: 20),
             tooltip: _showLivePreview ? 'Hide Live Preview' : 'Show Live Preview',

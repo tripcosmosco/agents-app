@@ -7,9 +7,11 @@ import 'core/theme/app_theme.dart';
 import 'providers/ai_agent_provider.dart';
 import 'providers/auth_provider.dart';
 import 'providers/call_provider.dart';
+import 'providers/catalog_provider.dart';
 import 'providers/event_provider.dart';
 import 'providers/lead_provider.dart';
 import 'providers/theme_provider.dart';
+import 'providers/website_radar_provider.dart';
 import 'providers/whatsapp_provider.dart';
 import 'screens/login_screen.dart';
 import 'screens/main_navigation_screen.dart';
@@ -99,6 +101,12 @@ class XAgentsApp extends StatelessWidget {
         ),
         ChangeNotifierProvider(
           create: (_) => WhatsAppProvider(apiService: service),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => WebsiteRadarProvider(),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => CatalogProvider(),
         ),
       ],
       child: Consumer2<ThemeProvider, AuthProvider>(

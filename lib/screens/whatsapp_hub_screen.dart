@@ -11,12 +11,14 @@ import '../models/whatsapp_thread_model.dart';
 import '../providers/call_provider.dart';
 import '../providers/event_provider.dart';
 import '../providers/lead_provider.dart';
+import '../providers/website_radar_provider.dart';
 import '../providers/whatsapp_provider.dart';
 import '../services/api_service.dart';
 import '../services/telephony_service.dart';
 import '../widgets/glass_card.dart';
 import '../widgets/live_activity_sheet.dart';
 import '../widgets/travel_quote_dialog.dart';
+import '../widgets/website_radar_dialog.dart';
 import '../widgets/whatsapp_team_chat_view.dart';
 import 'settings_screen.dart';
 import 'web_chat_detail_screen.dart';
@@ -576,6 +578,7 @@ class _WhatsAppHubScreenState extends State<WhatsAppHubScreen> {
   Widget build(BuildContext context) {
     final wp = Provider.of<WhatsAppProvider>(context);
     final eventProvider = Provider.of<EventProvider>(context);
+    final radarProvider = Provider.of<WebsiteRadarProvider>(context);
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -631,14 +634,14 @@ class _WhatsAppHubScreenState extends State<WhatsAppHubScreen> {
         ),
         actions: [
           IconButton(
-            onPressed: () => LiveActivitySheet.show(context),
+            onPressed: () => WebsiteRadarDialog.show(context),
             icon: Badge(
-              isLabelVisible: eventProvider.activeNowCount > 0,
+              isLabelVisible: (radarProvider.activeCount > 0) || (eventProvider.activeNowCount > 0),
               backgroundColor: AppColors.successGreen,
-              label: Text('${eventProvider.activeNowCount}'),
+              label: Text('${radarProvider.activeCount > 0 ? radarProvider.activeCount : eventProvider.activeNowCount}'),
               child: const Icon(Icons.radar_rounded, color: AppColors.successGreen),
             ),
-            tooltip: 'Live Website Visitor Radar',
+            tooltip: 'Live Website Visitor Radar (Proactive Chat)',
           ),
           IconButton(
             onPressed: () => _showEvolutionGatewayModal(context),

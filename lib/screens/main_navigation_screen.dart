@@ -20,6 +20,7 @@ import '../services/api_service.dart';
 import '../widgets/active_call_hud.dart';
 import '../widgets/live_activity_banner.dart';
 import '../widgets/post_call_action_sheet.dart';
+import '../widgets/workspace_drawer.dart';
 
 class MainNavigationScreen extends StatefulWidget {
   final ApiService? apiService;
@@ -307,6 +308,10 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     );
 
     return Scaffold(
+      drawer: WorkspaceDrawer(
+        currentIndex: safeIndex,
+        onSelectTab: _onTabSelected,
+      ),
       body: mainContent,
       bottomNavigationBar: _buildFooterSliderBar(
         context,
