@@ -948,6 +948,7 @@ class _AgentsScreenState extends State<AgentsScreen> with SingleTickerProviderSt
           if (role == 'CMO') roleColor = const Color(0xFFF59E0B);
           if (role == 'ENGINEER') roleColor = const Color(0xFF8B5CF6);
           if (role == 'RESEARCHER') roleColor = const Color(0xFFEC4899);
+          if (role == 'DESIGNER') roleColor = const Color(0xFFF43F5E);
 
           return Container(
             margin: const EdgeInsets.only(bottom: 10),
@@ -1455,15 +1456,23 @@ class _AgentChatSheetState extends State<_AgentChatSheet> {
         "⚖️ Calculate Custom 4D3N Varanasi Quote",
       ];
     } else if (lower.contains('growth') || lower.contains('seo') || role == 'RESEARCHER') {
-      greeting = "Growth & Authority Specialist **$name** online.\n\nI coordinate programmatic SEO topic clusters in **VM SEO Brain**, internal link equity in **Link Genius**, social scripts in **VM Social AI**, and negative keywords in **Google Ads Shown.io Cockpit**. Where shall we drive growth?";
+      greeting = "Growth & Authority Specialist **$name** online.\n\nI coordinate programmatic SEO topic clusters in **VM SEO Brain**, internal link equity in **Link Genius**, and negative keywords in **Google Ads Shown.io Cockpit**. Where shall we drive growth?";
       chips = [
         "🔍 Run Kashi Vishwanath Keyword Scan",
         "📝 Draft 2 Programmatic SEO Guides in VM SEO Brain",
         "🎯 Check Low-ROAS Google Ads Search Terms",
-        "📱 Generate Instagram Reel Script for Ganga Aarti",
+        "🔗 Audit Pending Internal Link Silos",
+      ];
+    } else if (lower.contains('social') || lower.contains('video') || lower.contains('reel') || role == 'DESIGNER') {
+      greeting = "Spiritual Visual Studio Lead **$name** online.\n\nI direct viral 9:16 vertical video frameworks (Reels & Shorts), draft 5-slide educational carousels via **VM Social AI**, and design devotional temple visuals via **VM Image AI Master**. What creative campaign shall we produce today?";
+      chips = [
+        "📱 Script 9:16 Sunrise Ganga Aarti Reel",
+        "🎨 Draft 5-Slide Carousel for Dev Diwali",
+        "🕉️ Write Sanskrit Sunrise Hook for Assi Ghat",
+        "📅 Review VM Social AI Upcoming Drafts",
       ];
     } else {
-      greeting = "Chief of Staff **$name** online.\n\nI oversee all 5 autonomous department heads across TripCosmos.co, monitor background cron heartbeats, and ensure zero unblocked bottlenecks. What is your strategic directive?";
+      greeting = "Chief of Staff **$name** online.\n\nI oversee all 6 autonomous department heads across TripCosmos.co, monitor background cron heartbeats, and ensure zero unblocked bottlenecks. What is your strategic directive?";
       chips = [
         "📊 Daily Operational Briefing & Pipeline Status",
         "⚡ Check Autonomous Department Heartbeats",
