@@ -5,6 +5,8 @@ import 'package:provider/provider.dart';
 import '../core/theme/app_colors.dart';
 import '../models/website_visitor_model.dart';
 import '../providers/website_radar_provider.dart';
+import '../screens/agents_screen.dart';
+import '../services/paperclip_service.dart';
 import 'glass_card.dart';
 import 'live_activity_sheet.dart';
 
@@ -221,14 +223,27 @@ class WebsiteRadarDialog extends StatelessWidget {
                 ),
                 ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF6366F1),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    minimumSize: const Size(0, 30),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                  icon: const Icon(Icons.psychology_rounded, size: 14),
+                  label: const Text('TRI-LEAD', style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.bold)),
+                  onPressed: () => _dispatchTriLead(context, v),
+                ),
+                const SizedBox(width: 6),
+                ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF10B981),
                     foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
                     minimumSize: const Size(0, 30),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                   ),
                   icon: const Icon(Icons.bolt_rounded, size: 14),
-                  label: const Text('Ping', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                  label: const Text('Ping', style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.bold)),
                   onPressed: () => _showPingDialog(context, v, radar),
                 ),
               ],
@@ -261,6 +276,25 @@ class WebsiteRadarDialog extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  void _dispatchTriLead(BuildContext context, WebsiteVisitor v) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => AgentChatSheet(
+        agent: const {
+          'id': '1a753736-faf4-4fbb-872d-b2fa1d57eaf0',
+          'name': 'TRI-LEAD',
+          'role': 'cmo',
+          'title': 'Traveler Intake & VIP Triage',
+          'capabilities': ['inbound_triage', 'whatsapp_dispatch', 'itinerary_routing', 'radar_intercept'],
+        },
+        companyId: 'b66bdec2-ddf6-4199-9161-da5c6ee60ef8',
+        service: PaperclipService(),
       ),
     );
   }

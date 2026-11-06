@@ -180,7 +180,7 @@ class _AgentsScreenState extends State<AgentsScreen> with SingleTickerProviderSt
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => _AgentChatSheet(
+      builder: (_) => AgentChatSheet(
         agent: agent,
         companyId: _selectedCompanyId,
         service: _service,
@@ -1388,22 +1388,23 @@ class _AgentsScreenState extends State<AgentsScreen> with SingleTickerProviderSt
 }
 
 /// Interactive "Talk to Fleet Agent" Conversational Modal Sheet
-class _AgentChatSheet extends StatefulWidget {
+class AgentChatSheet extends StatefulWidget {
   final Map<String, dynamic> agent;
   final String companyId;
   final PaperclipService service;
 
-  const _AgentChatSheet({
+  const AgentChatSheet({
+    super.key,
     required this.agent,
     required this.companyId,
     required this.service,
   });
 
   @override
-  State<_AgentChatSheet> createState() => _AgentChatSheetState();
+  State<AgentChatSheet> createState() => _AgentChatSheetState();
 }
 
-class _AgentChatSheetState extends State<_AgentChatSheet> {
+class _AgentChatSheetState extends State<AgentChatSheet> {
   final TextEditingController _msgCtrl = TextEditingController();
   final ScrollController _scrollCtrl = ScrollController();
   final List<Map<String, dynamic>> _messages = [];

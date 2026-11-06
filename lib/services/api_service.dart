@@ -1973,4 +1973,40 @@ class ApiService {
     }
     return false;
   }
+
+  /// 49. Publish / Broadcast Scheduled Social Post Immediately
+  Future<Map<String, dynamic>?> publishSocialPostNow(int postId) async {
+    try {
+      final endpoints = [
+        'https://tripcosmos.co/wp-json/vm-social-ai/v1/queue/publish-now',
+        '$baseUrl/mobile/social-ai/publish-now',
+      ];
+      final body = jsonEncode({'id': postId});
+      for (final ep in endpoints) {
+        try {
+          final res = await _client.post(Uri.parse(ep), headers: _headers, body: body).timeout(const Duration(seconds: 8));
+          if (res.statusCode == 200) {
+            return _safeJsonDecode(res.body) as Map<String, dynamic>?;
+          }
+        } catch (_) {}
+      }
+    } catch (e) {
+      debugPrint('Error publishing social post: $e');
+    }
+    return null;
+  }
+
+  /// 50. Run VM Social AI Autonomous Tick
+  Future<bool> triggerSocialAiTick() async {
+    try {
+      final res = await _client.post(
+        Uri.parse('https://tripcosmos.co/wp-json/vm-social-ai/v1/tick'),
+        headers: _headers,
+      ).timeout(const Duration(seconds: 8));
+      return res.statusCode == 200;
+    } catch (e) {
+      debugPrint('Error triggering social tick: $e');
+      return false;
+    }
+  }
 }

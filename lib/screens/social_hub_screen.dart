@@ -3,7 +3,9 @@ import 'package:provider/provider.dart';
 
 import '../core/theme/app_colors.dart';
 import '../providers/lead_provider.dart';
+import '../services/paperclip_service.dart';
 import '../services/telephony_service.dart';
+import 'agents_screen.dart';
 
 class SocialHubScreen extends StatefulWidget {
   const SocialHubScreen({super.key});
@@ -14,7 +16,9 @@ class SocialHubScreen extends StatefulWidget {
 
 class _SocialHubScreenState extends State<SocialHubScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  final PaperclipService _paperclipService = PaperclipService();
   bool _isLoading = true;
+  bool _isTriggeringTriSocial = false;
   // ignore: unused_field
   String? _errorMessage;
 
@@ -69,6 +73,73 @@ class _SocialHubScreenState extends State<SocialHubScreen> with SingleTickerProv
         _isLoading = false;
         _errorMessage = 'Connection error: $e';
       });
+    }
+  }
+
+  Future<void> _triggerTriSocialRoutine() async {
+    setState(() => _isTriggeringTriSocial = true);
+    final ok = await _paperclipService.triggerRoutine('11111111-7a16-4000-a000-000000000006');
+    setState(() => _isTriggeringTriSocial = false);
+    if (!mounted) return;
+    if (ok) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('⚡ Dispatched TRI-SOCIAL: Generating fresh 9:16 devotional video & carousel...'),
+          backgroundColor: Color(0xFF10B981),
+        ),
+      );
+      _loadSocialData();
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Failed to trigger TRI-SOCIAL routine. Check Paperclip telemetry.'),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+    }
+  }
+
+  void _openTriSocialChat() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => AgentChatSheet(
+        agent: const {
+          'id': 'd5094d48-7c90-452b-b14e-b4ac8592991a',
+          'name': 'TRI-SOCIAL',
+          'role': 'designer',
+          'title': 'Spiritual Reels, Shorts & Viral Visuals Studio',
+          'capabilities': ['vertical_video', 'instagram_carousels', 'scriptwriting', 'canva_design'],
+        },
+        companyId: 'b66bdec2-ddf6-4199-9161-da5c6ee60ef8',
+        service: _paperclipService,
+      ),
+    );
+  }
+
+  Future<void> _publishPostNow(dynamic item) async {
+    final id = int.tryParse(item['id']?.toString() ?? '0') ?? 0;
+    if (id <= 0) return;
+    final api = Provider.of<LeadProvider>(context, listen: false).apiService;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Publishing "${item['title'] ?? 'Post'}" immediately...')),
+    );
+    final res = await api.publishSocialPostNow(id);
+    if (!mounted) return;
+    if (res != null && res['ok'] == true) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('✅ Successfully broadcast to social network!'),
+          backgroundColor: Color(0xFF10B981),
+        ),
+      );
+      _loadSocialData();
+    } else {
+      final msg = res?['message'] ?? 'Could not publish. Verify social credentials in Settings.';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(msg), backgroundColor: Colors.orange),
+      );
     }
   }
 
@@ -176,6 +247,135 @@ class _SocialHubScreenState extends State<SocialHubScreen> with SingleTickerProv
     return ListView(
       padding: const EdgeInsets.fromLTRB(14, 12, 14, 80),
       children: [
+        // TRI-SOCIAL Sovereign Studio Hero Banner
+        Container(
+          margin: const EdgeInsets.only(bottom: 14),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Color(0xFF4C0519), Color(0xFF1E1B4B)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: const Color(0xFFF43F5E).withValues(alpha: 0.4), width: 1.2),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFFF43F5E).withValues(alpha: 0.2),
+                blurRadius: 16,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF43F5E).withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: const Color(0xFFF43F5E), width: 0.8),
+                    ),
+                    child: const Icon(Icons.video_camera_front_rounded, color: Color(0xFFF43F5E), size: 22),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            const Text(
+                              'TRI-SOCIAL Studio',
+                              style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w800),
+                            ),
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF10B981).withValues(alpha: 0.25),
+                                borderRadius: BorderRadius.circular(6),
+                                border: Border.all(color: const Color(0xFF10B981), width: 0.8),
+                              ),
+                              child: const Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.check_circle_rounded, size: 10, color: Color(0xFF10B981)),
+                                  SizedBox(width: 3),
+                                  Text(
+                                    'FLEET ACTIVE',
+                                    style: TextStyle(color: Color(0xFF10B981), fontSize: 9.5, fontWeight: FontWeight.bold),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 2),
+                        const Text(
+                          'Sovereign Paperclip Agent #6 • Spiritual Reels & Carousels',
+                          style: TextStyle(color: Colors.white70, fontSize: 11.5),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              const Text(
+                'Direct pipeline generating 9:16 vertical Ganga Aarti reels, Dev Diwali bajra teasers, and festival panchang carousels into vm-social-ai.',
+                style: TextStyle(color: Colors.white70, fontSize: 12, height: 1.35),
+              ),
+              const SizedBox(height: 14),
+              Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFF43F5E),
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(vertical: 11),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                      icon: _isTriggeringTriSocial
+                          ? const SizedBox(
+                              width: 14,
+                              height: 14,
+                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                            )
+                          : const Icon(Icons.bolt_rounded, size: 16),
+                      label: Text(
+                        _isTriggeringTriSocial ? 'Dispatching...' : '⚡ Generate Fresh Reel',
+                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800),
+                      ),
+                      onPressed: _isTriggeringTriSocial ? null : _triggerTriSocialRoutine,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.white,
+                      side: BorderSide(color: Colors.white.withValues(alpha: 0.3)),
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                    icon: const Icon(Icons.forum_rounded, size: 15, color: AppColors.accentGold),
+                    label: const Text(
+                      'Talk to Agent',
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+                    ),
+                    onPressed: _openTriSocialChat,
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+
         // AI Planning Status Banner
         Container(
           padding: const EdgeInsets.all(12),
@@ -327,6 +527,23 @@ class _SocialHubScreenState extends State<SocialHubScreen> with SingleTickerProv
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
+                      ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF10B981),
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          visualDensity: VisualDensity.compact,
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        ),
+                        icon: const Icon(Icons.rocket_launch_rounded, size: 13),
+                        label: const Text(
+                          'Broadcast Now',
+                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                        ),
+                        onPressed: () => _publishPostNow(item),
+                      ),
+                      const SizedBox(width: 8),
                       TextButton.icon(
                         style: TextButton.styleFrom(
                           visualDensity: VisualDensity.compact,
