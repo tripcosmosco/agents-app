@@ -23,7 +23,8 @@
 - **Dynamic Kanban/List Pipeline**: Stages: `New Lead`, `Contacted`, `Qualified`, `Quote Sent`, `Advance Paid (Won)`, `Lost`.
 - **Sticky Agent Routing**: Automatically routes returning travelers to their dedicated tour specialist (e.g. Santosh Yadav).
 
-### 3. 🤖 Autonomous AI Agents Command Center
+### 3. 🤖 Garuda Voice AI Copilot & Autonomous Command Center
+- **🎙️ Garuda Voice AI Copilot (`VoiceCopilotSheet`)**: Floating action button accessible across all screens. Features live Google Gemini 2.5 Flash Lite engine (`AIzaSyAL9g...`), pulsing radar soundwave animation, 1.3-second enterprise telemetry queries, preset voice quick-actions, dynamic follow-up suggestion chips, and 1-tap WhatsApp sharing / clipboard copy.
 - **AI Outbound Sales Agent**: One-tap toggle. Automatically polls pending website leads from `/mobile/call-queue` and initiates conversational qualification calls.
 - **24/7 AI Voice Receptionist**: Speaks concise, warm 2-sentence responses via Google's native speech engine and local **AI Puffer RAG Bot 155464 ("TripCosmos AI")**.
 - **Live AI RAG Playground**: Test-drive pilgrimage questions (Aarti timings, VIP Darshan, Innova rates) directly inside the app.
