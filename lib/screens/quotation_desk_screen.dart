@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import '../core/theme/app_colors.dart';
+import '../models/catalog_item_model.dart';
 import '../models/lead_model.dart';
 import '../providers/lead_provider.dart';
 import '../widgets/glass_card.dart';
@@ -11,13 +12,23 @@ import 'catalog_screen.dart';
 
 class QuotationDeskScreen extends StatefulWidget {
   final LeadModel? initialLead;
+  final CatalogItem? initialCatalogItem;
 
-  const QuotationDeskScreen({super.key, this.initialLead});
+  const QuotationDeskScreen({
+    super.key,
+    this.initialLead,
+    this.initialCatalogItem,
+  });
 
-  static void open(BuildContext context, [LeadModel? lead]) {
+  static void open(BuildContext context, [LeadModel? lead, CatalogItem? catalogItem]) {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => QuotationDeskScreen(initialLead: lead)),
+      MaterialPageRoute(
+        builder: (_) => QuotationDeskScreen(
+          initialLead: lead,
+          initialCatalogItem: catalogItem,
+        ),
+      ),
     );
   }
 
@@ -61,10 +72,14 @@ class _QuotationDeskScreenState extends State<QuotationDeskScreen> {
   bool _showLivePreview = false;
   bool _isSendingProposal = false;
   bool _isSendingButtons = false;
+  bool _isDispatchingOfficialQuote = false;
+  String? _lastGeneratedQuoteUrl;
+  String? _lastGeneratedRef;
 
   // Circuit catalog by duration
   final Map<int, List<String>> _circuitsByDays = {
     2: [
+      'Varanasi - Prayagraj - Ayodhya 2D1N Express Cab Circuit',
       'Varanasi Local 2D1N Spiritual Darshan & Ghats',
       'Prayagraj Sangam Express Excursion (2D1N)',
     ],
@@ -86,6 +101,28 @@ class _QuotationDeskScreenState extends State<QuotationDeskScreen> {
 
   // Pre-compiled Day-by-Day Itineraries audited from live WordPress packages
   Map<String, List<_ItineraryPlan>> get _itineraryCatalog => {
+    'Varanasi - Prayagraj - Ayodhya 2D1N Express Cab Circuit': const [
+      _ItineraryPlan(
+        title: 'Day 1: Varanasi Pickup, Triveni Sangam Holy Snan & Ayodhya Transit',
+        highlights: [
+          'Morning pickup from Varanasi Hotel / Airport in private dedicated AC cab.',
+          'Express highway drive to Prayagraj (2.5 hrs).',
+          'Holy bath (Snan) & boat at Triveni Sangam (Ganga-Yamuna-Saraswati).',
+          'Darshan at Bade Hanuman Ji Mandir (Sleeping Hanuman) & Alopi Devi Shaktipeeth.',
+          'Afternoon scenic highway drive to Ayodhya Dham.',
+          'Evening Saryu Aarti at Ram Ki Paidi & overnight stay in Ayodhya.',
+        ],
+      ),
+      _ItineraryPlan(
+        title: 'Day 2: Shri Ram Janmabhoomi VIP Darshan, Hanumangarhi & Varanasi Drop',
+        highlights: [
+          'VIP Darshan at grand Shri Ram Janmabhoomi Mandir.',
+          'Blessings at Hanumangarhi Temple, Kanak Bhawan & Dashrath Mahal.',
+          'Afternoon drive back to Varanasi via Purvanchal Expressway.',
+          'Chauffeur drop at Varanasi Airport / Railway Station.',
+        ],
+      ),
+    ],
     'Varanasi Local 2D1N Spiritual Darshan & Ghats': const [
       _ItineraryPlan(
         title: 'Day 1: Arrival, Kashi Vishwanath VIP Darshan & Ganga Aarti',
@@ -417,11 +454,11 @@ class _QuotationDeskScreenState extends State<QuotationDeskScreen> {
 
       // Guess duration & circuit from lead destination or text
       final destLower = lead.destination.toLowerCase();
-      if (destLower.contains('5d') || (destLower.contains('ayodhya') && destLower.contains('prayagraj'))) {
+      if (destLower.contains('5d') || (destLower.contains('ayodhya') && destLower.contains('prayagraj') && destLower.contains('4n'))) {
         _setDuration(5, 4);
       } else if (destLower.contains('4d') || destLower.contains('ayodhya') || destLower.contains('gaya')) {
         _setDuration(4, 3);
-      } else if (destLower.contains('2d') || destLower.contains('local') || destLower.contains('1n')) {
+      } else if (destLower.contains('2d') || destLower.contains('local') || destLower.contains('1n') || destLower.contains('express')) {
         _setDuration(2, 1);
       } else {
         _setDuration(3, 2);
@@ -429,6 +466,69 @@ class _QuotationDeskScreenState extends State<QuotationDeskScreen> {
     } else {
       _travelDate = DateTime.now().add(const Duration(days: 7));
       _autoSelectFleetForPax(_pax);
+    }
+
+    if (widget.initialCatalogItem != null) {
+      _applyCatalogItem(widget.initialCatalogItem!);
+    }
+  }
+
+  void _applyCatalogItem(CatalogItem item) {
+    final titleLower = item.title.toLowerCase();
+    final descLower = item.description.toLowerCase();
+    final combined = '$titleLower $descLower';
+
+    if (combined.contains('5d') || combined.contains('5 day') || (combined.contains('ayodhya') && combined.contains('prayagraj') && combined.contains('4n'))) {
+      _selectedDays = 5;
+      _selectedNights = 4;
+    } else if (combined.contains('4d') || combined.contains('4 day') || combined.contains('3n')) {
+      _selectedDays = 4;
+      _selectedNights = 3;
+    } else if (combined.contains('2d') || combined.contains('2 day') || combined.contains('1n') || combined.contains('express') || combined.contains('excursion')) {
+      _selectedDays = 2;
+      _selectedNights = 1;
+    } else {
+      _selectedDays = 3;
+      _selectedNights = 2;
+    }
+
+    final available = _circuitsByDays[_selectedDays] ?? _circuitsByDays[3]!;
+    String matched = available[0];
+    for (final c in available) {
+      final cLower = c.toLowerCase();
+      if (combined.contains('dev deepawali') && cLower.contains('dev deepawali')) {
+        matched = c;
+        break;
+      } else if (combined.contains('prayagraj') && combined.contains('ayodhya') && cLower.contains('ayodhya') && cLower.contains('prayagraj')) {
+        matched = c;
+        break;
+      } else if (combined.contains('ayodhya') && cLower.contains('ayodhya')) {
+        matched = c;
+        break;
+      } else if (combined.contains('pind daan') && cLower.contains('pind daan')) {
+        matched = c;
+        break;
+      }
+    }
+    _selectedCircuit = matched;
+
+    if (item.basePrice > 0) {
+      _customTotalCtrl.text = item.basePrice.toInt().toString();
+    }
+    if (item.features.isNotEmpty) {
+      _customInclusionsCtrl.text = item.features.join(' • ');
+    }
+    if (combined.contains('cab only') || item.category == 'cab_circuit') {
+      _hotelCategory = 'Cab Only (No Hotel)';
+    }
+    if (combined.contains('dzire')) {
+      _cabType = 'Swift Dzire AC';
+    } else if (combined.contains('innova')) {
+      _cabType = 'Innova Crysta';
+    } else if (combined.contains('tempo')) {
+      _cabType = '12S Force Tempo Traveller';
+    } else if (combined.contains('urbania')) {
+      _cabType = 'Force Urbania Luxury';
     }
   }
 
@@ -568,10 +668,134 @@ class _QuotationDeskScreenState extends State<QuotationDeskScreen> {
     buffer.writeln('💰 *Total Package Investment:* *$total* ($perPax per person)');
     buffer.writeln('💳 *Advance Booking Token:* *$advance* to lock dates, VIP darshan passes & vehicle fleet.');
     buffer.writeln('⚖️ *Balance:* Payable on check-in arrival in Varanasi.');
+    if (_lastGeneratedQuoteUrl != null && _lastGeneratedQuoteUrl!.isNotEmpty) {
+      buffer.writeln('');
+      buffer.writeln('📄 *View, Confirm & Download Official Quotation (Tracked):*');
+      buffer.writeln(_lastGeneratedQuoteUrl);
+    }
     buffer.writeln('');
     buffer.writeln('📞 *TripCosmos Operations Desk:* +91 93361 16210 | support@tripcosmos.co');
     buffer.writeln('🌐 *Registered Office:* D 59/103-E-1-R, Shivpurva, Mahmoorganj, Varanasi 221010');
     return buffer.toString();
+  }
+
+  void _dispatchOfficialQuote() async {
+    if (_isDispatchingOfficialQuote) return;
+    final phone = _customerPhoneCtrl.text.trim();
+    final name = _customerNameCtrl.text.trim().isNotEmpty ? _customerNameCtrl.text.trim() : 'Traveler';
+
+    if (phone.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter traveler WhatsApp phone number.')),
+      );
+      return;
+    }
+
+    setState(() => _isDispatchingOfficialQuote = true);
+    try {
+      final apiService = Provider.of<LeadProvider>(context, listen: false).apiService;
+      final contactId = int.tryParse(widget.initialLead?.id.toString() ?? '0') ?? 0;
+      final dealValue = _calculatedTotal;
+      final advance = double.tryParse(_advanceTokenCtrl.text.replaceAll(RegExp(r'[^0-9]'), '')) ?? 2500.0;
+
+      final res = await apiService.dispatchQuote(
+        contactId: contactId,
+        phone: phone,
+        name: name,
+        destination: _selectedCircuit,
+        tier: _hotelCategory,
+        pax: _pax,
+        dealValue: dealValue,
+        advanceAmount: advance,
+        message: _generateProposalText(),
+      );
+
+      if (mounted) {
+        if (res != null && res['ok'] == true) {
+          final quoteUrl = res['quote_url']?.toString() ?? '';
+          final ref = res['ref']?.toString() ?? '';
+          setState(() {
+            _lastGeneratedQuoteUrl = quoteUrl;
+            _lastGeneratedRef = ref;
+          });
+
+          showDialog(
+            context: context,
+            builder: (ctx) => AlertDialog(
+              backgroundColor: const Color(0xFF0F172A),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              title: const Row(
+                children: [
+                  Icon(Icons.verified_rounded, color: Color(0xFF10B981), size: 24),
+                  SizedBox(width: 8),
+                  Text('Quote Dispatched!', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                ],
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Booking Reference: $ref', style: const TextStyle(color: AppColors.accentGold, fontWeight: FontWeight.w700, fontSize: 13)),
+                  const SizedBox(height: 8),
+                  const Text('Official quote record created in WordPress CRM & dispatched to traveler via WhatsApp with 7-day tracked token.', style: TextStyle(color: Colors.white70, fontSize: 12)),
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF1E293B),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.white12),
+                    ),
+                    child: SelectableText(
+                      quoteUrl,
+                      style: const TextStyle(color: Color(0xFF38BDF8), fontSize: 11, fontFamily: 'monospace'),
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton.icon(
+                  icon: const Icon(Icons.copy_rounded, size: 14),
+                  label: const Text('Copy URL'),
+                  onPressed: () {
+                    Clipboard.setData(ClipboardData(text: quoteUrl));
+                    Navigator.pop(ctx);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Quote URL copied to clipboard!'), backgroundColor: AppColors.successGreen),
+                    );
+                  },
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF10B981)),
+                  onPressed: () => Navigator.pop(ctx),
+                  child: const Text('Done', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                ),
+              ],
+            ),
+          );
+        } else {
+          final ok = await apiService.sendWhatsAppMessage(phone: phone, message: _generateProposalText());
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(ok ? '✓ Proposal dispatched via WhatsApp!' : 'Failed to dispatch proposal. Check WhatsApp gateway.'),
+                backgroundColor: ok ? AppColors.successGreen : const Color(0xFFDC2626),
+              ),
+            );
+          }
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error dispatching quote: $e'), backgroundColor: const Color(0xFFDC2626)),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isDispatchingOfficialQuote = false);
+      }
+    }
   }
 
   void _sendWhatsAppProposal() async {
@@ -1318,6 +1542,76 @@ class _QuotationDeskScreenState extends State<QuotationDeskScreen> {
                       ],
                     ),
                     const Divider(color: Colors.white12, height: 24),
+
+                    // Active Tracked Quote Banner
+                    if (_lastGeneratedQuoteUrl != null) ...[
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        margin: const EdgeInsets.only(bottom: 12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF0D9488).withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: const Color(0xFF14B8A6)),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.link_rounded, color: Color(0xFF14B8A6), size: 18),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Active Quote Ref: ${_lastGeneratedRef ?? ""}',
+                                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF14B8A6)),
+                                  ),
+                                  Text(
+                                    _lastGeneratedQuoteUrl!,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(fontSize: 10, color: Colors.white70),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.copy_rounded, size: 16, color: Color(0xFF14B8A6)),
+                              tooltip: 'Copy Tracked URL',
+                              onPressed: () {
+                                Clipboard.setData(ClipboardData(text: _lastGeneratedQuoteUrl!));
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('Quote URL copied to clipboard!'), backgroundColor: AppColors.successGreen),
+                                );
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+
+                    // 1. Primary Action: Dispatch Tracked Official Web Quote
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFD97706),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          disabledBackgroundColor: const Color(0xFF92400E),
+                        ),
+                        icon: _isDispatchingOfficialQuote
+                            ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                            : const Icon(Icons.bolt_rounded, size: 20, color: Colors.white),
+                        label: Text(
+                          _isDispatchingOfficialQuote ? 'Creating CRM Quote & Sending...' : '⚡ Generate & Dispatch Tracked Web Quote',
+                          style: const TextStyle(fontWeight: FontWeight.w900, color: Colors.white, fontSize: 13.5),
+                        ),
+                        onPressed: _isDispatchingOfficialQuote ? null : _dispatchOfficialQuote,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+
                     Row(
                       children: [
                         Expanded(

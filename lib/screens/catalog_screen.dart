@@ -287,7 +287,7 @@ class CatalogScreen extends StatelessWidget {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (_) => const QuotationDeskScreen(),
+                        builder: (_) => QuotationDeskScreen(initialCatalogItem: item),
                       ),
                     );
                   },

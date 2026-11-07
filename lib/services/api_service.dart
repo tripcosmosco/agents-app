@@ -1199,6 +1199,8 @@ class ApiService {
   /// 23d. Official Quote & Booking Dispatch (stores in wp_tc_agent_quotes & wp_tc_agent_bookings)
   Future<Map<String, dynamic>?> dispatchQuote({
     required int contactId,
+    String? phone,
+    String? name,
     required String destination,
     required String tier,
     required int pax,
@@ -1210,6 +1212,8 @@ class ApiService {
       final uri = Uri.parse('$baseUrl/mobile/dispatch-quote');
       final body = json.encode({
         'contact_id': contactId,
+        if (phone != null && phone.isNotEmpty) 'phone': phone,
+        if (name != null && name.isNotEmpty) 'name': name,
         'destination': destination,
         'tier': tier,
         'pax': pax,
