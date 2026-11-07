@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import '../core/theme/app_colors.dart';
 import '../providers/ai_agent_provider.dart';
 import 'glass_card.dart';
+import 'voice_copilot_sheet.dart';
 
 class MasterAiAssistantView extends StatefulWidget {
   final bool isBottomSheet;
@@ -65,79 +66,7 @@ class _MasterAiAssistantViewState extends State<MasterAiAssistantView> {
   }
 
   void _showVoiceCommandModal(BuildContext context, AiAgentProvider provider) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: AppColors.getCard(context),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
-      ),
-      builder: (ctx) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 36,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: AppColors.getBorder(context),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: AppColors.accentGold.withValues(alpha: 0.18),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(Icons.mic_rounded, color: AppColors.accentGold, size: 22),
-                  ),
-                  const SizedBox(width: 12),
-                  const Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Voice Command Dictation',
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                      ),
-                      Text(
-                        'Tap an operations prompt to execute immediately',
-                        style: TextStyle(fontSize: 12, color: AppColors.textMuted),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-              const SizedBox(height: 14),
-              ...[
-                '🌅 Morning Operations & Pipeline Briefing',
-                '🔥 Show hot leads needing immediate callback',
-                '🚗 Calculate Innova Crysta rate: Kashi to Ayodhya',
-                '🤝 Draft B2B Wholesale pitch for Gujarat travel agents',
-                '💰 Check staff payroll & financial status',
-                '💬 Check unread WhatsApp chats & SLA alert breaches',
-              ].map((cmd) => ListTile(
-                    dense: true,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
-                    leading: const Icon(Icons.play_circle_outline_rounded, color: AppColors.accentGold, size: 20),
-                    title: Text(cmd, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-                    onTap: () {
-                      Navigator.pop(ctx);
-                      _handleSend(provider, cmd);
-                    },
-                  )),
-            ],
-          ),
-        ),
-      ),
-    );
+    VoiceCopilotSheet.show(context, apiService: provider.apiService);
   }
 
   @override

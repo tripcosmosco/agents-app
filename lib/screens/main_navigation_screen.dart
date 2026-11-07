@@ -21,6 +21,7 @@ import '../widgets/active_call_hud.dart';
 import '../widgets/live_activity_banner.dart';
 import '../widgets/post_call_action_sheet.dart';
 import '../widgets/workspace_drawer.dart';
+import '../widgets/voice_copilot_sheet.dart';
 
 class MainNavigationScreen extends StatefulWidget {
   final ApiService? apiService;
@@ -313,6 +314,48 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         onSelectTab: _onTabSelected,
       ),
       body: mainContent,
+      floatingActionButton: Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFFD4AF37), Color(0xFFF59E0B)],
+          ),
+          borderRadius: BorderRadius.circular(28),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFFD4AF37).withValues(alpha: 0.45),
+              blurRadius: 14,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(28),
+            onTap: () => VoiceCopilotSheet.show(context, apiService: widget.apiService),
+            child: const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.mic_rounded, color: Colors.black, size: 20),
+                  SizedBox(width: 8),
+                  Text(
+                    'Voice AI Copilot',
+                    style: TextStyle(
+                      color: Colors.black,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 12.5,
+                      letterSpacing: -0.2,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
       bottomNavigationBar: _buildFooterSliderBar(
         context,
         destinations: visibleDestinations,
