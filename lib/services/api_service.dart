@@ -261,6 +261,34 @@ class ApiService {
     return 'Namaste! Our travel specialist will connect with you on WhatsApp right away.';
   }
 
+  /// 3b. Ask Voice Brain (TripCosmos Brain Unified Assistant Endpoint)
+  Future<Map<String, dynamic>?> askVoiceBrain({
+    required String query,
+    String? phone,
+    String? name,
+    String channel = 'x_agents_copilot',
+  }) async {
+    try {
+      final uri = Uri.parse('$baseUrl/voice-brain');
+      final body = json.encode({
+        'query': query,
+        'message': query,
+        if (phone != null && phone.isNotEmpty) 'phone': phone,
+        if (name != null && name.isNotEmpty) 'name': name,
+        'channel': channel,
+      });
+
+      final response = await _client.post(uri, headers: _headers, body: body)
+          .timeout(const Duration(seconds: 15));
+      if (response.statusCode == 200) {
+        return _safeJsonDecode(response.body);
+      }
+    } catch (e) {
+      debugPrint('Error querying Voice Brain: $e');
+    }
+    return null;
+  }
+
   /// 4. Fetch CRM Leads from WordPress & Connected CRMs
   Future<List<LeadModel>?> fetchLeads() async {
     try {
