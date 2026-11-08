@@ -231,20 +231,22 @@ class ApiService {
     }
   }
 
-  /// 3. Voice AI RAG Query (AI Puffer Bot 155464 spoken answer)
+  /// 3. Voice AI RAG Query (AI Puffer Bot 155464 & Voice Brain Assistant)
   Future<String> queryVoiceRag({
     required String transcript,
     String sessionId = '',
     String agentSlug = 'nishkarsh-ai',
   }) async {
     try {
-      final uri = Uri.parse('$baseUrl/voice/query-rag');
+      final uri = Uri.parse('$baseUrl/voice-brain');
       final body = json.encode({
         'transcript': transcript,
+        'query': transcript,
         'message': transcript,
         'session_id': sessionId,
         'agent_slug': agentSlug,
         'agent': agentSlug,
+        'channel': 'voice_rag_playground',
       });
 
       final response = await _client.post(uri, headers: _headers, body: body)
@@ -258,7 +260,7 @@ class ApiService {
     } catch (e) {
       debugPrint('Error querying voice RAG: $e');
     }
-    return 'Namaste! Our travel specialist will connect with you on WhatsApp right away.';
+    return 'Namaste! TripCosmos arranges VIP Kashi Darshan passes, Ganga Aarti boat charters, and AC cabs across Varanasi, Ayodhya, and Prayagraj.';
   }
 
   /// 3b. Ask Voice Brain (TripCosmos Brain Unified Assistant Endpoint)
@@ -901,7 +903,7 @@ class ApiService {
   Future<bool> sendWebChatReply({
     required String sessionId,
     required String message,
-    String agentName = 'Santosh Yadav',
+    String agentName = 'TripCosmos Agent',
   }) async {
     try {
       final uri = Uri.parse('$baseUrl/mobile/web-chats/$sessionId/reply');
@@ -1176,7 +1178,6 @@ class ApiService {
   /// 23c. Fetch Live Tour Package Catalog from WordPress (33+ Packages)
   Future<List<Map<String, dynamic>>> fetchCatalog() async {
     final endpoints = [
-      '$baseUrl/catalog',
       '$baseUrl/mobile/catalog',
       'https://tripcosmos.co/wp-json/tc-agents/v1/mobile/catalog',
     ];
@@ -1932,6 +1933,22 @@ class ApiService {
       }
     } catch (e) {
       debugPrint('Error fetching SEO Brain overview: $e');
+    }
+    return null;
+  }
+
+  /// 45b. Apply SEO Goal Autopilot Directive
+  Future<Map<String, dynamic>?> applySeoGoalDirective() async {
+    try {
+      final res = await _client.post(
+        Uri.parse('$baseUrl/mobile/seo-brain/apply-directive'),
+        headers: _headers,
+      );
+      if (res.statusCode == 200) {
+        return jsonDecode(res.body) as Map<String, dynamic>;
+      }
+    } catch (e) {
+      debugPrint('Error applying SEO Goal directive: $e');
     }
     return null;
   }
