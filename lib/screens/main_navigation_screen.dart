@@ -314,17 +314,22 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         onSelectTab: _onTabSelected,
       ),
       body: mainContent,
+      floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
       floatingActionButton: Container(
         margin: const EdgeInsets.only(bottom: 8),
+        width: 48,
+        height: 48,
         decoration: BoxDecoration(
+          shape: BoxShape.circle,
           gradient: const LinearGradient(
             colors: [Color(0xFFD4AF37), Color(0xFFF59E0B)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
           ),
-          borderRadius: BorderRadius.circular(28),
           boxShadow: [
             BoxShadow(
               color: const Color(0xFFD4AF37).withValues(alpha: 0.45),
-              blurRadius: 14,
+              blurRadius: 12,
               offset: const Offset(0, 4),
             ),
           ],
@@ -332,25 +337,12 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         child: Material(
           color: Colors.transparent,
           child: InkWell(
-            borderRadius: BorderRadius.circular(28),
+            customBorder: const CircleBorder(),
             onTap: () => VoiceCopilotSheet.show(context, apiService: widget.apiService),
-            child: const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.mic_rounded, color: Colors.black, size: 20),
-                  SizedBox(width: 8),
-                  Text(
-                    'Voice AI Copilot',
-                    style: TextStyle(
-                      color: Colors.black,
-                      fontWeight: FontWeight.w800,
-                      fontSize: 12.5,
-                      letterSpacing: -0.2,
-                    ),
-                  ),
-                ],
+            child: const Tooltip(
+              message: 'Garuda Voice AI Copilot',
+              child: Center(
+                child: Icon(Icons.auto_awesome, color: Colors.black, size: 24),
               ),
             ),
           ),
@@ -411,11 +403,14 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         ? Colors.black.withValues(alpha: 0.08)
         : Colors.white.withValues(alpha: 0.12);
 
+    final bottomInset = MediaQuery.of(context).padding.bottom;
+    final totalBarHeight = 62.0 + bottomInset;
+
     return ClipRect(
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
         child: Container(
-          height: 60,
+          height: totalBarHeight,
           decoration: BoxDecoration(
             color: glassBg,
             border: Border(
@@ -425,100 +420,97 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
               ),
             ),
           ),
-          child: SafeArea(
-            top: false,
-            child: ListView.separated(
-              controller: _sliderNavScrollController,
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              itemCount: navItems.length,
-              separatorBuilder: (_, _) => const SizedBox(width: 4),
-              itemBuilder: (context, index) {
-                final item = navItems[index];
-                final isSelected = currentIndex == index;
-                final activeGold = AppColors.getAccentGold(context);
+          padding: EdgeInsets.fromLTRB(8, 4, 8, 4 + bottomInset),
+          child: ListView.separated(
+            controller: _sliderNavScrollController,
+            scrollDirection: Axis.horizontal,
+            itemCount: navItems.length,
+            separatorBuilder: (_, _) => const SizedBox(width: 4),
+            itemBuilder: (context, index) {
+              final item = navItems[index];
+              final isSelected = currentIndex == index;
+              final activeGold = AppColors.getAccentGold(context);
 
-                return InkWell(
-                  onTap: () => _onTabSelected(index),
-                  borderRadius: BorderRadius.circular(10),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 180),
-                    width: 72,
-                    padding: const EdgeInsets.symmetric(vertical: 3),
-                    decoration: BoxDecoration(
+              return InkWell(
+                onTap: () => _onTabSelected(index),
+                borderRadius: BorderRadius.circular(10),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 180),
+                  width: 74,
+                  padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 2),
+                  decoration: BoxDecoration(
+                    color: isSelected
+                        ? activeGold.withValues(alpha: isLight ? 0.14 : 0.18)
+                        : Colors.transparent,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
                       color: isSelected
-                          ? activeGold.withValues(alpha: isLight ? 0.14 : 0.18)
+                          ? activeGold.withValues(alpha: isLight ? 0.35 : 0.45)
                           : Colors.transparent,
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(
-                        color: isSelected
-                            ? activeGold.withValues(alpha: isLight ? 0.35 : 0.45)
-                            : Colors.transparent,
-                        width: 1.0,
-                      ),
+                      width: 1.0,
                     ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                    Stack(
-                      clipBehavior: Clip.none,
-                      children: [
-                        Icon(
-                          isSelected ? item.activeIcon : item.icon,
-                          color: isSelected
-                              ? activeGold
-                              : AppColors.getTextMuted(context),
-                          size: isSelected ? 21 : 20,
-                        ),
-                        if (item.badgeCount != null && item.badgeCount! > 0)
-                          Positioned(
-                            right: -8,
-                            top: -4,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 4.5, vertical: 1.5),
-                              decoration: BoxDecoration(
-                                color: item.badgeColor ?? AppColors.accentGold,
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(color: Colors.white, width: 0.8),
-                              ),
-                              constraints: const BoxConstraints(minWidth: 15, minHeight: 15),
-                              child: Text(
-                                '${item.badgeCount}',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 8.5,
-                                  fontWeight: FontWeight.w800,
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          Icon(
+                            isSelected ? item.activeIcon : item.icon,
+                            color: isSelected
+                                ? activeGold
+                                : AppColors.getTextMuted(context),
+                            size: isSelected ? 21 : 20,
+                          ),
+                          if (item.badgeCount != null && item.badgeCount! > 0)
+                            Positioned(
+                              right: -8,
+                              top: -4,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 4.5, vertical: 1.5),
+                                decoration: BoxDecoration(
+                                  color: item.badgeColor ?? AppColors.accentGold,
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(color: Colors.white, width: 0.8),
                                 ),
-                                textAlign: TextAlign.center,
+                                constraints: const BoxConstraints(minWidth: 15, minHeight: 15),
+                                child: Text(
+                                  '${item.badgeCount}',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 8.5,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
                               ),
                             ),
-                          ),
-                      ],
-                    ),
-                    const SizedBox(height: 3),
-                    Text(
-                      item.label,
-                      style: TextStyle(
-                        color: isSelected
-                            ? AppColors.accentGold
-                            : AppColors.getTextSecondary(context),
-                        fontSize: 10.5,
-                        fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-                        letterSpacing: -0.2,
+                        ],
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
+                      const SizedBox(height: 3),
+                      Text(
+                        item.label,
+                        style: TextStyle(
+                          color: isSelected
+                              ? AppColors.accentGold
+                              : AppColors.getTextSecondary(context),
+                          fontSize: 10.5,
+                          fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                          letterSpacing: -0.2,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            );
-          },
+              );
+            },
+          ),
         ),
       ),
-    ),
-    ),
     );
   }
 }

@@ -583,44 +583,47 @@ class _WhatsAppHubScreenState extends State<WhatsAppHubScreen> {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
+        titleSpacing: 8,
         title: Row(
           children: [
             Container(
-              width: 34,
-              height: 34,
+              width: 32,
+              height: 32,
               decoration: BoxDecoration(
                 color: AppColors.whatsappGreen.withValues(alpha: 0.18),
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(9),
                 border: Border.all(color: AppColors.whatsappGreen.withValues(alpha: 0.5)),
               ),
-              child: const Icon(Icons.hub_rounded, color: AppColors.whatsappGreen, size: 19),
+              child: const Icon(Icons.hub_rounded, color: AppColors.whatsappGreen, size: 18),
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: 8),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   const Text(
-                    'Superfone WhatsApp & Lead Hub',
-                    style: TextStyle(fontSize: 16.5, fontWeight: FontWeight.w800),
+                    'WhatsApp',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+                    maxLines: 1,
                   ),
                   Row(
                     children: [
                       Container(
-                        width: 7,
-                        height: 7,
+                        width: 6.5,
+                        height: 6.5,
                         decoration: BoxDecoration(
                           color: wp.evolutionOnline ? AppColors.successGreen : AppColors.errorRed,
                           shape: BoxShape.circle,
                         ),
                       ),
-                      const SizedBox(width: 5),
+                      const SizedBox(width: 4),
                       Flexible(
                         child: Text(
                           wp.evolutionOnline
-                              ? 'Evolution Live (+91 93361 16210) • ${wp.threads.length} Threads'
-                              : 'Syncing Evolution Gateway...',
-                          style: const TextStyle(fontSize: 10.5, color: AppColors.textMuted),
+                              ? 'Live (+91 93361 16210) • ${wp.threads.length}'
+                              : 'Connecting Evolution...',
+                          style: const TextStyle(fontSize: 10, color: AppColors.textMuted),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -634,45 +637,55 @@ class _WhatsAppHubScreenState extends State<WhatsAppHubScreen> {
         ),
         actions: [
           IconButton(
+            visualDensity: VisualDensity.compact,
+            padding: const EdgeInsets.all(3),
+            constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
             onPressed: () => WebsiteRadarDialog.show(context),
             icon: Badge(
               isLabelVisible: (radarProvider.activeCount > 0) || (eventProvider.activeNowCount > 0),
               backgroundColor: AppColors.successGreen,
               label: Text('${radarProvider.activeCount > 0 ? radarProvider.activeCount : eventProvider.activeNowCount}'),
-              child: const Icon(Icons.radar_rounded, color: AppColors.successGreen),
+              child: const Icon(Icons.radar_rounded, color: AppColors.successGreen, size: 20),
             ),
             tooltip: 'Live Website Visitor Radar (Proactive Chat)',
           ),
           IconButton(
+            visualDensity: VisualDensity.compact,
+            padding: const EdgeInsets.all(3),
+            constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
             onPressed: () => _showEvolutionGatewayModal(context),
             icon: Icon(
               Icons.qr_code_scanner_rounded,
               color: wp.evolutionOnline ? AppColors.whatsappGreen : AppColors.errorRed,
+              size: 20,
             ),
             tooltip: 'WhatsApp Gateway & QR Reconnect',
           ),
           IconButton(
+            visualDensity: VisualDensity.compact,
+            padding: const EdgeInsets.all(3),
+            constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
             onPressed: () {
               wp.fetchThreadsFromServer();
               _fetchWebChats();
             },
-            icon: const Icon(Icons.refresh, color: AppColors.accentGold),
+            icon: const Icon(Icons.refresh, color: AppColors.accentGold, size: 20),
             tooltip: 'Sync Evolution WhatsApp & CRM',
           ),
           // Master Automation Kill Switch Pill
           Padding(
-            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
+            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 2),
             child: InkWell(
               onTap: () => _showMasterAutomationSheet(context),
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(14),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 250),
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3.5),
                 decoration: BoxDecoration(
                   color: wp.allAutomationsDisabled
                       ? AppColors.errorRed.withValues(alpha: 0.18)
                       : AppColors.whatsappGreen.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(14),
                   border: Border.all(
                     color: wp.allAutomationsDisabled
                         ? AppColors.errorRed.withValues(alpha: 0.8)
@@ -685,14 +698,14 @@ class _WhatsAppHubScreenState extends State<WhatsAppHubScreen> {
                   children: [
                     Icon(
                       wp.allAutomationsDisabled ? Icons.pause_circle_filled : Icons.bolt_rounded,
-                      size: 14,
+                      size: 13,
                       color: wp.allAutomationsDisabled ? AppColors.errorRed : AppColors.whatsappGreen,
                     ),
-                    const SizedBox(width: 4),
+                    const SizedBox(width: 3),
                     Text(
-                      wp.allAutomationsDisabled ? 'Human Only' : 'Automations ON',
+                      wp.allAutomationsDisabled ? 'Human' : 'Auto ON',
                       style: TextStyle(
-                        fontSize: 11,
+                        fontSize: 10.5,
                         fontWeight: FontWeight.w700,
                         color: wp.allAutomationsDisabled ? AppColors.errorRed : AppColors.whatsappGreen,
                       ),
@@ -703,6 +716,9 @@ class _WhatsAppHubScreenState extends State<WhatsAppHubScreen> {
             ),
           ),
           IconButton(
+            visualDensity: VisualDensity.compact,
+            padding: const EdgeInsets.all(3),
+            constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
             onPressed: () {
               Navigator.push(
                 context,
@@ -717,15 +733,18 @@ class _WhatsAppHubScreenState extends State<WhatsAppHubScreen> {
         ],
       ),
       floatingActionButton: _selectedTab == 0
-          ? FloatingActionButton(
-              heroTag: 'fab_whatsapp_hub_new_chat',
-              onPressed: () => _showNewWhatsAppLeadDialog(context),
-              backgroundColor: AppColors.whatsappGreen,
-              foregroundColor: Colors.white,
-              elevation: 4,
-              shape: const CircleBorder(),
-              tooltip: 'New WhatsApp Chat / Lead',
-              child: const Icon(Icons.add, size: 28),
+          ? Container(
+              margin: const EdgeInsets.only(bottom: 8),
+              child: FloatingActionButton(
+                heroTag: 'fab_whatsapp_hub_new_chat',
+                onPressed: () => _showNewWhatsAppLeadDialog(context),
+                backgroundColor: AppColors.whatsappGreen,
+                foregroundColor: Colors.white,
+                elevation: 4,
+                shape: const CircleBorder(),
+                tooltip: 'New WhatsApp Chat / Lead',
+                child: const Icon(Icons.add, size: 28),
+              ),
             )
           : null,
       body: SafeArea(
@@ -1145,7 +1164,7 @@ class _WhatsAppHubScreenState extends State<WhatsAppHubScreen> {
                   onRefresh: wp.fetchThreadsFromServer,
                   color: AppColors.whatsappGreen,
                   child: ListView.separated(
-                    padding: const EdgeInsets.fromLTRB(14, 6, 14, 80),
+                    padding: const EdgeInsets.fromLTRB(14, 6, 14, 140),
                     itemCount: threads.length,
                     separatorBuilder: (_, _) => const SizedBox(height: 8),
                     itemBuilder: (context, index) {
@@ -1627,7 +1646,7 @@ class _WhatsAppHubScreenState extends State<WhatsAppHubScreen> {
     }
 
     return ListView.separated(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 140),
       itemCount: _webChats.length,
       separatorBuilder: (_, _) => const SizedBox(height: 10),
       itemBuilder: (context, index) {
@@ -1949,7 +1968,7 @@ class _WhatsAppHubScreenState extends State<WhatsAppHubScreen> {
   // ===========================================================================
   Widget _buildBrochuresAndQuotesTab() {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 140),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

@@ -297,50 +297,32 @@ class _LeadsScreenState extends State<LeadsScreen> {
                           final visitorCount = radarProvider.activeCount > 0
                               ? radarProvider.activeCount
                               : eventProvider.liveVisitorCount;
-                          return TextButton.icon(
+                          return IconButton(
+                            visualDensity: VisualDensity.compact,
+                            padding: const EdgeInsets.all(4),
                             onPressed: () => WebsiteRadarDialog.show(context),
-                            icon: Container(
-                              width: 7,
-                              height: 7,
-                              decoration: const BoxDecoration(
-                                color: AppColors.successGreen,
-                                shape: BoxShape.circle,
-                              ),
+                            icon: Badge(
+                              isLabelVisible: visitorCount > 0,
+                              backgroundColor: AppColors.successGreen,
+                              label: Text('$visitorCount'),
+                              child: const Icon(Icons.radar_rounded, color: AppColors.successGreen, size: 20),
                             ),
-                            label: Text(
-                              '$visitorCount Live Radar',
-                              style: TextStyle(
-                                color: AppColors.getTextPrimary(context),
-                                fontSize: 10.5,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                            style: TextButton.styleFrom(
-                              backgroundColor: AppColors.getCard(context),
-                              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                                side: BorderSide(
-                                  color: AppColors.successGreen.withValues(alpha: 0.3),
-                                ),
-                              ),
-                            ),
+                            tooltip: 'Live Website Visitor Radar',
                           );
                         },
                       ),
                       IconButton(
+                        visualDensity: VisualDensity.compact,
+                        padding: const EdgeInsets.all(4),
                         onPressed: () => QuotationDeskScreen.open(context),
                         icon: const Icon(Icons.request_quote_rounded, color: AppColors.accentGold, size: 20),
                         tooltip: 'Quotation Desk',
                       ),
                       IconButton(
-                        onPressed: () => LeadsScreen.showAddLeadDialog(context),
-                        icon: const Icon(Icons.add_circle_outline_rounded, color: AppColors.accentGold, size: 21),
-                        tooltip: 'Capture New Lead (+)',
-                      ),
-                      IconButton(
+                        visualDensity: VisualDensity.compact,
+                        padding: const EdgeInsets.all(4),
                         onPressed: () => leadProvider.refreshLeadsFromServer(),
-                        icon: const Icon(Icons.refresh, color: AppColors.accentGold, size: 19),
+                        icon: const Icon(Icons.refresh, color: AppColors.accentGold, size: 20),
                         tooltip: 'Sync with Server',
                       ),
                       IconButton(
@@ -510,7 +492,7 @@ class _LeadsScreenState extends State<LeadsScreen> {
                         left: 16,
                         right: 16,
                         top: 8,
-                        bottom: 96,
+                        bottom: 140,
                       ),
                       sliver: SliverList(
                         delegate: SliverChildBuilderDelegate(
@@ -525,16 +507,17 @@ class _LeadsScreenState extends State<LeadsScreen> {
                 ],
               ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        heroTag: 'fab_add_lead_screen',
-        onPressed: () => LeadsScreen.showAddLeadDialog(context),
-        backgroundColor: AppColors.accentGold,
-        foregroundColor: Colors.black,
-        elevation: 4,
-        icon: const Icon(Icons.person_add_rounded, size: 20, color: Colors.black),
-        label: const Text(
-          'New Lead',
-          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: Colors.black),
+      floatingActionButton: Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        child: FloatingActionButton(
+          heroTag: 'fab_add_lead_screen',
+          onPressed: () => LeadsScreen.showAddLeadDialog(context),
+          backgroundColor: AppColors.accentGold,
+          foregroundColor: Colors.black,
+          elevation: 4,
+          shape: const CircleBorder(),
+          tooltip: 'New Lead (+)',
+          child: const Icon(Icons.add_rounded, size: 28, color: Colors.black),
         ),
       ),
     );
