@@ -603,8 +603,8 @@ class _WhatsAppHubScreenState extends State<WhatsAppHubScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   const Text(
-                    'WhatsApp',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+                    'WhatsApp Hub',
+                    style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.w800),
                     maxLines: 1,
                   ),
                   Row(
@@ -1056,6 +1056,7 @@ class _WhatsAppHubScreenState extends State<WhatsAppHubScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
             children: [
               _buildFilterChip(wp, 'all', 'All (${wp.threads.length})'),
+              _buildFilterChip(wp, 'verified', '🇮🇳 Verified (${wp.threads.where((t) => !t.isBotFlag).length})'),
               if (wp.slaBreachedCount > 0)
                 _buildFilterChip(wp, 'sla', '🚨 SLA Breach (${wp.slaBreachedCount})', isAlert: true),
               _buildFilterChip(wp, 'whatsapp', '💬 WhatsApp (${wp.whatsappActiveCount})'),
@@ -1066,6 +1067,8 @@ class _WhatsAppHubScreenState extends State<WhatsAppHubScreen> {
               _buildFilterChip(wp, 'b2b', '🏢 B2B (${wp.b2bThreadsCount})'),
               _buildFilterChip(wp, 'mine', '👤 My Leads'),
               _buildFilterChip(wp, 'ai_active', '🤖 AI Auto'),
+              if (wp.threads.any((t) => t.isBotFlag))
+                _buildFilterChip(wp, 'bots', '⚠️ Spam/Bots (${wp.threads.where((t) => t.isBotFlag).length})', isAlert: true),
             ],
           ),
         ),
@@ -1217,9 +1220,19 @@ class _WhatsAppHubScreenState extends State<WhatsAppHubScreen> {
   Widget _buildSuperfoneThreadTile(WhatsAppThread th, WhatsAppProvider wp, {bool isWide = false}) {
     final isB2b = wp.isB2bThread(th);
     final stageColor = _getStageColor(th.stage);
-    final timeLabel = th.timeAgo.isNotEmpty
-        ? th.timeAgo
-        : DateFormat('dd MMM, h:mm a').format(th.lastMessageTime);
+    final diff = DateTime.now().difference(th.lastMessageTime);
+    final String timeLabel;
+    if (diff.inSeconds < 60 && diff.inSeconds >= 0) {
+      timeLabel = 'Just now';
+    } else if (diff.inMinutes < 60 && diff.inMinutes >= 0) {
+      timeLabel = '${diff.inMinutes}m ago';
+    } else if (diff.inHours < 24 && diff.inHours >= 0) {
+      timeLabel = '${diff.inHours}h ago';
+    } else if (diff.inDays < 7 && diff.inDays >= 0) {
+      timeLabel = '${diff.inDays}d ago';
+    } else {
+      timeLabel = DateFormat('dd MMM').format(th.lastMessageTime);
+    }
     final isSelected = isWide && wp.selectedThreadId == th.id;
     final isLight = Theme.of(context).brightness == Brightness.light;
 
@@ -1362,13 +1375,34 @@ class _WhatsAppHubScreenState extends State<WhatsAppHubScreen> {
                         ],
                       ),
                       const SizedBox(height: 2),
-                      Text(
-                        th.customerPhone,
-                        style: TextStyle(
-                          color: AppColors.getTextSecondary(context),
-                          fontSize: 11,
-                          fontFamily: 'monospace',
-                        ),
+                      Row(
+                        children: [
+                          Text(th.countryFlag, style: const TextStyle(fontSize: 12)),
+                          const SizedBox(width: 4),
+                          Text(
+                            th.customerPhone,
+                            style: TextStyle(
+                              color: th.isBotFlag ? Colors.orangeAccent : AppColors.getTextSecondary(context),
+                              fontSize: 11,
+                              fontFamily: 'monospace',
+                            ),
+                          ),
+                          if (th.isBotFlag) ...[
+                            const SizedBox(width: 6),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                              decoration: BoxDecoration(
+                                color: Colors.red.withValues(alpha: 0.2),
+                                borderRadius: BorderRadius.circular(4),
+                                border: Border.all(color: Colors.redAccent.withValues(alpha: 0.5), width: 0.6),
+                              ),
+                              child: const Text(
+                                'Bot/Foreign',
+                                style: TextStyle(color: Colors.redAccent, fontSize: 8.5, fontWeight: FontWeight.w700),
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
                       const SizedBox(height: 5),
 
@@ -1423,28 +1457,64 @@ class _WhatsAppHubScreenState extends State<WhatsAppHubScreen> {
 
                 const SizedBox(width: 6),
 
-                // 1-Tap Direct Call Icon Button
-                if (th.customerPhone.isNotEmpty)
-                  IconButton(
-                    visualDensity: VisualDensity.compact,
-                    tooltip: 'Call ${th.displayName}',
-                    onPressed: () {
-                      context.read<CallProvider>().startOutboundCall(
-                        phone: th.customerPhone,
-                        name: th.displayName,
-                        tourInterest: th.circuit,
-                      );
-                    },
-                    icon: Container(
-                      padding: const EdgeInsets.all(7),
-                      decoration: BoxDecoration(
-                        color: AppColors.successGreen.withValues(alpha: 0.14),
-                        shape: BoxShape.circle,
-                        border: Border.all(color: AppColors.successGreen.withValues(alpha: 0.4)),
+                // 1-Tap Quick Quote + Direct Call Buttons
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (!th.isBotFlag)
+                      IconButton(
+                        visualDensity: VisualDensity.compact,
+                        tooltip: 'Send Quick Quote',
+                        onPressed: () {
+                          TravelQuoteDialog.show(
+                            context,
+                            LeadModel(
+                              id: th.contactId > 0 ? th.contactId.toString() : th.id,
+                              name: th.displayName,
+                              phone: th.customerPhone,
+                              destination: th.circuit,
+                              pax: th.isB2b ? 12 : 4,
+                              source: th.sourceChannel,
+                              stage: th.stage,
+                              score: th.leadScore,
+                              createdAt: th.lastMessageTime,
+                            ),
+                            initialB2bMode: th.isB2b,
+                          );
+                        },
+                        icon: Container(
+                          padding: const EdgeInsets.all(7),
+                          decoration: BoxDecoration(
+                            color: AppColors.accentGold.withValues(alpha: 0.14),
+                            shape: BoxShape.circle,
+                            border: Border.all(color: AppColors.accentGold.withValues(alpha: 0.4)),
+                          ),
+                          child: const Icon(Icons.bolt_rounded, size: 15, color: AppColors.accentGold),
+                        ),
                       ),
-                      child: const Icon(Icons.call_rounded, size: 15, color: AppColors.successGreen),
-                    ),
-                  ),
+                    if (th.customerPhone.isNotEmpty)
+                      IconButton(
+                        visualDensity: VisualDensity.compact,
+                        tooltip: 'Call ${th.displayName}',
+                        onPressed: () {
+                          context.read<CallProvider>().startOutboundCall(
+                            phone: th.customerPhone,
+                            name: th.displayName,
+                            tourInterest: th.circuit,
+                          );
+                        },
+                        icon: Container(
+                          padding: const EdgeInsets.all(7),
+                          decoration: BoxDecoration(
+                            color: AppColors.successGreen.withValues(alpha: 0.14),
+                            shape: BoxShape.circle,
+                            border: Border.all(color: AppColors.successGreen.withValues(alpha: 0.4)),
+                          ),
+                          child: const Icon(Icons.call_rounded, size: 15, color: AppColors.successGreen),
+                        ),
+                      ),
+                  ],
+                ),
               ],
             ),
 
@@ -1473,6 +1543,48 @@ class _WhatsAppHubScreenState extends State<WhatsAppHubScreen> {
                     ),
                   ),
                 ),
+
+                // Lead Quality & Bot Indicator
+                if (th.isBotFlag)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+                    decoration: BoxDecoration(
+                      color: Colors.red.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(color: Colors.redAccent.withValues(alpha: 0.5)),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.gpp_bad_rounded, size: 10, color: Colors.redAccent),
+                        SizedBox(width: 3),
+                        Text(
+                          'SPAM / BOT',
+                          style: TextStyle(color: Colors.redAccent, fontSize: 9.5, fontWeight: FontWeight.w800),
+                        ),
+                      ],
+                    ),
+                  )
+                else if (th.leadScore >= 70)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+                    decoration: BoxDecoration(
+                      color: Colors.green.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(color: Colors.green.withValues(alpha: 0.4)),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.local_fire_department_rounded, size: 10, color: Colors.greenAccent),
+                        const SizedBox(width: 3),
+                        Text(
+                          '${th.leadScore}% HOT',
+                          style: const TextStyle(color: Colors.greenAccent, fontSize: 9.5, fontWeight: FontWeight.w800),
+                        ),
+                      ],
+                    ),
+                  ),
 
                 // Deal Value
                 if (th.dealValue > 0)

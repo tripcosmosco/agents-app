@@ -1,3 +1,23 @@
+DateTime parseSafeEpochOrIso(dynamic val) {
+  if (val == null) return DateTime.now();
+  if (val is int) {
+    if (val < 10000000000) {
+      return DateTime.fromMillisecondsSinceEpoch(val * 1000).toLocal();
+    }
+    return DateTime.fromMillisecondsSinceEpoch(val).toLocal();
+  }
+  final s = val.toString().trim();
+  if (s.isEmpty) return DateTime.now();
+  final intVal = int.tryParse(s);
+  if (intVal != null) {
+    if (intVal < 10000000000) {
+      return DateTime.fromMillisecondsSinceEpoch(intVal * 1000).toLocal();
+    }
+    return DateTime.fromMillisecondsSinceEpoch(intVal).toLocal();
+  }
+  return DateTime.tryParse(s)?.toLocal() ?? DateTime.now();
+}
+
 class WhatsAppMessage {
   final String id;
   final String text;
@@ -80,6 +100,10 @@ class WhatsAppThread {
   final String sourceChannel;
   final bool hasWhatsappChat;
   final bool isB2b;
+  final bool isBotFlag;
+  final String countryFlag;
+  final String countryName;
+  final int leadScore;
   final DateTime? nextFollowUpAt;
   final int callCount;
   final bool slaBreached;
@@ -107,6 +131,10 @@ class WhatsAppThread {
     this.sourceChannel = 'whatsapp',
     this.hasWhatsappChat = true,
     this.isB2b = false,
+    this.isBotFlag = false,
+    this.countryFlag = '🇮🇳',
+    this.countryName = 'India',
+    this.leadScore = 75,
     this.nextFollowUpAt,
     this.callCount = 0,
     this.slaBreached = false,
@@ -124,10 +152,14 @@ class WhatsAppThread {
     }
 
     final parsedLastMessageTime = json['last_message_time'] != null
-        ? DateTime.tryParse(json['last_message_time'].toString())?.toLocal() ?? DateTime.now()
-        : (json['updated_at'] != null
-            ? DateTime.tryParse(json['updated_at'].toString())?.toLocal() ?? DateTime.now()
-            : DateTime.now());
+        ? parseSafeEpochOrIso(json['last_message_time'])
+        : (json['timestamp'] != null
+            ? parseSafeEpochOrIso(json['timestamp'])
+            : (json['updated_at'] != null
+                ? parseSafeEpochOrIso(json['updated_at'])
+                : (json['epoch'] != null
+                    ? parseSafeEpochOrIso(json['epoch'])
+                    : DateTime.now())));
 
     return WhatsAppThread(
       id: json['id']?.toString() ?? '',
@@ -144,14 +176,18 @@ class WhatsAppThread {
       unreadCount: int.tryParse(json['unread_count']?.toString() ?? '0') ?? 0,
       isAiAssisted: json['is_ai_assisted'] == true,
       assignedAgent: json['assigned_agent']?.toString() ?? 'Nishkarsh AI',
-      circuit: json['circuit']?.toString() ?? 'Varanasi Pilgrimage',
+      circuit: json['circuit']?.toString() ?? (json['tour_interest']?.toString() ?? 'New Inquiry'),
       stage: json['stage']?.toString() ?? 'new',
       dealValue: double.tryParse(json['deal_value']?.toString() ?? '0') ?? 0.0,
       sourceChannel: json['source_channel']?.toString() ?? 'whatsapp',
       hasWhatsappChat: json['has_whatsapp_chat'] != false,
       isB2b: json['is_b2b'] == true,
+      isBotFlag: json['is_bot_flag'] == true,
+      countryFlag: json['country_flag']?.toString() ?? '🇮🇳',
+      countryName: json['country_name']?.toString() ?? 'India',
+      leadScore: int.tryParse(json['lead_score']?.toString() ?? '75') ?? 75,
       nextFollowUpAt: json['next_follow_up_at'] != null
-          ? DateTime.tryParse(json['next_follow_up_at'].toString())
+          ? parseSafeEpochOrIso(json['next_follow_up_at'])
           : null,
       callCount: int.tryParse(json['call_count']?.toString() ?? '0') ?? 0,
       slaBreached: () {
@@ -197,6 +233,10 @@ class WhatsAppThread {
       'source_channel': sourceChannel,
       'has_whatsapp_chat': hasWhatsappChat,
       'is_b2b': isB2b,
+      'is_bot_flag': isBotFlag,
+      'country_flag': countryFlag,
+      'country_name': countryName,
+      'lead_score': leadScore,
       'next_follow_up_at': nextFollowUpAt?.toIso8601String(),
       'call_count': callCount,
       'sla_breached': slaBreached,
@@ -249,6 +289,10 @@ class WhatsAppThread {
     String? sourceChannel,
     bool? hasWhatsappChat,
     bool? isB2b,
+    bool? isBotFlag,
+    String? countryFlag,
+    String? countryName,
+    int? leadScore,
     DateTime? nextFollowUpAt,
     bool clearFollowUp = false,
     int? callCount,
@@ -277,6 +321,10 @@ class WhatsAppThread {
       sourceChannel: sourceChannel ?? this.sourceChannel,
       hasWhatsappChat: hasWhatsappChat ?? this.hasWhatsappChat,
       isB2b: isB2b ?? this.isB2b,
+      isBotFlag: isBotFlag ?? this.isBotFlag,
+      countryFlag: countryFlag ?? this.countryFlag,
+      countryName: countryName ?? this.countryName,
+      leadScore: leadScore ?? this.leadScore,
       nextFollowUpAt: clearFollowUp ? null : (nextFollowUpAt ?? this.nextFollowUpAt),
       callCount: callCount ?? this.callCount,
       slaBreached: slaBreached ?? this.slaBreached,

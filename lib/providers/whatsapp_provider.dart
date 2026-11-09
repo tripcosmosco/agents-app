@@ -117,7 +117,7 @@ class WhatsAppProvider extends ChangeNotifier {
   }
 
   List<WhatsAppThread> get filteredThreads {
-    return _threads.where((th) {
+    final list = _threads.where((th) {
       final matchesSearch = _searchQuery.isEmpty ||
           th.customerName.toLowerCase().contains(_searchQuery.toLowerCase()) ||
           th.customerPhone.contains(_searchQuery) ||
@@ -125,6 +125,8 @@ class WhatsAppProvider extends ChangeNotifier {
           th.lastMessage.toLowerCase().contains(_searchQuery.toLowerCase());
 
       final matchesFilter = _filter == 'all' ||
+          (_filter == 'verified' && !th.isBotFlag) ||
+          (_filter == 'bots' && th.isBotFlag) ||
           (_filter == 'sla' && (th.slaBreached || (th.unreadCount > 0 && !th.lastMessageFromMe && DateTime.now().difference(th.lastMessageTime).inMinutes >= 5))) ||
           (_filter == 'whatsapp' && (th.hasWhatsappChat || th.sourceChannel == 'whatsapp')) ||
           (_filter == 'unread' && th.unreadCount > 0) ||
@@ -140,6 +142,15 @@ class WhatsAppProvider extends ChangeNotifier {
 
       return matchesSearch && matchesFilter;
     }).toList();
+
+    // Sort: Verified prospective travelers & B2B partners first, suspicious foreign bots to the bottom
+    list.sort((a, b) {
+      if (a.isBotFlag != b.isBotFlag) {
+        return a.isBotFlag ? 1 : -1;
+      }
+      return b.lastMessageTime.compareTo(a.lastMessageTime);
+    });
+    return list;
   }
 
   WhatsAppThread openOrCreateAgencyThread({
@@ -583,16 +594,21 @@ class WhatsAppProvider extends ChangeNotifier {
             final isAiActive = item['is_ai_active'] != false;
 
             DateTime lastMessageTime = DateTime.now();
-            final rawTs = item['timestamp']?.toString() ?? '';
+            final rawTs = item['timestamp']?.toString() ?? item['updated_at']?.toString() ?? item['epoch']?.toString() ?? '';
             if (rawTs.isNotEmpty) {
-              lastMessageTime = DateTime.tryParse(rawTs) ?? DateTime.now();
+              lastMessageTime = parseSafeEpochOrIso(rawTs);
             }
 
             DateTime? nextFollowUpAt;
             final rawFollowUp = item['next_follow_up_at']?.toString() ?? '';
             if (rawFollowUp.isNotEmpty) {
-              nextFollowUpAt = DateTime.tryParse(rawFollowUp);
+              nextFollowUpAt = parseSafeEpochOrIso(rawFollowUp);
             }
+
+            final isBot = item['is_bot_flag'] == true;
+            final countryFlag = item['country_flag']?.toString() ?? '🇮🇳';
+            final countryName = item['country_name']?.toString() ?? 'India';
+            final leadScore = int.tryParse(item['lead_score']?.toString() ?? (isBot ? '10' : '75')) ?? 75;
 
             final prevThread = existingById[id];
             final initialMessages = (prevThread != null && prevThread.messages.length > 1)
@@ -629,6 +645,10 @@ class WhatsAppProvider extends ChangeNotifier {
               sourceChannel: sourceChannel,
               hasWhatsappChat: hasWhatsappChat,
               isB2b: isB2b,
+              isBotFlag: isBot,
+              countryFlag: countryFlag,
+              countryName: countryName,
+              leadScore: leadScore,
               nextFollowUpAt: nextFollowUpAt,
               callCount: callCount,
               messages: initialMessages,
