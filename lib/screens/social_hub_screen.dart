@@ -99,7 +99,7 @@ class _SocialHubScreenState extends State<SocialHubScreen> with SingleTickerProv
     }
   }
 
-  void _openTriSocialChat() {
+  void _openTriSocialChat([String? prompt]) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -111,9 +111,34 @@ class _SocialHubScreenState extends State<SocialHubScreen> with SingleTickerProv
           'role': 'designer',
           'title': 'Spiritual Reels, Shorts & Viral Visuals Studio',
           'capabilities': ['vertical_video', 'instagram_carousels', 'scriptwriting', 'canva_design'],
+          'adapterConfig': {'model': 'mistral/codestral-latest'},
         },
         companyId: 'b66bdec2-ddf6-4199-9161-da5c6ee60ef8',
         service: _paperclipService,
+        initialPrompt: prompt,
+      ),
+    );
+  }
+
+  Widget _buildQuickPromptChip(String label, VoidCallback onTap) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.25)),
+        ),
+        child: Text(
+          label,
+          style: const TextStyle(
+            fontSize: 10.5,
+            fontWeight: FontWeight.w600,
+            color: Colors.white,
+          ),
+        ),
       ),
     );
   }
@@ -368,8 +393,19 @@ class _SocialHubScreenState extends State<SocialHubScreen> with SingleTickerProv
                       'Talk to Agent',
                       style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
                     ),
-                    onPressed: _openTriSocialChat,
+                    onPressed: () => _openTriSocialChat(),
                   ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: [
+                  _buildQuickPromptChip('📱 Script 9:16 Reel', () => _openTriSocialChat('Script 9:16 Sunrise Ganga Aarti Reel')),
+                  _buildQuickPromptChip('🎨 5-Slide Carousel', () => _openTriSocialChat('Draft 5-Slide Carousel for Dev Diwali')),
+                  _buildQuickPromptChip('🕉️ Sanskrit Sunrise Hook', () => _openTriSocialChat('Write Sanskrit Sunrise Hook for Assi Ghat')),
+                  _buildQuickPromptChip('📅 Review Schedule', () => _openTriSocialChat("tell me about today's task and scheduled campaigns")),
                 ],
               ),
             ],

@@ -1,6 +1,9 @@
+import 'dart:convert';
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../core/theme/app_colors.dart';
@@ -754,12 +757,18 @@ class _AgentsScreenState extends State<AgentsScreen> with SingleTickerProviderSt
                 ),
               ],
             ),
-      floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: const Color(0xFF2563EB),
-        foregroundColor: Colors.white,
-        icon: const Icon(Icons.add_task_rounded, size: 18),
-        label: const Text('New Mission', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-        onPressed: _showCreateTaskModal,
+      floatingActionButton: Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        child: FloatingActionButton(
+          heroTag: 'fab_agents_new_mission',
+          backgroundColor: const Color(0xFF2563EB),
+          foregroundColor: Colors.white,
+          elevation: 4,
+          shape: const CircleBorder(),
+          tooltip: 'New Mission (+)',
+          onPressed: _showCreateTaskModal,
+          child: const Icon(Icons.add_task_rounded, size: 24),
+        ),
       ),
     );
   }
@@ -861,7 +870,7 @@ class _AgentsScreenState extends State<AgentsScreen> with SingleTickerProviderSt
       onRefresh: _loadAllData,
       color: AppColors.accentGold,
       child: ListView.builder(
-        padding: const EdgeInsets.fromLTRB(14, 12, 14, 80),
+        padding: const EdgeInsets.fromLTRB(14, 12, 14, 140),
         itemCount: _agents.length + 1,
         itemBuilder: (context, index) {
           // 0. Emergency Swarm Kill Switch Banner
@@ -1130,7 +1139,7 @@ class _AgentsScreenState extends State<AgentsScreen> with SingleTickerProviderSt
       onRefresh: _loadAllData,
       color: AppColors.accentGold,
       child: ListView.builder(
-        padding: const EdgeInsets.fromLTRB(14, 12, 14, 80),
+        padding: const EdgeInsets.fromLTRB(14, 12, 14, 140),
         itemCount: _routines.length,
         itemBuilder: (context, index) {
           final r = _routines[index];
@@ -1280,7 +1289,7 @@ class _AgentsScreenState extends State<AgentsScreen> with SingleTickerProviderSt
                   onRefresh: _loadAllData,
                   color: AppColors.accentGold,
                   child: ListView.builder(
-                    padding: const EdgeInsets.fromLTRB(14, 4, 14, 80),
+                    padding: const EdgeInsets.fromLTRB(14, 4, 14, 140),
                     itemCount: filtered.length,
                     itemBuilder: (context, index) {
                       final item = filtered[index];
@@ -1392,12 +1401,14 @@ class AgentChatSheet extends StatefulWidget {
   final Map<String, dynamic> agent;
   final String companyId;
   final PaperclipService service;
+  final String? initialPrompt;
 
   const AgentChatSheet({
     super.key,
     required this.agent,
     required this.companyId,
     required this.service,
+    this.initialPrompt,
   });
 
   @override
@@ -1410,10 +1421,13 @@ class _AgentChatSheetState extends State<AgentChatSheet> {
   final List<Map<String, dynamic>> _messages = [];
   bool _isLoading = false;
 
+  String get _storageKey =>
+      'paperclip_agent_chat_${widget.agent['id']?.toString() ?? widget.agent['name']?.toString() ?? 'default'}';
+
   @override
   void initState() {
     super.initState();
-    _initGreeting();
+    _loadChatHistory();
   }
 
   @override
@@ -1421,6 +1435,121 @@ class _AgentChatSheetState extends State<AgentChatSheet> {
     _msgCtrl.dispose();
     _scrollCtrl.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadChatHistory() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final saved = prefs.getString(_storageKey);
+      if (saved != null && saved.trim().isNotEmpty) {
+        final decoded = jsonDecode(saved);
+        if (decoded is List && decoded.isNotEmpty) {
+          setState(() {
+            _messages.clear();
+            for (final item in decoded) {
+              if (item is Map) {
+                _messages.add({
+                  'role': item['role']?.toString() ?? 'assistant',
+                  'text': item['text']?.toString() ?? '',
+                  'time': item['time'] != null
+                      ? DateTime.tryParse(item['time'].toString()) ?? DateTime.now()
+                      : DateTime.now(),
+                  'model': item['model']?.toString(),
+                  'tokens': item['tokens'],
+                });
+              }
+            }
+          });
+          _scrollToBottom();
+          if (widget.initialPrompt != null && widget.initialPrompt!.trim().isNotEmpty) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              _sendMessage(widget.initialPrompt!.trim());
+            });
+          }
+          return;
+        }
+      }
+    } catch (e) {
+      debugPrint('Error loading chat history: $e');
+    }
+
+    _initGreeting();
+    if (widget.initialPrompt != null && widget.initialPrompt!.trim().isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _sendMessage(widget.initialPrompt!.trim());
+      });
+    }
+  }
+
+  Future<void> _saveChatHistory() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final toSave = _messages.map((m) => {
+        'role': m['role'],
+        'text': m['text'],
+        'time': (m['time'] is DateTime)
+            ? (m['time'] as DateTime).toIso8601String()
+            : DateTime.now().toIso8601String(),
+        'model': m['model'],
+        'tokens': m['tokens'],
+      }).toList();
+      await prefs.setString(_storageKey, jsonEncode(toSave));
+    } catch (e) {
+      debugPrint('Error saving chat history: $e');
+    }
+  }
+
+  Future<void> _clearChatHistory() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF0F172A),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Row(
+          children: [
+            Icon(Icons.delete_sweep_rounded, color: Colors.redAccent, size: 22),
+            SizedBox(width: 8),
+            Text('Clear Chat History?', style: TextStyle(color: Colors.white, fontSize: 16)),
+          ],
+        ),
+        content: Text(
+          'This will wipe all dialogue history with ${widget.agent['name'] ?? 'this agent'}.',
+          style: const TextStyle(color: Colors.white70, fontSize: 13),
+        ),
+        actions: [
+          TextButton(
+            child: const Text('Cancel', style: TextStyle(color: Colors.white60)),
+            onPressed: () => Navigator.pop(ctx, false),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.redAccent,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Clear All'),
+            onPressed: () => Navigator.pop(ctx, true),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.remove(_storageKey);
+      } catch (_) {}
+      if (!mounted) return;
+      setState(() {
+        _messages.clear();
+        _initGreeting();
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Chat history cleared.'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
   }
 
   void _initGreeting() {
@@ -1543,6 +1672,7 @@ class _AgentChatSheetState extends State<AgentChatSheet> {
           });
         }
       });
+      _saveChatHistory();
       _scrollToBottom();
     }
   }
@@ -1652,19 +1782,39 @@ class _AgentChatSheetState extends State<AgentChatSheet> {
                           ),
                         ],
                       ),
-                      Text(
-                        '$title • $model',
-                        style: TextStyle(
-                          fontSize: 10.5,
-                          color: isLight ? AppColors.lightTextMuted : Colors.white60,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                      Row(
+                        children: [
+                          Container(
+                            width: 6,
+                            height: 6,
+                            decoration: const BoxDecoration(
+                              color: Color(0xFF10B981),
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            'Live Fleet ($model) • $title',
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: isLight ? AppColors.lightTextMuted : const Color(0xFF10B981),
+                              fontWeight: FontWeight.w600,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
                       ),
                     ],
                   ),
                 ),
                 IconButton(
+                  tooltip: 'Clear Chat History',
+                  icon: const Icon(Icons.delete_sweep_rounded, size: 20, color: Colors.white60),
+                  onPressed: _clearChatHistory,
+                ),
+                IconButton(
+                  tooltip: 'Close Sheet',
                   icon: const Icon(Icons.close_rounded, size: 20),
                   onPressed: () => Navigator.pop(context),
                 ),
@@ -1728,6 +1878,61 @@ class _AgentChatSheetState extends State<AgentChatSheet> {
                         ),
                       ),
                     ),
+
+                    // Assistant Action Bar (Copy & Live Model Tag)
+                    if (!isUser && (msg['text']?.toString().isNotEmpty ?? false)) ...[
+                      Padding(
+                        padding: const EdgeInsets.only(left: 4, bottom: 8),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            InkWell(
+                              onTap: () {
+                                final textToCopy = msg['text']?.toString() ?? '';
+                                Clipboard.setData(ClipboardData(text: textToCopy));
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('📋 Copied response to clipboard!'),
+                                    duration: Duration(seconds: 1),
+                                  ),
+                                );
+                              },
+                              borderRadius: BorderRadius.circular(6),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.06),
+                                  borderRadius: BorderRadius.circular(6),
+                                  border: Border.all(color: Colors.white12, width: 0.7),
+                                ),
+                                child: const Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.copy_rounded, size: 11, color: Colors.white70),
+                                    SizedBox(width: 4),
+                                    Text('Copy', style: TextStyle(fontSize: 10, color: Colors.white70, fontWeight: FontWeight.w600)),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            if (msg['model'] != null && msg['model'].toString().isNotEmpty) ...[
+                              const SizedBox(width: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF10B981).withValues(alpha: 0.12),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Text(
+                                  msg['model'].toString().replaceFirst('google/', '').replaceFirst('mistral/', ''),
+                                  style: const TextStyle(fontSize: 9.5, color: Color(0xFF10B981), fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                    ],
 
                     // Quick Prompt Chips
                     if (chips != null && chips.isNotEmpty) ...[
