@@ -560,7 +560,11 @@ class _WebChatDetailScreenState extends State<WebChatDetailScreen> {
                                       builder: (context) {
                                         final whatsappMatch = RegExp(r'\[(?:WHATSAPP_ACTION|WHATSAPP):\s*([^\]]+)\]', caseSensitive: false).firstMatch(content);
                                         final String? whatsappActionLabel = whatsappMatch?.group(1);
-                                        final String displayContent = content.replaceAll(RegExp(r'\[(?:WHATSAPP_ACTION|WHATSAPP):\s*[^\]]+\]', caseSensitive: false), '').trim();
+                                        final vehicleMatch = RegExp(r'\[VEHICLE_CARD:\s*([^|\]]+)\|\s*([^|\]]+)\|\s*([^\]]+)\]', caseSensitive: false).firstMatch(content);
+                                        final String displayContent = content
+                                            .replaceAll(RegExp(r'\[(?:WHATSAPP_ACTION|WHATSAPP):\s*[^\]]+\]', caseSensitive: false), '')
+                                            .replaceAll(RegExp(r'\[VEHICLE_CARD:\s*[^\]]+\]', caseSensitive: false), '')
+                                            .trim();
 
                                         return Column(
                                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -573,6 +577,34 @@ class _WebChatDetailScreenState extends State<WebChatDetailScreen> {
                                                 height: 1.35,
                                               ),
                                             ),
+                                            if (vehicleMatch != null) ...[
+                                              const SizedBox(height: 8),
+                                              Container(
+                                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                                decoration: BoxDecoration(
+                                                  color: AppColors.accentGold.withValues(alpha: 0.14),
+                                                  borderRadius: BorderRadius.circular(8),
+                                                  border: Border.all(color: AppColors.accentGold, width: 1.0),
+                                                ),
+                                                child: Row(
+                                                  mainAxisSize: MainAxisSize.min,
+                                                  children: [
+                                                    const Icon(Icons.directions_car_rounded, size: 14, color: AppColors.accentGold),
+                                                    const SizedBox(width: 5),
+                                                    Flexible(
+                                                      child: Text(
+                                                        '${vehicleMatch.group(1)!.trim()} • ${vehicleMatch.group(2)!.trim()} • ${vehicleMatch.group(3)!.trim()}',
+                                                        style: const TextStyle(
+                                                          color: AppColors.accentGold,
+                                                          fontSize: 11,
+                                                          fontWeight: FontWeight.w700,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ],
                                             if (whatsappActionLabel != null && whatsappActionLabel.isNotEmpty) ...[
                                               const SizedBox(height: 8),
                                               Container(
