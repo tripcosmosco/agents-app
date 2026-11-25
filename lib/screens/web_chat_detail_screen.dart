@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../core/theme/app_colors.dart';
 import '../services/api_service.dart';
@@ -27,8 +28,12 @@ class _WebChatDetailScreenState extends State<WebChatDetailScreen> {
   List<Map<String, dynamic>> _messages = [];
   bool _isLoading = true;
   bool _isSending = false;
+  bool _isTranslating = false;
   late bool _isAiActive;
   Timer? _pollTimer;
+
+  final Map<int, String> _translatedVisitorMessages = {};
+  final Set<int> _translatingMessageIds = {};
 
   final List<Map<String, String>> _cannedQuickReplies = [
     {
@@ -52,6 +57,91 @@ class _WebChatDetailScreenState extends State<WebChatDetailScreen> {
           'For early morning Rudrabhishek and Sparsh Darshan at Kashi Vishwanath: Men: Dhoti/Kurta; Women: Saree or Salwar suit. Leather items prohibited inside corridor.',
     },
   ];
+
+  String get _pageContext => '${widget.chat['page_url'] ?? ''} ${widget.chat['page_title'] ?? ''}';
+
+  bool get _isRussianVisitor {
+    final page = _pageContext;
+    if (page.toLowerCase().contains('russian') || page.toLowerCase().contains(' ru')) return true;
+    for (final m in _messages) {
+      final content = m['content']?.toString() ?? '';
+      if (RegExp(r'[\u0400-\u04FF]').hasMatch(content)) return true;
+    }
+    return false;
+  }
+
+  String? get _detectedPhone {
+    final direct = widget.chat['phone']?.toString() ?? widget.chat['visitor_phone']?.toString();
+    if (direct != null && direct.trim().isNotEmpty && direct.trim() != 'null') {
+      return direct.trim();
+    }
+    for (final m in _messages) {
+      final content = m['content']?.toString() ?? '';
+      final match = RegExp(r'(?:\+?[0-9]{8,15})').firstMatch(content);
+      if (match != null) return match.group(0);
+    }
+    return null;
+  }
+
+  List<Map<String, String>> get _dynamicQuickReplies {
+    if (_isRussianVisitor) {
+      return [
+        {
+          'label': '🇷🇺 Русскоязычный Гид',
+          'text':
+              'Намасте! Наш лицензированный русскоязычный гид встретит вас в отеле и проведет комфортную экскурсию по Варанаси без суеты и спешки.',
+        },
+        {
+          'label': '🚗 Авто с водителем',
+          'text':
+              'Для спокойного передвижения предоставляем чистый автомобиль с кондиционером (Innova Crysta) и проверенным водителем на весь день.',
+        },
+        {
+          'label': '🧓 Для пожилых (комфорт)',
+          'text':
+              'Организуем поездку в размеренном ритме: лодка на рассвете с удобной посадкой, помощь на ступенях гхатов и согласованный маршрут.',
+        },
+        {
+          'label': '💬 WhatsApp программа',
+          'text':
+              'Пожалуйста, напишите ваш WhatsApp номер, и мы пришлем подробную программу по дням и расчет стоимости.',
+        },
+      ];
+    }
+
+    final pageLower = _pageContext.toLowerCase();
+
+    if (pageLower.contains('cab') ||
+        pageLower.contains('taxi') ||
+        pageLower.contains('ayodhya') ||
+        pageLower.contains('airport') ||
+        pageLower.contains('mughalsarai')) {
+      return [
+        {
+          'label': '🚗 Airport Cab ₹1,100',
+          'text':
+              'Pickup from Varanasi Airport (VNS) to City/Ghats: AC Dzire ₹1,100 | Innova Crysta ₹1,800. UP65 verified driver.',
+        },
+        {
+          'label': '🛕 Ayodhya Day Trip ₹3,800',
+          'text':
+              'Varanasi to Ayodhya same-day return cab: AC Sedan ₹3,800 | Innova ₹5,500. Toll, parking & driver included.',
+        },
+        {
+          'label': '🌊 Prayagraj Sangam ₹3,600',
+          'text':
+              'Varanasi to Prayagraj Sangam return: AC Sedan ₹3,600 | Innova ₹5,200. Comfortable highway journey.',
+        },
+        {
+          'label': '💳 Lock with ₹500 Advance',
+          'text':
+              'Lock your vehicle reservation with an initial advance of ₹500 via UPI (9336116210@upi). Pay balance directly to driver.',
+        },
+      ];
+    }
+
+    return _cannedQuickReplies;
+  }
 
   @override
   void initState() {
@@ -167,6 +257,51 @@ class _WebChatDetailScreenState extends State<WebChatDetailScreen> {
     }
   }
 
+  Future<void> _openWhatsApp(String phone) async {
+    final cleanPhone = phone.replaceAll(RegExp(r'[^0-9]'), '');
+    final uri = Uri.parse('https://wa.me/$cleanPhone');
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+  }
+
+  Future<void> _translateAndSend() async {
+    final text = _textController.text.trim();
+    if (text.isEmpty) return;
+
+    setState(() => _isTranslating = true);
+    final targetLang = _isRussianVisitor ? 'ru' : 'en';
+    final translated = await widget.apiService.translateText(
+      text: text,
+      targetLang: targetLang,
+    );
+    if (!mounted) return;
+    setState(() => _isTranslating = false);
+
+    if (translated != null && translated.isNotEmpty) {
+      _sendMessage(translated);
+    } else {
+      _sendMessage(text);
+    }
+  }
+
+  Future<void> _translateVisitorMessage(int msgId, String text) async {
+    if (_translatingMessageIds.contains(msgId)) return;
+    setState(() => _translatingMessageIds.add(msgId));
+
+    final trans = await widget.apiService.translateText(
+      text: text,
+      targetLang: 'en',
+    );
+    if (!mounted) return;
+    setState(() {
+      _translatingMessageIds.remove(msgId);
+      if (trans != null && trans.isNotEmpty) {
+        _translatedVisitorMessages[msgId] = trans;
+      }
+    });
+  }
+
   Future<void> _toggleAiTakeover() async {
     final newAiState = !_isAiActive;
     setState(() => _isAiActive = newAiState);
@@ -207,8 +342,8 @@ class _WebChatDetailScreenState extends State<WebChatDetailScreen> {
                 shape: BoxShape.circle,
                 border: Border.all(color: const Color(0xFF0284C7)),
               ),
-              child: const Center(
-                child: Text('🌐', style: TextStyle(fontSize: 16)),
+              child: Center(
+                child: Text(_isRussianVisitor ? '🇷🇺' : '🌐', style: const TextStyle(fontSize: 16)),
               ),
             ),
             const SizedBox(width: 10),
@@ -234,6 +369,15 @@ class _WebChatDetailScreenState extends State<WebChatDetailScreen> {
           ],
         ),
         actions: [
+          if (_detectedPhone != null)
+            Padding(
+              padding: const EdgeInsets.only(right: 4),
+              child: IconButton(
+                icon: const Icon(Icons.chat_bubble_rounded, color: Color(0xFF25D366), size: 20),
+                tooltip: 'WhatsApp: $_detectedPhone',
+                onPressed: () => _openWhatsApp(_detectedPhone!),
+              ),
+            ),
           // AI Takeover Switch Pill
           Padding(
             padding: const EdgeInsets.only(right: 12),
@@ -411,14 +555,112 @@ class _WebChatDetailScreenState extends State<WebChatDetailScreen> {
                                       ],
                                     ),
                                     const SizedBox(height: 5),
-                                    // Message Body
-                                    Text(
-                                      content,
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 13.5,
-                                        height: 1.35,
-                                      ),
+                                    // Message Body with 1-Tap Action Parser
+                                    Builder(
+                                      builder: (context) {
+                                        final whatsappMatch = RegExp(r'\[(?:WHATSAPP_ACTION|WHATSAPP):\s*([^\]]+)\]', caseSensitive: false).firstMatch(content);
+                                        final String? whatsappActionLabel = whatsappMatch?.group(1);
+                                        final String displayContent = content.replaceAll(RegExp(r'\[(?:WHATSAPP_ACTION|WHATSAPP):\s*[^\]]+\]', caseSensitive: false), '').trim();
+
+                                        return Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              displayContent,
+                                              style: const TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 13.5,
+                                                height: 1.35,
+                                              ),
+                                            ),
+                                            if (whatsappActionLabel != null && whatsappActionLabel.isNotEmpty) ...[
+                                              const SizedBox(height: 8),
+                                              Container(
+                                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                                decoration: BoxDecoration(
+                                                  color: const Color(0xFF25D366).withValues(alpha: 0.18),
+                                                  borderRadius: BorderRadius.circular(8),
+                                                  border: Border.all(color: const Color(0xFF25D366), width: 1.2),
+                                                ),
+                                                child: Row(
+                                                  mainAxisSize: MainAxisSize.min,
+                                                  children: [
+                                                    const Icon(Icons.touch_app_rounded, size: 14, color: Color(0xFF25D366)),
+                                                    const SizedBox(width: 5),
+                                                    Flexible(
+                                                      child: Text(
+                                                        'Action: $whatsappActionLabel',
+                                                        style: const TextStyle(
+                                                          color: Color(0xFF25D366),
+                                                          fontSize: 11,
+                                                          fontWeight: FontWeight.w700,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ],
+                                            if (isCustomer && RegExp(r'[\u0400-\u04FF]').hasMatch(displayContent)) ...[
+                                              const SizedBox(height: 6),
+                                              if (_translatedVisitorMessages.containsKey(index)) ...[
+                                                Container(
+                                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                                  decoration: BoxDecoration(
+                                                    color: Colors.blueGrey.withValues(alpha: 0.25),
+                                                    borderRadius: BorderRadius.circular(6),
+                                                  ),
+                                                  child: Row(
+                                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                                    children: [
+                                                      const Icon(Icons.translate, size: 12, color: Colors.lightBlueAccent),
+                                                      const SizedBox(width: 5),
+                                                      Expanded(
+                                                        child: Text(
+                                                          _translatedVisitorMessages[index]!,
+                                                          style: const TextStyle(
+                                                            color: Colors.lightBlueAccent,
+                                                            fontSize: 11.5,
+                                                            fontStyle: FontStyle.italic,
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                              ] else ...[
+                                                InkWell(
+                                                  onTap: () => _translateVisitorMessage(index, displayContent),
+                                                  child: Padding(
+                                                    padding: const EdgeInsets.symmetric(vertical: 2),
+                                                    child: Row(
+                                                      mainAxisSize: MainAxisSize.min,
+                                                      children: [
+                                                        const Icon(Icons.g_translate, size: 12, color: Colors.blueAccent),
+                                                        const SizedBox(width: 4),
+                                                        _translatingMessageIds.contains(index)
+                                                            ? const SizedBox(
+                                                                width: 10,
+                                                                height: 10,
+                                                                child: CircularProgressIndicator(strokeWidth: 1.5, color: Colors.blueAccent),
+                                                              )
+                                                            : const Text(
+                                                                'Translate to English',
+                                                                style: TextStyle(
+                                                                  color: Colors.blueAccent,
+                                                                  fontSize: 10.5,
+                                                                  fontWeight: FontWeight.w600,
+                                                                ),
+                                                              ),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ],
+                                          ],
+                                        );
+                                      },
                                     ),
                                     if (timeStr.isNotEmpty) ...[
                                       const SizedBox(height: 4),
@@ -441,16 +683,16 @@ class _WebChatDetailScreenState extends State<WebChatDetailScreen> {
                         ),
             ),
 
-            // Quick Canned Replies Bar
+            // Quick Canned Replies Bar (Dynamic based on Page & Language)
             Container(
               height: 38,
               margin: const EdgeInsets.only(bottom: 6),
               child: ListView.builder(
                 scrollDirection: Axis.horizontal,
                 padding: const EdgeInsets.symmetric(horizontal: 12),
-                itemCount: _cannedQuickReplies.length,
+                itemCount: _dynamicQuickReplies.length,
                 itemBuilder: (context, index) {
-                  final reply = _cannedQuickReplies[index];
+                  final reply = _dynamicQuickReplies[index];
                   return Padding(
                     padding: const EdgeInsets.only(right: 8),
                     child: ActionChip(
@@ -459,9 +701,9 @@ class _WebChatDetailScreenState extends State<WebChatDetailScreen> {
                         color: AppColors.accentGold.withValues(alpha: 0.3),
                       ),
                       label: Text(
-                        reply['label']!,
+                        reply['label'] ?? '',
                         style: const TextStyle(
-                          fontSize: 11,
+                           fontSize: 11,
                           fontWeight: FontWeight.w600,
                           color: AppColors.accentGold,
                         ),
@@ -489,7 +731,9 @@ class _WebChatDetailScreenState extends State<WebChatDetailScreen> {
                       maxLines: 3,
                       minLines: 1,
                       decoration: InputDecoration(
-                        hintText: 'Type live reply to website visitor...',
+                        hintText: _isRussianVisitor
+                            ? 'Type in English/Hindi (Tap 🌐 to translate)...'
+                            : 'Type live reply to website visitor...',
                         hintStyle: const TextStyle(color: AppColors.textMuted, fontSize: 13),
                         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                         filled: true,
@@ -503,6 +747,43 @@ class _WebChatDetailScreenState extends State<WebChatDetailScreen> {
                     ),
                   ),
                   const SizedBox(width: 8),
+                  // 1-Tap Translate & Send Button (for Foreign Visitors)
+                  if (_isRussianVisitor) ...[
+                    InkWell(
+                      onTap: (_isSending || _isTranslating) ? null : () => _translateAndSend(),
+                      borderRadius: BorderRadius.circular(24),
+                      child: Container(
+                        width: 44,
+                        height: 44,
+                        margin: const EdgeInsets.only(right: 6),
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
+                          ),
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFF6366F1).withValues(alpha: 0.3),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Center(
+                          child: _isTranslating
+                              ? const SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : const Icon(Icons.g_translate, color: Colors.white, size: 20),
+                        ),
+                      ),
+                    ),
+                  ],
                   InkWell(
                     onTap: _isSending ? null : () => _sendMessage(),
                     borderRadius: BorderRadius.circular(24),

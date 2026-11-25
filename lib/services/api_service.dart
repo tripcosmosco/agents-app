@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
@@ -21,7 +22,7 @@ class ApiService {
       : _baseUrl = baseUrl ?? AppConstants.defaultApiBaseUrl {
     _apiToken = (apiToken != null && apiToken.trim().isNotEmpty)
         ? apiToken.trim()
-        : null;
+        : (AppConstants.defaultMobileToken.isNotEmpty ? AppConstants.defaultMobileToken : null);
   }
 
   String get baseUrl {
@@ -33,6 +34,10 @@ class ApiService {
   }
   String? get apiToken => _apiToken;
   bool get isAuthenticated => _apiToken != null && _apiToken!.trim().isNotEmpty;
+
+  int? _lastAuthError;
+  int? get lastAuthError => _lastAuthError;
+  void clearAuthError() => _lastAuthError = null;
 
   Map<String, String> get _headers => {
     'Content-Type': 'application/json',
@@ -68,6 +73,8 @@ class ApiService {
       }
       if (savedToken != null && savedToken.trim().isNotEmpty) {
         _apiToken = savedToken.trim();
+      } else if (AppConstants.defaultMobileToken.isNotEmpty) {
+        _apiToken = AppConstants.defaultMobileToken;
       } else {
         _apiToken = null;
       }
@@ -94,6 +101,7 @@ class ApiService {
   /// Update active mobile API token
   Future<bool> setApiToken(String? token) async {
     try {
+      _lastAuthError = null;
       final clean = (token ?? '').trim();
       if (clean.isEmpty) {
         _apiToken = null;
@@ -165,7 +173,7 @@ class ApiService {
     try {
       final uri = Uri.parse('$baseUrl/mobile/call-queue');
       final response = await _client.get(uri, headers: _headers)
-          .timeout(const Duration(seconds: 12));
+          .timeout(const Duration(seconds: 35));
 
       if (response.statusCode == 200) {
         final data = _safeJsonDecode(response.body);
@@ -296,18 +304,27 @@ class ApiService {
     try {
       final uri = Uri.parse('$baseUrl/mobile/leads');
       final response = await _client.get(uri, headers: _headers)
-          .timeout(const Duration(seconds: 15));
+          .timeout(const Duration(seconds: 35));
 
       if (response.statusCode == 200) {
+        _lastAuthError = null;
         final data = _safeJsonDecode(response.body);
         final isSuccess = data != null && (data['ok'] == true || data['success'] == true);
         if (isSuccess && data['leads'] is List) {
-          return (data['leads'] as List)
-              .map(
-                (item) => LeadModel.fromJson(Map<String, dynamic>.from(item)),
-              )
-              .toList();
+          final list = <LeadModel>[];
+          for (final item in data['leads']) {
+            try {
+              if (item is Map) {
+                list.add(LeadModel.fromJson(Map<String, dynamic>.from(item)));
+              }
+            } catch (e) {
+              debugPrint('Error parsing lead item: $e');
+            }
+          }
+          return list;
         }
+      } else if (response.statusCode == 401 || response.statusCode == 403) {
+        _lastAuthError = response.statusCode;
       }
     } catch (e) {
       debugPrint('Error fetching leads: $e');
@@ -428,19 +445,32 @@ class ApiService {
   }
 
   /// 9b. Fetch Superfone Unified Hub Data (Leads + Evolution Live Status)
-  Future<Map<String, dynamic>?> fetchWhatsAppHubData() async {
+  Future<Map<String, dynamic>?> fetchWhatsAppHubData({String? search, int limit = 400, bool refresh = false}) async {
     if (!isAuthenticated) return null;
     try {
-      final uri = Uri.parse('$baseUrl/mobile/whatsapp-leads');
+      final queryParams = <String, String>{
+        'limit': limit.toString(),
+      };
+      if (search != null && search.trim().isNotEmpty) {
+        queryParams['search'] = search.trim();
+      }
+      if (refresh) {
+        queryParams['refresh'] = '1';
+      }
+      final uri = Uri.parse('$baseUrl/mobile/whatsapp-leads').replace(queryParameters: queryParams);
       final response = await _client.get(uri, headers: _headers)
-          .timeout(const Duration(seconds: 12));
+          .timeout(const Duration(seconds: 35));
 
       if (response.statusCode == 200) {
+        _lastAuthError = null;
         final data = _safeJsonDecode(response.body);
         final isSuccess = data != null && (data['ok'] == true || data['success'] == true);
         if (isSuccess) {
           return Map<String, dynamic>.from(data);
         }
+      } else if (response.statusCode == 401 || response.statusCode == 403) {
+        _lastAuthError = response.statusCode;
+        debugPrint('Auth error (${response.statusCode}) fetching WhatsApp hub data');
       }
     } catch (e) {
       debugPrint('Error fetching WhatsApp hub data: $e');
@@ -463,7 +493,7 @@ class ApiService {
       };
       final uri = Uri.parse('$baseUrl/mobile/whatsapp-messages').replace(queryParameters: queryParams);
       final response = await _client.get(uri, headers: _headers)
-          .timeout(const Duration(seconds: 12));
+          .timeout(const Duration(seconds: 35));
 
       if (response.statusCode == 200) {
         final data = _safeJsonDecode(response.body);
@@ -864,7 +894,7 @@ class ApiService {
     try {
       final uri = Uri.parse('$baseUrl/mobile/web-chats?limit=30');
       final response = await _client.get(uri, headers: _headers)
-          .timeout(const Duration(seconds: 12));
+          .timeout(const Duration(seconds: 35));
 
       if (response.statusCode == 200) {
         final data = _safeJsonDecode(response.body);
@@ -885,7 +915,7 @@ class ApiService {
     try {
       final uri = Uri.parse('$baseUrl/mobile/web-chats/$sessionId');
       final response = await _client.get(uri, headers: _headers)
-          .timeout(const Duration(seconds: 12));
+          .timeout(const Duration(seconds: 35));
 
       if (response.statusCode == 200) {
         final data = _safeJsonDecode(response.body);
@@ -945,6 +975,33 @@ class ApiService {
       debugPrint('Error toggling web chat AI for $sessionId: $e');
     }
     return false;
+  }
+
+  /// 17b. Real-time Concierge Translation for Mobile Operators
+  Future<String?> translateText({
+    required String text,
+    String targetLang = 'ru',
+  }) async {
+    try {
+      final uri = Uri.parse('$baseUrl/translate');
+      final body = json.encode({
+        'text': text,
+        'target_lang': targetLang,
+      });
+
+      final response = await _client.post(uri, headers: _headers, body: body)
+          .timeout(const Duration(seconds: 12));
+
+      if (response.statusCode == 200) {
+        final data = _safeJsonDecode(response.body);
+        if (data != null && data['success'] == true && data['translated_text'] != null) {
+          return data['translated_text'].toString();
+        }
+      }
+    } catch (e) {
+      debugPrint('Error translating text via backend: $e');
+    }
+    return null;
   }
 
   /// Ground Activity Tariffs & Net Pricing Sync
@@ -1679,7 +1736,7 @@ class ApiService {
       if (avatarUrl != null) payload['avatar_url'] = avatarUrl;
       final body = json.encode(payload);
       final response = await _client.post(uri, headers: {'Content-Type': 'application/json'}, body: body)
-          .timeout(const Duration(seconds: 15));
+          .timeout(const Duration(seconds: 45));
       if (response.statusCode == 200) {
         final data = _safeJsonDecode(response.body);
         if (data != null && data['token'] != null) {
@@ -1687,12 +1744,18 @@ class ApiService {
         }
         return data;
       } else {
-        return _safeJsonDecode(response.body);
+        final errData = _safeJsonDecode(response.body);
+        if (errData != null && errData['error'] != null) {
+          return errData;
+        }
+        return {'ok': false, 'error': 'Server error (${response.statusCode}): ${response.reasonPhrase}'};
       }
+    } on TimeoutException {
+      return {'ok': false, 'error': 'Verification took longer than 45s. Please check internet or retry.'};
     } catch (e) {
       debugPrint('Error with Google login: $e');
+      return {'ok': false, 'error': 'Connection error: $e'};
     }
-    return null;
   }
 
   /// 36. WordPress Credentials Login
@@ -1707,7 +1770,7 @@ class ApiService {
         'password': password,
       });
       final response = await _client.post(uri, headers: {'Content-Type': 'application/json'}, body: body)
-          .timeout(const Duration(seconds: 15));
+          .timeout(const Duration(seconds: 45));
       if (response.statusCode == 200) {
         final data = _safeJsonDecode(response.body);
         if (data != null && data['token'] != null) {
@@ -1715,12 +1778,18 @@ class ApiService {
         }
         return data;
       } else {
-        return _safeJsonDecode(response.body);
+        final errData = _safeJsonDecode(response.body);
+        if (errData != null && errData['error'] != null) {
+          return errData;
+        }
+        return {'ok': false, 'error': 'Login failed (${response.statusCode}): ${response.reasonPhrase}'};
       }
+    } on TimeoutException {
+      return {'ok': false, 'error': 'Server connection timed out. Please retry.'};
     } catch (e) {
       debugPrint('Error logging in with credentials: $e');
+      return {'ok': false, 'error': 'Connection error: $e'};
     }
-    return null;
   }
 
   /// 37. Fetch Authenticated User Profile & Role
@@ -1971,6 +2040,7 @@ class ApiService {
 
   /// 47. Live Website Visitor Radar Telemetry
   Future<List<Map<String, dynamic>>> fetchLiveRadarVisitors() async {
+    if (!isAuthenticated) return [];
     try {
       final endpoints = [
         '$baseUrl/mobile/live-radar',
@@ -2019,6 +2089,37 @@ class ApiService {
       }
     } catch (e) {
       debugPrint('Error sending proactive ping: $e');
+    }
+    return false;
+  }
+
+  /// 48b. Push Flash Deal / Offer to Live Website Visitor Screen
+  Future<bool> sendPushOffer({
+    required String sessionId,
+    required String title,
+    required String message,
+    String code = 'KASHI10',
+  }) async {
+    try {
+      final endpoints = [
+        '$baseUrl/mobile/push-offer',
+        '$baseUrl/push-offer',
+        'https://tripcosmos.co/wp-json/tc-agents/v1/mobile/push-offer',
+      ];
+      final body = jsonEncode({
+        'session_id': sessionId,
+        'offer_title': title,
+        'offer_text': message,
+        'discount_code': code,
+      });
+      for (final ep in endpoints) {
+        try {
+          final res = await _client.post(Uri.parse(ep), headers: _headers, body: body).timeout(const Duration(seconds: 4));
+          if (res.statusCode == 200 || res.statusCode == 201) return true;
+        } catch (_) {}
+      }
+    } catch (e) {
+      debugPrint('Error sending push offer: $e');
     }
     return false;
   }
